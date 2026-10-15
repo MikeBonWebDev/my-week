@@ -1,0 +1,19 @@
+{
+  "name": "la-mia-settimana",
+  "version": "1.0.0",
+  "description": "Tabella settimanale delle attività, installabile come app (PWA), con sincronizzazione tra dispositivi tramite file.",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "node --test test/core.test.js",
+    "test:browser": "playwright test",
+    "start": "node strumenti/server.js",
+    "seme": "node strumenti/seme.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.0"
+  }
+}
