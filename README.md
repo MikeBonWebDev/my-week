@@ -27,6 +27,7 @@ Per pubblicarla, installarla e usarla c’è [LEGGIMI.md](LEGGIMI.md).
 
 Una tabella settimanale: in riga le attività, in colonna i giorni. Per ogni attività e giorno una casella
 "fatto". In fondo due righe di servizio: l’**energia** del giorno (pesa · ok · leggero) e il **giorno di riposo**.
+Sul telefono la stessa settimana si mostra **un giorno alla volta**, con i sette giorni in una striscia in alto.
 
 - Ogni settimana ha **la sua lista** di attività, indipendente dalle altre.
 - Le attività vengono da una **libreria di voci** ("Sviluppo", "Camminare"…); ogni attività, in ogni settimana,
@@ -52,7 +53,8 @@ settimana-pwa/
 │   └── core.test.js      test del nucleo (Node, senza dipendenze)
 ├── test-browser/         test nel browser vero (Playwright)
 │   ├── aiuti.js          azioni comuni: aggiungi, spunta, salva file, unisci…
-│   ├── pagina.spec.js    uso quotidiano: primo avvio, suggerimenti, libreria, CSV, telefono
+│   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
+│   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, menu dal basso
 │   ├── sincronizzazione.spec.js   due "dispositivi" che si scambiano il file
 │   └── pwa.spec.js       installabilità e funzionamento senza rete
 ├── strumenti/
@@ -68,14 +70,14 @@ L’app vera e propria sono i primi cinque elementi. Il resto serve a sviluppare
 
 ## 3. Provarla sul tuo computer
 
-Serve [Node.js](https://nodejs.org) 20 o successivo.
+Serve [Node.js](https://nodejs.org) 22 o successivo (consigliata la LTS più recente).
 
 ```sh
 npm install                       # una volta: scarica Playwright (serve solo ai test nel browser)
 npx playwright install chromium   # una volta: scarica il browser usato dai test
 npm start                         # avvia il server: apri http://localhost:8765/
 npm test                          # test del nucleo (pochi secondi)
-npm run test:browser              # test nel browser (circa 15 secondi)
+npm run test:browser              # test nel browser (circa 20 secondi)
 ```
 
 Si può anche aprire `index.html` con un doppio clic: funziona, ma senza service worker, e il browser lo tratta
@@ -109,18 +111,21 @@ Tre idee reggono tutto:
 
 Seguiamo cosa succede quando segni "Sviluppo" di mercoledì. È il modo migliore per capire come i pezzi si parlano.
 
-**1. Il browser segnala l’evento.** La casella sta dentro `<tbody id="corpo-tabella">`. Non c’è un gestore su
-ogni casella: ce n’è uno solo sul corpo della tabella (delega degli eventi, vedi §8):
+**1. Il browser segnala l’evento.** Su computer la casella sta dentro `<tbody id="corpo-tabella">`, su telefono
+dentro l’elenco delle schede `<ul id="carte">`. Non c’è un gestore su ogni casella: ce n’è uno solo, `suCambio`,
+collegato a entrambi i contenitori (delega degli eventi, vedi §8):
 
 ```js
-corpo.addEventListener('change', (e) => {
+function suCambio(e) {
   const el = e.target;                                   // l'elemento toccato
   if (el.matches('input[type="checkbox"]')) {
     const { id, giorno } = el.dataset;                   // data-id="sviluppo" data-giorno="2"
-    esito(db.spunta(visualizzata, id, Number(giorno), el.checked), { ridisegna: false });
+    esito(db.spunta(visualizzata, id, Number(giorno), el.checked), { ridisegna: telefono.matches });
+    return;
   }
   …
-});
+}
+for (const contenitore of [corpo, carte]) contenitore.addEventListener('change', suCambio);   // (semplificato)
 ```
 
 **2. Il nucleo registra.** `db.spunta` controlla che la richiesta abbia senso (giorno 0-6, voce presente in quella
@@ -137,8 +142,9 @@ scrivi(`s/${sett}/a/${id}/f/${giorno}`, fatto);   // "s/2026-10-12/a/sviluppo/f/
 `{ ok: false, errore: '…' }`). Se è ok chiama `salva()`, che scrive il registro in `localStorage`, e ricalcola
 `state = db.vista()`.
 
-**4. Si ridisegna (se serve).** Per una spunta non serve: la casella è già spuntata, l’ha fatto il browser.
-Per aggiungere o togliere un’attività invece `disegna()` rifà la tabella dalla vista.
+**4. Si ridisegna (se serve).** Sulla tabella, per una spunta non serve: la casella è già spuntata, l’ha fatto il
+browser. Sul telefono sì, perché cambiano anche la striscia dei giorni, il colore della scheda e i puntini.
+Per aggiungere o togliere un’attività `disegna()` rifà sempre tutto dalla vista.
 
 Ogni altra azione (dettaglio, energia, riposo, aggiungi, togli, rinomina…) fa lo stesso giro.
 
@@ -300,9 +306,37 @@ rinominata), si usa `-2`, `-3`… (`idPer` in `core.js`).
 
 Un solo file con tre parti: HTML (struttura), CSS (aspetto), JavaScript (comportamento). Il JavaScript è diviso in
 sezioni, segnate da commenti `/* ───── … ───── */`, nell’ordine: impostazioni → date → dati → disegno → azioni →
-CSV → sincronizzazione → avvio. In testa allo script c’è un riassunto del giro di una modifica.
+CSV → sincronizzazione → menu → avvio. In testa allo script c’è un riassunto del giro di una modifica.
 
-Concetti del web usati qui, con dove trovarli:
+### Due viste della stessa settimana
+
+| | Computer (più largo di 40rem, circa 640 pixel) | Telefono |
+|---|---|---|
+| Come si vede | la tabella: attività × sette giorni | un giorno alla volta |
+| Scegliere il giorno | tutti visibili insieme | striscia dei sette giorni in alto (barra = quota di attività segnate, puntino = energia) |
+| Energia | tre puntini per ogni giorno | una barra con tre segmenti: Pesa, Ok, Leggero |
+| Attività | righe della tabella | schede: nome, dettaglio, sette puntini della settimana, «Togli», interruttore grande |
+| Aggiungere | sotto la tabella | in cima, sopra le schede; i suggerimenti compaiono quando usi il campo |
+
+Quale vista mostrare lo decide JavaScript con `matchMedia('(max-width: 40rem)')`, la stessa soglia del CSS:
+`disegna()` chiama `disegnaTabella()` oppure `disegnaGiorno()` e nasconde l’altra. Se ruoti il telefono o stringi la
+finestra, l’evento `change` della media query ridisegna. Il modulo per aggiungere è uno solo: `disegna()` lo sposta
+dove serve con `append` (spostare un elemento non gli toglie i gestori degli eventi). Le caselle delle schede hanno
+gli stessi `data-id` e `data-giorno` della tabella, quindi i gestori sono gli stessi.
+
+Nella vista a un giorno `giornoScelto` ricorda il giorno mostrato: oggi nella settimana corrente; passando a un’altra
+settimana resta lo stesso giorno della settimana, se non è nel futuro (`giornoMostrato`).
+
+### Il menu
+
+CSV, sincronizzazione e libreria stanno in un `<dialog id="menu">`, aperto dal pulsante in alto a destra con
+`showModal()`: sta sopra alla pagina, che intanto non risponde ai tocchi. Su computer è un pannello al centro, su
+telefono sale dal basso (stesso elemento, CSS diverso). Si chiude con la ×, con Esc, con un tocco fuori, e da solo
+dopo aver unito un file, così vedi subito il risultato.
+
+### Concetti del web usati
+
+Qui sotto, con dove trovarli:
 
 **DOM e disegno.** Il DOM è l’albero degli elementi della pagina, che JavaScript può leggere e modificare. Le funzioni
 `creaRiga`, `creaRigaEnergia`… costruiscono elementi con `document.createElement` e li mettono nella tabella con
@@ -318,8 +352,17 @@ garantisce che ciò che vedi venga solo dai dati. È lo stesso principio dei fra
 Così il gestore sa a cosa si riferisce un tocco senza cercarlo.
 
 **Delega degli eventi.** Un evento "risale" dall’elemento toccato fino ai suoi antenati (*bubbling*). Per questo basta
-un gestore su `corpo` (il `<tbody>`) per ricevere i tocchi di tutte le caselle, anche di quelle create dopo.
-Dentro il gestore, `e.target` è l’elemento toccato; `matches()` e `closest()` dicono di che elemento si tratta.
+un gestore su `corpo` (il `<tbody>`) e uno su `carte` (la `<ul>` delle schede) per ricevere i tocchi di tutte le
+caselle, anche di quelle create dopo. Dentro il gestore, `e.target` è l’elemento toccato; `matches()` e `closest()`
+dicono di che elemento si tratta.
+
+**Suggerimenti senza chiudere la tastiera.** Toccando un suggerimento, il campo di testo perderebbe il fuoco e sul
+telefono la tastiera si chiuderebbe. Un `preventDefault()` sull’evento `pointerdown` dei suggerimenti lo impedisce:
+il fuoco resta nel campo e il clic arriva comunque al pulsante.
+
+**Il messaggio di stato come popover.** "Salvato" e gli errori compaiono in un avviso in basso (`#stato`). È un
+*popover* (`popover="manual"`, `showPopover()`): il browser lo mette nello strato più alto della pagina, sopra anche
+al menu aperto. Dove i popover non esistono, resta un normale elemento in sovrimpressione.
 
 **La finestra di conferma e `await`.** `conferma(testo)` apre un `<dialog>` e restituisce una **Promise**, cioè un
 risultato che arriverà più tardi. Chi la usa scrive `const ok = await conferma(…)`: la funzione si "ferma" fino alla
@@ -341,14 +384,19 @@ conta dalla domenica). Le date si mostrano con `Intl.DateTimeFormat('it-IT', …
 se è cambiato il giorno (`controllaGiorno`), così a mezzanotte "oggi" si sposta da solo.
 
 **CSS.** I colori sono variabili (`--accento`, `--fatto`…) definite con `light-dark(chiaro, scuro)`: il tema segue
-quello del sistema. La colonna dei nomi resta ferma quando la tabella scorre (`position: sticky`). Su schermi
-stretti una `@media` riduce la tabella. Chi preferisce meno animazioni (impostazione del sistema) le ha quasi azzerate
+quello del sistema. La colonna dei nomi resta ferma quando la tabella scorre (`position: sticky`). Sotto i 40rem una
+`@media` adatta intestazione, modulo e menu al telefono. La striscia dei giorni è una griglia a sette colonne uguali
+(`grid-template-columns: repeat(7, 1fr)`); la barra di ogni giorno si riempie con un gradiente che legge la variabile
+`--pieno` (da 0 a 1), impostata dal codice. Su iPhone `env(safe-area-inset-…)` tiene il contenuto lontano da tacca e
+barra in basso. Chi preferisce meno animazioni (impostazione del sistema) le ha quasi azzerate
 (`prefers-reduced-motion`).
 
-**Accessibilità.** I pulsanti dell’energia usano `aria-pressed`, le caselle hanno `aria-label` ("Sviluppo –
-Mercoledì"), i messaggi di stato stanno in una regione `aria-live` che i lettori di schermo annunciano.
+**Accessibilità.** I pulsanti dell’energia e i giorni della striscia usano `aria-pressed`; le caselle hanno
+`aria-label` ("Sviluppo – Mercoledì"); ogni giorno della striscia dice quante attività sono segnate ("Mer 21 ott:
+1 di 3 attività segnate"); i messaggi di stato stanno in una regione `aria-live` che i lettori di schermo annunciano.
+Sul telefono i bersagli dei tocchi sono di almeno 44 pixel, la misura consigliata da Apple e Google.
 
-**CSV.** Separatore `;` (Excel in italiano), un carattere BOM (`﻿`) all’inizio perché Excel riconosca le
+**CSV.** Separatore `;` (Excel in italiano), un carattere BOM (`\uFEFF`) all’inizio perché Excel riconosca le
 lettere accentate, e un apostrofo davanti ai testi che iniziano con `=`, `+`, `-`, `@` perché Excel non li scambi per
 formule (`campoCsv`). Il CSV si può solo **esportare**: non ha i momenti delle modifiche, quindi non potrebbe
 partecipare all’unione e diventerebbe una terza versione dei dati.
@@ -363,6 +411,8 @@ partecipare all’unione e diventerebbe una terza versione dei dati.
   la più recente. Le voci non usate da più di 4 settimane spariscono da qui da sole.
 - **Mentre scrivi ("Nella libreria").** Tutta la libreria, comprese le voci vecchie. La ricerca ignora maiuscole e
   accenti (`perRicerca`); vengono prima le voci che *iniziano* con il testo, poi quelle che lo *contengono*.
+- **Sul telefono** i suggerimenti compaiono solo mentre usi il campo, oppure quando la settimana è ancora vuota:
+  altrimenti occuperebbero spazio sopra le schede ogni volta che apri l’app.
 - **Per cominciare.** Nella prima settimana d’uso compaiono sei attività di esempio, finché non le scegli. Non sono
   scritte nei dati: lo diventano solo quando ne tocchi una. Altrimenti, togliendole su un dispositivo, ricomparirebbero
   dall’altro.
@@ -430,6 +480,9 @@ si leggono come una storia.
 - **Due dispositivi = due contesti.** Un *contesto* di Playwright è come un profilo separato del browser, con la sua
   memoria. Nel test di sincronizzazione telefono e PC lavorano separati, si scambiano il file salvato e alla fine
   devono mostrare la stessa tabella (`foto()` la fotografa per confrontarla).
+- **Telefono simulato.** `telefono.spec.js` apre contesti larghi 390 pixel, con tocco: verifica la vista a un giorno,
+  il passaggio tra le due viste stringendo la finestra, e che ciò che segni sul telefono arrivi nella tabella del
+  computer dopo l’unione.
 - **Orologio fermo.** `page.clock.install({ time })` fissa la data: i test girano "mercoledì 14 ottobre 2026" in
   qualunque giorno li lanci.
 - **Service worker bloccato**, tranne in `pwa.spec.js`, che verifica installabilità (lo chiede a Chrome stesso) e
@@ -491,7 +544,7 @@ Così lo stesso file funziona in entrambi.
 2. `core.js`, dall’alto: il commento iniziale, poi `scrivi`, `vince`, `unisci`, `vista`, le operazioni.
 3. `test/core.test.js`: i test su esempi in fondo al file, poi i test di proprietà in cima.
 4. `index.html`, lo script: la panoramica in testa, poi le sezioni "Dati" e "Azioni".
-5. `test-browser/sincronizzazione.spec.js` con `aiuti.js` accanto.
+5. `test-browser/sincronizzazione.spec.js` e `telefono.spec.js`, con `aiuti.js` accanto.
 6. `sw.js` e il §10.
 
 **Esperimenti, dal più facile**

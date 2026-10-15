@@ -504,26 +504,32 @@
     button.pulsante.secondario { color: var(--inchiostro); background: var(--bottone-sec); }
     button.pulsante.piccolo { padding: .45rem 1rem; font-size: .9rem; }
 
-    .azioni {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: .75rem;
-      margin-top: 1.4rem;
-    }
-
+    /* Il messaggio di stato ("Salvato", errori): un avviso in basso, sopra a tutto. È un popover: il browser lo
+       mette nello strato più alto della pagina, così si vede anche quando il menu è aperto. */
     .stato {
-      margin: 0 0 0 .4rem;
+      position: fixed;
+      inset: auto auto calc(1.1rem + env(safe-area-inset-bottom)) 50%;
+      translate: -50% 0;
+      width: max-content;
+      max-width: min(92vw, 30rem);
+      margin: 0;
+      padding: .55rem 1.1rem;
       font-size: .9rem;
-      color: var(--tenue);
+      text-align: center;
+      color: var(--inchiostro);
+      background: var(--scheda);
+      border: 1px solid var(--scheda-bordo);
+      border-radius: 999px;
+      box-shadow: var(--ombra);
       opacity: 0;
-      transition: opacity .5s ease;
+      pointer-events: none;
+      transition: opacity .35s ease;
     }
     .stato.visibile { opacity: 1; }
-    .stato.errore { color: light-dark(#a24f3f, #e59a8a); }
+    .stato.errore { color: light-dark(#a24f3f, #e59a8a); border-color: currentColor; }
 
-    /* ───────── Copia di sicurezza ───────── */
-    .dati { margin-top: 1.3rem; color: var(--tenue); }
+    /* ───────── Pannelli del menu (libreria, sincronizzazione) ───────── */
+    .dati { color: var(--tenue); }
     .dati summary {
       width: fit-content;
       padding: .3rem .1rem;
@@ -559,29 +565,260 @@
     dialog p { margin: 0 0 1.2rem; }
     dialog menu { display: flex; justify-content: flex-end; gap: .6rem; margin: 0; padding: 0; }
 
-    /* ───────── Schermi stretti ───────── */
+    /* ───────── Intestazione e pulsante del menu ───────── */
+    .testata {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .apri-menu {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      min-height: 2.75rem;
+      margin-top: .35rem;
+      padding: 0 1rem;
+      font: inherit;
+      font-weight: 600;
+      color: var(--inchiostro);
+      background: var(--scheda);
+      border: 1px solid var(--scheda-bordo);
+      border-radius: 999px;
+      box-shadow: 0 1px 2px rgb(60 70 55 / .06);
+      cursor: pointer;
+    }
+    .apri-menu:hover { border-color: var(--accento); }
+    .apri-menu:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+    .apri-menu svg { width: 1.15rem; height: 1.15rem; }
+
+    /* ───────── Il menu: un pannello (al centro su computer, dal basso su telefono) ───────── */
+    dialog.foglio {
+      width: min(100vw - 2rem, 34rem);
+      max-width: none;
+      max-height: min(86dvh, 46rem);
+      overflow: auto;
+      padding: 0 1.4rem 1.4rem;
+      overscroll-behavior: contain;
+    }
+    .foglio-testa {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0 .5rem;
+      background: var(--scheda);
+    }
+    .foglio-testa h2 {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      font-weight: 500;
+      font-size: 1.5rem;
+    }
+    .chiudi {
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      font: inherit;
+      font-size: 1.5rem;
+      line-height: 1;
+      color: var(--tenue);
+      background: transparent;
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .chiudi:hover { background: var(--bottone-sec); }
+    .chiudi:focus-visible { outline: 3px solid var(--fuoco); }
+    .sezione { padding: 1rem 0 1.1rem; border-top: 1px solid var(--linea); }
+    .sezione h3 { margin: 0 0 .35rem; font-size: 1rem; }
+    .sezione > p { margin: 0 0 .8rem; font-size: .9rem; color: var(--tenue); }
+    .sezione .copie { margin: 0 0 .9rem; padding: 0; list-style: none; font-size: .9rem; color: var(--tenue); }
+    .sezione .azioni-dati { display: flex; flex-wrap: wrap; gap: .6rem; }
+    .sezione.dati summary { font-weight: 600; color: var(--inchiostro); }
+
+    /* ───────── Vista a un giorno (telefono) ─────────
+       Sotto i 40rem la tabella si nasconde e compare questa vista: i sette giorni in alto, la giornata scelta,
+       la riga per aggiungere, le attività come schede. Quale delle due mostrare lo decide il codice (disegna). */
+    .vista-giorno { display: grid; gap: .9rem; }
+
+    /* la striscia dei giorni: sette pulsanti, con una barra che si riempie con le attività segnate */
+    .striscia { display: grid; grid-template-columns: repeat(7, 1fr); gap: .3rem; }
+    .giorno {
+      --pieno: 0;
+      position: relative;
+      display: grid;
+      justify-items: center;
+      gap: .1rem;
+      min-height: 4.1rem;
+      padding: .45rem 0 .55rem;
+      font: inherit;
+      color: var(--inchiostro);
+      background: var(--scheda);
+      border: 1px solid var(--scheda-bordo);
+      border-radius: .95rem;
+      cursor: pointer;
+      transition: background-color .25s ease, border-color .25s ease;
+    }
+    .giorno-nome { font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+    .giorno-num { font-size: 1.1rem; font-weight: 600; line-height: 1.2; }
+    .giorno-barra {
+      width: 62%;
+      height: .28rem;
+      margin-top: .15rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accento) calc(var(--pieno) * 100%), var(--linea) 0);
+    }
+    /* un puntino sull'angolo, come un badge: l'energia di quel giorno, se l'hai indicata */
+    .giorno[data-energia]::after {
+      content: "";
+      position: absolute;
+      top: -.2rem;
+      right: -.2rem;
+      width: .7rem;
+      height: .7rem;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 0 0 2px var(--sfondo-1);
+    }
+    .giorno[data-energia="pesa"] { --c: var(--en-pesa); }
+    .giorno[data-energia="ok"] { --c: var(--en-ok); }
+    .giorno[data-energia="leggero"] { --c: var(--en-leggero); }
+    .giorno[data-riposo] { background: var(--riposo); }
+    .giorno[data-oggi] .giorno-num { color: var(--fuoco); }
+    .giorno[data-oggi] { border-color: var(--accento); }
+    .giorno[aria-pressed="true"] { background: var(--bottone); border-color: var(--bottone); color: var(--bottone-testo); }
+    .giorno[aria-pressed="true"] .giorno-nome,
+    .giorno[aria-pressed="true"] .giorno-num { color: var(--bottone-testo); }
+    .giorno[aria-pressed="true"] .giorno-barra {
+      background: linear-gradient(90deg, var(--bottone-testo) calc(var(--pieno) * 100%), color-mix(in srgb, var(--bottone-testo) 30%, transparent) 0);
+    }
+    .giorno:disabled { opacity: .4; cursor: default; }
+    .giorno:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+
+    /* la giornata: titolo, energia a tre segmenti, riposo */
+    .giornata {
+      display: grid;
+      gap: .7rem;
+      padding: .9rem 1rem 1rem;
+      background: var(--scheda);
+      border: 1px solid var(--scheda-bordo);
+      border-radius: var(--raggio);
+      box-shadow: var(--ombra);
+    }
+    .titolo-giorno {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      font-weight: 500;
+      font-size: 1.3rem;
+    }
+    .titolo-giorno small { font-family: ui-rounded, system-ui, sans-serif; font-size: .8rem; font-weight: 600; color: var(--fuoco); margin-left: .4rem; }
+    .etichetta-giornata { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+    .segmenti { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin-top: -.3rem; }
+    .segmento {
+      --c: var(--accento);
+      min-height: 2.9rem;
+      font: inherit;
+      font-weight: 600;
+      color: var(--inchiostro);
+      background: color-mix(in srgb, var(--c) 12%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--c) 60%, var(--linea-forte));
+      border-radius: .85rem;
+      cursor: pointer;
+      transition: background-color .25s ease, border-color .25s ease;
+    }
+    .segmento[data-livello="pesa"] { --c: var(--en-pesa); }
+    .segmento[data-livello="ok"] { --c: var(--en-ok); }
+    .segmento[data-livello="leggero"] { --c: var(--en-leggero); }
+    .segmento[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #1d2521; }
+    .segmento:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+    .interruttore-riposo {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      min-height: 2.75rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* le attività come schede: testi a sinistra, interruttore grande a destra */
+    .carte { display: grid; gap: .55rem; margin: 0; padding: 0; list-style: none; }
+    .carta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: .5rem;
+      padding: .7rem .55rem .7rem 1rem;
+      background: var(--scheda);
+      border: 1px solid var(--scheda-bordo);
+      border-radius: 1.1rem;
+      transition: background-color .3s ease;
+    }
+    .carta[data-fatto] { background: var(--fatto); }
+    .carta-testi { min-width: 0; display: grid; gap: .1rem; }
+    .carta .nome-voce { padding: 0; font-size: 1.02rem; }
+    .carta .dettaglio { padding: .2rem 0; font-size: .86rem; }
+    .carta .dettaglio::placeholder { font-style: normal; opacity: .7; }
+    .carta-piede { display: flex; align-items: center; gap: .8rem; margin-top: .2rem; }
+    /* sette puntini: la settimana di questa attività; quello cerchiato è il giorno scelto */
+    .puntini { display: flex; gap: .3rem; }
+    .puntino { width: .5rem; height: .5rem; border-radius: 50%; border: 1.5px solid var(--linea-forte); }
+    .puntino[data-fatto] { background: var(--accento); border-color: var(--accento); }
+    .puntino[data-scelto] { outline: 2px solid var(--fuoco); outline-offset: 1.5px; }
+    .togli {
+      margin-left: auto;
+      padding: .35rem .2rem;
+      font: inherit;
+      font-size: .82rem;
+      color: var(--tenue);
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .togli:focus-visible { outline: 3px solid var(--fuoco); border-radius: .3rem; }
+    .carta-spunta { display: grid; place-items: center; width: 3.4rem; height: 3.4rem; cursor: pointer; }
+    .carta-spunta input[type="checkbox"] { width: 2.4rem; height: 2.4rem; }
+    .carta-spunta input[type="checkbox"]::after { width: 1.35rem; height: 1.35rem; }
+    .carta-vuota { padding: 1.2rem 1rem; color: var(--tenue); text-align: center; }
+
+    /* ───────── Schermi stretti: telefono ───────── */
     @media (max-width: 40rem) {
-      .lungo { display: none; }
-      .corto { display: inline; }
-      table { min-width: 46rem; }
-      th[scope="row"], thead th:first-child { min-width: 10rem; width: 10rem; }
-      /* su telefono la × non ruba spazio ai nomi: compare sopra, solo quando tocchi la riga */
-      .riga-nome { position: relative; }
-      .elimina {
-        position: absolute;
-        right: .2rem;
-        top: 50%;
-        translate: 0 -50%;
-        width: 1.9rem;
-        background: var(--scheda);
-        opacity: 0;
-        pointer-events: none;
-      }
-      tr:focus-within .elimina { opacity: .9; pointer-events: auto; }
-      .riga-nome { padding-left: .7rem; }
-      .voce { padding-left: 1.1rem; }
-      thead th:first-child { padding-left: .9rem; }
+      main { padding-block: calc(1rem + env(safe-area-inset-top)) calc(5rem + env(safe-area-inset-bottom)); }
+      h1 { font-size: 1.75rem; }
+      .sottotitolo, .apri-menu .lungo { display: none; }
+      .apri-menu { margin-top: 0; padding: 0 .85rem; }
+      .intestazione { margin-bottom: .8rem; }
+      .settimane { margin-bottom: .8rem; }
       .periodo { min-width: 0; flex: 1; }
+
+      /* la riga per aggiungere, in cima alla vista a un giorno: compatta, senza la cornice della tabella */
+      .blocco-aggiungi .aggiungi { padding: 0; border: 0; gap: .55rem; }
+      .blocco-aggiungi .riga-aggiungi { flex-wrap: nowrap; }
+      .blocco-aggiungi .riga-aggiungi input[type="text"] { flex: 1; background: var(--scheda); border-color: var(--scheda-bordo); }
+      .blocco-aggiungi .riga-aggiungi .pulsante { flex: none; min-width: 2.9rem; padding: 0 1rem; font-size: 1.5rem; line-height: 1; }
+      .blocco-aggiungi .riprendi { margin-bottom: .6rem; border: 1px solid var(--scheda-bordo); border-radius: 1.1rem; padding: .8rem 1rem; }
+      .blocco-aggiungi .nota { padding: 0; border: 0; }
+
+      dialog.foglio {
+        width: 100%;
+        max-height: 88dvh;
+        margin: auto 0 0;
+        border-bottom: 0;
+        border-radius: var(--raggio) var(--raggio) 0 0;
+        padding-bottom: calc(1.4rem + env(safe-area-inset-bottom));
+      }
+    }
+    /* il pulsante "Aggiungi" mostra la parola su computer e solo "+" su telefono */
+    .corto-telefono { display: none; }
+    @media (max-width: 40rem) {
+      .lungo-computer { display: none; }
+      .corto-telefono { display: inline; }
     }
 
     /* ───────── Chi preferisce meno movimento ───────── */
@@ -598,8 +835,15 @@
 
   <main>
     <header class="intestazione">
-      <h1>La mia settimana</h1>
-      <p>Segna ciò che hai fatto, con calma. Anche il riposo conta. Tutto si salva da solo, su questo dispositivo.</p>
+      <div class="testata">
+        <h1>La mia settimana</h1>
+        <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog"
+                aria-label="Menu: sincronizza, esporta, libreria delle attività">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <span class="lungo">Menu</span>
+        </button>
+      </div>
+      <p class="sottotitolo">Segna ciò che hai fatto, con calma. Anche il riposo conta. Tutto si salva da solo, su questo dispositivo.</p>
     </header>
 
     <nav class="settimane" aria-label="Scegli la settimana">
@@ -612,6 +856,22 @@
       <button type="button" class="pulsante secondario piccolo" id="vai-oggi" hidden>Torna a oggi</button>
     </nav>
 
+    <!-- Telefono: un giorno alla volta. Il codice mostra questa vista oppure la tabella, mai tutte e due. -->
+    <section class="vista-giorno" id="vista-giorno" aria-label="Il giorno scelto" hidden>
+      <div class="striscia" id="striscia" role="group" aria-label="Scegli il giorno"></div>
+      <div class="giornata">
+        <h2 class="titolo-giorno" id="titolo-giorno"></h2>
+        <span class="etichetta-giornata" id="etichetta-energia">Energia</span>
+        <div class="segmenti" id="segmenti" role="group" aria-labelledby="etichetta-energia"></div>
+        <label class="interruttore-riposo">
+          <input type="checkbox" class="riposo" id="riposo-giorno">
+          <span>Giorno di riposo</span>
+        </label>
+      </div>
+      <div id="posto-aggiungi"></div>
+      <ul class="carte" id="carte" aria-label="Attività del giorno"></ul>
+    </section>
+
     <section class="scheda">
       <div class="scorri" tabindex="0" role="region" aria-label="Tabella settimanale, scorre in orizzontale">
         <table id="tabella">
@@ -622,6 +882,8 @@
         </table>
       </div>
 
+      <!-- Riprendi, aggiungi e nota: su telefono questo blocco viene spostato in cima alla vista a un giorno -->
+      <div class="blocco-aggiungi" id="blocco-aggiungi">
       <div class="riprendi" id="riprendi" hidden>
         <p id="testo-riprendi"></p>
         <button type="button" class="pulsante secondario piccolo" id="riprendi-settimana">Riprendi quelle attività</button>
@@ -630,7 +892,7 @@
         <div class="riga-aggiungi">
           <input type="text" id="nuova-attivita" maxlength="60"
                  placeholder="Aggiungi un’attività…" aria-label="Nome dell’attività da aggiungere a questa settimana">
-          <button type="submit" class="pulsante">Aggiungi</button>
+          <button type="submit" class="pulsante" aria-label="Aggiungi"><span class="lungo-computer">Aggiungi</span><span class="corto-telefono" aria-hidden="true">+</span></button>
         </div>
         <div class="suggerimenti" id="suggerimenti" role="group" aria-labelledby="titolo-suggerimenti" aria-live="polite" hidden>
           <span class="suggerimenti-titolo" id="titolo-suggerimenti"></span>
@@ -641,32 +903,24 @@
         Stai guardando una settimana passata: puoi correggere le spunte, i dettagli, l’energia e il riposo.
         Le attività si aggiungono e si tolgono solo nella settimana corrente.
       </p>
+      </div>
     </section>
 
-    <div class="azioni">
-      <button type="button" class="pulsante" id="scarica-settimana">Scarica CSV · settimana</button>
-      <button type="button" class="pulsante secondario" id="scarica-storico">Scarica CSV · storico</button>
-      <p class="stato" id="stato" role="status" aria-live="polite"></p>
+    <p class="stato" id="stato" role="status" aria-live="polite" popover="manual"></p>
+  </main>
+
+  <!-- Il menu: sincronizzazione, esportazione, libreria. Si apre dal pulsante in alto a destra. -->
+  <dialog id="menu" class="foglio" aria-labelledby="titolo-menu">
+    <div class="foglio-testa">
+      <h2 id="titolo-menu">Menu</h2>
+      <button type="button" class="chiudi" id="chiudi-menu" aria-label="Chiudi il menu">×</button>
     </div>
 
-    <details class="dati">
-      <summary>Libreria delle attività <span id="conta-libreria"></span></summary>
+    <section class="sezione" aria-labelledby="titolo-sync">
+      <h3 id="titolo-sync">Sincronizza</h3>
       <p>
-        Le voci che usi nelle settimane: cosa fai, in generale. Il dettaglio di ogni settimana sta accanto all’attività,
-        nella tabella. Cambiare il nome di una voce lo cambia in tutte le settimane in cui compare.
-        Una voce già usata non si cancella, perché fa parte dello storico. Le voci che non usi da più di quattro settimane
-        spariscono da sole dai suggerimenti, ma tornano appena inizi a scriverne il nome.
-      </p>
-      <ul class="libreria" id="lista-libreria"></ul>
-    </details>
-
-    <details class="dati">
-      <summary>Sincronizzazione tra dispositivi</summary>
-      <p>
-        Ogni dispositivo tiene i suoi dati. Per portarli da uno all’altro: qui salvi il file di sincronizzazione
-        (per esempio su Google Drive), sull’altro dispositivo lo unisci. L’unione tiene, casella per casella,
-        la modifica più recente: puoi unire più file, in qualsiasi ordine, anche lo stesso due volte,
-        e non perdi niente di più recente. Il file è anche la tua copia di sicurezza.
+        Per portare i dati da un dispositivo all’altro: salva il file qui (per esempio su Drive) e uniscilo sull’altro.
+        Vince sempre la modifica più recente. Il file è anche la tua copia di sicurezza.
       </p>
       <ul class="copie">
         <li>Ultimo file salvato da qui: <span id="ultimo-salvataggio"></span></li>
@@ -678,8 +932,28 @@
         <button type="button" class="pulsante secondario piccolo" id="unisci-sync">Unisci un file</button>
       </div>
       <input type="file" id="file-sync" accept="application/json,.json" hidden>
+    </section>
+
+    <section class="sezione" aria-labelledby="titolo-esporta">
+      <h3 id="titolo-esporta">Esporta</h3>
+      <p>CSV da aprire con Excel o da analizzare: una riga per attività, con i sette giorni e il dettaglio.</p>
+      <div class="azioni-dati">
+        <button type="button" class="pulsante secondario piccolo" id="scarica-settimana">CSV · settimana mostrata</button>
+        <button type="button" class="pulsante secondario piccolo" id="scarica-storico">CSV · storico</button>
+      </div>
+    </section>
+
+    <details class="dati sezione" id="pannello-libreria">
+      <summary>Libreria delle attività <span id="conta-libreria"></span></summary>
+      <p>
+        Le voci che usi nelle settimane: cosa fai, in generale. Il dettaglio di ogni settimana sta accanto all’attività.
+        Cambiare il nome di una voce lo cambia in tutte le settimane in cui compare.
+        Una voce già usata non si cancella, perché fa parte dello storico. Le voci che non usi da più di quattro settimane
+        spariscono da sole dai suggerimenti, ma tornano appena inizi a scriverne il nome.
+      </p>
+      <ul class="libreria" id="lista-libreria"></ul>
     </details>
-  </main>
+  </dialog>
 
   <dialog id="conferma" aria-labelledby="conferma-testo">
     <form method="dialog">
@@ -704,9 +978,13 @@
          2. la pagina chiede al nucleo di registrarla:  db.spunta(settimana, id, giorno, true);
          3. esito(): se il nucleo dice ok, salva() scrive il registro nella memoria del browser
             e state = db.vista() ricostruisce la "vista" (la tabella sotto forma di oggetti);
-         4. disegna() rifà la tabella dalla vista (per le spunte non serve: la casella è già spuntata).
+         4. disegna() rifà la tabella dalla vista (su computer, per le spunte non serve: la casella è già spuntata).
 
-       Ordine delle sezioni: impostazioni → date → dati → disegno → azioni → CSV → sincronizzazione → avvio.
+       Due modi di mostrare la stessa settimana: su computer la tabella, su telefono (sotto i 40rem di larghezza)
+       la "vista a un giorno". disegna() sceglie quale, in base a una media query letta da JavaScript (telefono).
+
+       Ordine delle sezioni: impostazioni → date → dati → disegno (tabella e vista a un giorno) → azioni → CSV →
+       sincronizzazione → menu → avvio.
        ───────────────────────────────────────────────────────────────────────────── */
 
     /* ───────── Impostazioni ───────── */
@@ -749,6 +1027,16 @@
     const msgStato = $('#stato');
     const dialogo = $('#conferma');
     const listaLibreria = $('#lista-libreria');
+    const scheda = $('.scheda');
+    const vistaGiorno = $('#vista-giorno');
+    const striscia = $('#striscia');
+    const segmenti = $('#segmenti');
+    const riposoGiorno = $('#riposo-giorno');
+    const carte = $('#carte');
+    const bloccoAggiungi = $('#blocco-aggiungi');
+    const menu = $('#menu');
+    // true sotto i 40rem: la stessa soglia del CSS. matches cambia da solo se ruoti il telefono o stringi la finestra.
+    const telefono = matchMedia('(max-width: 40rem)');
 
     /* ───────── Date (sempre in ora locale, mai UTC) ─────────
        Una settimana si identifica con la data del suo lunedì, scritta come testo 'AAAA-MM-GG' (la "chiave").
@@ -838,12 +1126,26 @@
 
     // Il messaggino accanto ai pulsanti ("Salvato", errori). Sparisce da solo; gli errori restano più a lungo.
     let timerStato;
+    // È un popover: showPopover() lo porta nello strato più alto, sopra anche al menu aperto. Lo riapro a ogni
+    // messaggio perché finisca sopra all'ultima cosa aperta. Dove il browser non conosce i popover, resta un
+    // normale elemento in sovrimpressione.
+    const conPopover = typeof msgStato.showPopover === 'function';
     function mostraStato(testoMsg, errore = false, durata = null) {
       msgStato.textContent = testoMsg;
       msgStato.classList.toggle('errore', errore);
+      if (conPopover) {
+        try {
+          if (msgStato.matches(':popover-open')) msgStato.hidePopover();
+          msgStato.showPopover();
+        } catch { /* niente: il messaggio resta comunque nel documento */ }
+      }
       msgStato.classList.add('visibile');
       clearTimeout(timerStato);
-      timerStato = setTimeout(() => msgStato.classList.remove('visibile'), durata ?? (errore ? 6000 : 1800));
+      timerStato = setTimeout(() => {
+        msgStato.classList.remove('visibile');
+        // tolgo il popover dopo la dissolvenza
+        timerStato = setTimeout(() => { if (conPopover) { try { msgStato.hidePopover(); } catch { /* già chiuso */ } } }, 400);
+      }, durata ?? (errore ? 6000 : 1500));
     }
 
     // Salva il registro. Prima unisce quello che c'è già in memoria: se un'altra scheda di questo browser
@@ -1208,7 +1510,11 @@
         b.setAttribute('aria-label', `Aggiungi «${v.name}» a questa settimana`);
         return b;
       }));
-      boxSuggerimenti.hidden = voci.length === 0;
+      // Su telefono i suggerimenti occupano spazio prezioso: compaiono mentre usi il campo, oppure se la settimana
+      // è ancora vuota (è il momento in cui servono di più).
+      const settimanaVuota = !(state.weeks[visualizzata]?.activities.length);
+      const mostra = !telefono.matches || formNuova.classList.contains('attivo') || settimanaVuota;
+      boxSuggerimenti.hidden = voci.length === 0 || !mostra;
     }
 
     // Settimana corrente ancora vuota: proposta di riprendere la lista della settimana precedente.
@@ -1223,9 +1529,8 @@
       }
     }
 
-    // Ridisegna tutto dalla vista (state). Rifare la tabella intera costa pochissimo (poche decine di righe)
-    // e ha un grande vantaggio: ciò che vedi viene sempre e solo dai dati, non può restare indietro.
-    function disegna() {
+    // La tabella della settimana (computer).
+    function disegnaTabella() {
       creaIntestazione();
       const attivita = attivitaDi(visualizzata);
       corpo.replaceChildren(...(attivita.length
@@ -1235,6 +1540,164 @@
             : 'In questa settimana non c’erano attività.')]));
       piede.replaceChildren(creaRigaEnergia(), creaRigaRiposo());
       aggiornaColonne();
+    }
+
+    /* ───────── Vista a un giorno (telefono) ───────── */
+    // Il giorno mostrato, da 0 (lunedì) a 6. null = "scegli tu": oggi nella settimana corrente, domenica nelle altre.
+    // Passando da una settimana all'altra resta lo stesso giorno della settimana, se non è nel futuro.
+    let giornoScelto = null;
+
+    function giornoMostrato() {
+      const lun = dataDaChiave(visualizzata);
+      const futuro = (i) => chiaveData(aggiungiGiorni(lun, i)) > oggiK;
+      if (giornoScelto === null || futuro(giornoScelto)) {
+        giornoScelto = inSettimanaCorrente() ? (dataDaChiave(oggiK).getDay() + 6) % 7 : 6;
+      }
+      return giornoScelto;
+    }
+
+    function disegnaGiorno() {
+      const g = giornoMostrato();
+      const lun = dataDaChiave(visualizzata);
+      const w = state.weeks[visualizzata];
+      const attivita = attivitaDi(visualizzata);
+      const data = aggiungiGiorni(lun, g);
+
+      // La striscia: per ogni giorno abbreviazione, numero, barra (quota di attività segnate), puntino dell'energia
+      striscia.replaceChildren(...GIORNI.map((nome, i) => {
+        const giornoK = chiaveData(aggiungiGiorni(lun, i));
+        const fatti = attivita.filter((a) => w?.done[a.id]?.[i]).length;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'giorno';
+        b.dataset.giorno = String(i);
+        b.disabled = giornoK > oggiK;
+        b.toggleAttribute('data-oggi', giornoK === oggiK);
+        b.toggleAttribute('data-riposo', w?.rest[i] === true);
+        if (w?.energy[i]) b.dataset.energia = w.energy[i];
+        b.setAttribute('aria-pressed', String(i === g));
+        b.style.setProperty('--pieno', attivita.length ? String(fatti / attivita.length) : '0');
+        b.setAttribute('aria-label', `${nome} ${fmtBreve.format(aggiungiGiorni(lun, i))}: ${fatti} di ${attivita.length} attività segnate`);
+        const n = document.createElement('span');
+        n.className = 'giorno-nome';
+        n.textContent = nome.slice(0, 3);
+        const num = document.createElement('span');
+        num.className = 'giorno-num';
+        num.textContent = String(aggiungiGiorni(lun, i).getDate());
+        const barra = document.createElement('span');
+        barra.className = 'giorno-barra';
+        b.append(n, num, barra);
+        return b;
+      }));
+
+      // La giornata: titolo, energia, riposo
+      const titolo = $('#titolo-giorno');
+      titolo.textContent = `${GIORNI[g]} ${fmt({ day: 'numeric', month: 'long' }).format(data)}`;
+      if (chiaveData(data) === oggiK) {
+        const oggi = document.createElement('small');
+        oggi.textContent = 'oggi';
+        titolo.append(oggi);
+      }
+      segmenti.replaceChildren(...LIVELLI.map((livello) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'segmento';
+        b.dataset.livello = livello;
+        b.dataset.giorno = String(g);
+        b.textContent = NOME_LIVELLO[livello];
+        b.setAttribute('aria-pressed', String(w?.energy[g] === livello));
+        return b;
+      }));
+      riposoGiorno.dataset.giorno = String(g);
+      riposoGiorno.checked = w?.rest[g] === true;
+      riposoGiorno.setAttribute('aria-label', `Giorno di riposo – ${GIORNI[g]}`);
+
+      // Le schede delle attività
+      carte.replaceChildren(...(attivita.length
+        ? attivita.map((a) => creaCarta(a, g))
+        : [creaCartaVuota(inSettimanaCorrente()
+            ? 'Nessuna attività, per ora: aggiungine una qui sopra.'
+            : 'In questa settimana non c’erano attività.')]));
+    }
+
+    // Una scheda: nome, dettaglio, sette puntini della settimana, "Togli"; a destra l'interruttore del giorno scelto.
+    // Le caselle hanno gli stessi data-id e data-giorno della tabella: i gestori degli eventi sono gli stessi.
+    function creaCarta(attivita, g) {
+      const w = state.weeks[visualizzata];
+      const fatto = w?.done[attivita.id] ?? [];
+      const li = document.createElement('li');
+      li.className = 'carta';
+      li.toggleAttribute('data-fatto', fatto[g] === true);
+
+      const testi = document.createElement('div');
+      testi.className = 'carta-testi';
+      const nome = document.createElement('span');
+      nome.className = 'nome-voce';
+      nome.textContent = attivita.name;
+      const dettaglio = document.createElement('input');
+      dettaglio.type = 'text';
+      dettaglio.className = 'dettaglio';
+      dettaglio.value = attivita.dettaglio;
+      dettaglio.maxLength = MAX_DETTAGLIO;
+      dettaglio.placeholder = 'Aggiungi un dettaglio';
+      dettaglio.dataset.id = attivita.id;
+      dettaglio.setAttribute('aria-label', `Dettaglio di «${attivita.name}» per questa settimana`);
+
+      const piedeCarta = document.createElement('div');
+      piedeCarta.className = 'carta-piede';
+      const puntini = document.createElement('span');
+      puntini.className = 'puntini';
+      puntini.setAttribute('aria-hidden', 'true');   // la stessa informazione è nella striscia e nelle schede degli altri giorni
+      for (let i = 0; i < 7; i++) {
+        const p = document.createElement('span');
+        p.className = 'puntino';
+        p.toggleAttribute('data-fatto', fatto[i] === true);
+        p.toggleAttribute('data-scelto', i === g);
+        puntini.append(p);
+      }
+      piedeCarta.append(puntini);
+      if (inSettimanaCorrente()) {
+        const togli = document.createElement('button');
+        togli.type = 'button';
+        togli.className = 'togli';
+        togli.dataset.id = attivita.id;
+        togli.textContent = 'Togli';
+        togli.setAttribute('aria-label', `Togli «${attivita.name}» da questa settimana`);
+        piedeCarta.append(togli);
+      }
+      testi.append(nome, dettaglio, piedeCarta);
+
+      const etichetta = document.createElement('label');
+      etichetta.className = 'carta-spunta';
+      const casella = document.createElement('input');
+      casella.type = 'checkbox';
+      casella.dataset.id = attivita.id;
+      casella.dataset.giorno = String(g);
+      casella.checked = fatto[g] === true;
+      casella.setAttribute('aria-label', `${attivita.name} – ${GIORNI[g]}`);
+      etichetta.append(casella);
+
+      li.append(testi, etichetta);
+      return li;
+    }
+
+    function creaCartaVuota(testo) {
+      const li = document.createElement('li');
+      li.className = 'carta-vuota';
+      li.textContent = testo;
+      return li;
+    }
+
+    // Ridisegna tutto dalla vista (state). Rifare la tabella intera costa pochissimo (poche decine di righe)
+    // e ha un grande vantaggio: ciò che vedi viene sempre e solo dai dati, non può restare indietro.
+    function disegna() {
+      const suTelefono = telefono.matches;
+      scheda.hidden = suTelefono;
+      vistaGiorno.hidden = !suTelefono;
+      // il blocco per aggiungere è uno solo: lo sposto dove serve (spostare un elemento non perde i suoi gestori)
+      const posto = suTelefono ? $('#posto-aggiungi') : scheda;
+      if (bloccoAggiungi.parentElement !== posto) posto.append(bloccoAggiungi);
+      if (suTelefono) disegnaGiorno(); else disegnaTabella();
       aggiornaNavigatore();
       aggiornaSuggerimenti();
       aggiornaRiprendi();
@@ -1388,6 +1851,20 @@
 
     campoNuova.addEventListener('input', aggiornaSuggerimenti);
 
+    // "attivo" = stai usando il campo: su telefono è il momento di mostrare i suggerimenti.
+    formNuova.addEventListener('focusin', () => { formNuova.classList.add('attivo'); aggiornaSuggerimenti(); });
+    formNuova.addEventListener('focusout', () => {
+      // aspetto un attimo: se il fuoco è solo passato a un altro elemento del modulo, non chiudo niente
+      setTimeout(() => {
+        if (formNuova.contains(document.activeElement)) return;
+        formNuova.classList.remove('attivo');
+        aggiornaSuggerimenti();
+      }, 0);
+    });
+    // Premendo un suggerimento il campo non perde il fuoco (preventDefault su pointerdown): la tastiera resta aperta
+    // e il clic arriva comunque al suggerimento.
+    boxSuggerimenti.addEventListener('pointerdown', (e) => { if (e.target.closest('.chip')) e.preventDefault(); });
+
     // Tocco su un suggerimento ("+ Sviluppo"): aggiunge quella voce.
     boxSuggerimenti.addEventListener('click', (e) => {
       const b = e.target.closest('.chip');
@@ -1404,12 +1881,14 @@
     });
 
     // Una casella spuntata o tolta, oppure un dettaglio modificato ("change" arriva quando esci dal campo).
-    corpo.addEventListener('change', (e) => {
+    // Lo stesso gestore serve la tabella (corpo) e le schede del telefono (carte).
+    // Su telefono, dopo una spunta, ridisegno: cambiano anche la striscia, il colore della scheda, i puntini.
+    function suCambio(e) {
       const el = e.target;
 
       if (el.matches('input[type="checkbox"]')) {
         const { id, giorno } = el.dataset;
-        esito(db.spunta(visualizzata, id, Number(giorno), el.checked), { ridisegna: false });
+        esito(db.spunta(visualizzata, id, Number(giorno), el.checked), { ridisegna: telefono.matches });
         return;
       }
 
@@ -1417,16 +1896,16 @@
         const r = db.dettaglio(visualizzata, el.dataset.id, el.value);
         if (esito(r, { ridisegna: false })) { el.value = r.valore; el.title = r.valore; }
       }
-    });
+    }
 
     // Invio nel campo del dettaglio lo conferma (esce dal campo, e così parte "change").
-    corpo.addEventListener('keydown', (e) => {
+    function suTasto(e) {
       if (e.key === 'Enter' && e.target.matches('.dettaglio')) { e.preventDefault(); e.target.blur(); }
-    });
+    }
 
-    // La × di una riga: chiede conferma e toglie l'attività da questa settimana.
-    corpo.addEventListener('click', async (e) => {
-      const bottone = e.target.closest('.elimina');
+    // La × di una riga (tabella) o "Togli" di una scheda (telefono): chiede conferma e toglie l'attività da questa settimana.
+    async function suTogli(e) {
+      const bottone = e.target.closest('.elimina, .togli');
       if (!bottone || !inSettimanaCorrente()) return;
       const id = bottone.dataset.id;
       const v = voce(id);
@@ -1439,27 +1918,55 @@
       if (!ok) return;
 
       esito(db.togli(visualizzata, id));
-    });
+    }
+
+    for (const contenitore of [corpo, carte]) {
+      contenitore.addEventListener('change', suCambio);
+      contenitore.addEventListener('keydown', suTasto);
+      contenitore.addEventListener('click', suTogli);
+    }
 
     /* ───────── Azioni: energia e riposo ───────── */
-    // Una casella di riposo.
+    // Una casella di riposo (tabella).
     piede.addEventListener('change', (e) => {
       const el = e.target;
       if (!el.matches('input.riposo')) return;
       if (esito(db.riposo(visualizzata, Number(el.dataset.giorno), el.checked), { ridisegna: false })) aggiornaColonne();
     });
 
-    // Un pulsante di energia.
+    // Il livello di energia dopo un tocco su `livello`: un secondo tocco sullo stesso livello toglie la scelta.
+    function energiaDopoTocco(giorno, livello) {
+      const attuale = state.weeks[visualizzata]?.energy[giorno] ?? null;
+      return attuale === livello ? null : livello;
+    }
+
+    // Un pulsante di energia (tabella): aggiorno solo i tre pulsanti di quel giorno.
     piede.addEventListener('click', (e) => {
       const b = e.target.closest('.en');
       if (!b || b.disabled) return;
       const i = Number(b.dataset.giorno);
-      const attuale = state.weeks[visualizzata]?.energy[i] ?? null;
-      const nuovo = attuale === b.dataset.livello ? null : b.dataset.livello;   // un secondo tocco toglie la scelta
+      const nuovo = energiaDopoTocco(i, b.dataset.livello);
       if (!esito(db.energia(visualizzata, i, nuovo), { ridisegna: false })) return;
       b.parentElement.querySelectorAll('.en').forEach((x) => {
         x.setAttribute('aria-pressed', String(x.dataset.livello === nuovo));
       });
+    });
+
+    // Telefono: un segmento dell'energia, il riposo, un giorno della striscia.
+    segmenti.addEventListener('click', (e) => {
+      const b = e.target.closest('.segmento');
+      if (!b) return;
+      const i = Number(b.dataset.giorno);
+      esito(db.energia(visualizzata, i, energiaDopoTocco(i, b.dataset.livello)));
+    });
+    riposoGiorno.addEventListener('change', () => {
+      esito(db.riposo(visualizzata, Number(riposoGiorno.dataset.giorno), riposoGiorno.checked));
+    });
+    striscia.addEventListener('click', (e) => {
+      const b = e.target.closest('.giorno');
+      if (!b || b.disabled) return;
+      giornoScelto = Number(b.dataset.giorno);
+      disegna();
     });
 
     /* ───────── Azioni: cambiare settimana ───────── */
@@ -1472,7 +1979,7 @@
     $('#sett-succ').addEventListener('click', () => {
       if (visualizzata < lunediCorrente()) vaiA(chiaveData(aggiungiGiorni(dataDaChiave(visualizzata), 7)));
     });
-    $('#vai-oggi').addEventListener('click', () => vaiA(lunediCorrente()));
+    $('#vai-oggi').addEventListener('click', () => { giornoScelto = null; vaiA(lunediCorrente()); });
 
     // Se la pagina resta aperta oltre la mezzanotte, "oggi" si sposta da solo.
     function controllaGiorno() {
@@ -1480,7 +1987,7 @@
       if (nuovo === oggiK) return;
       const guardavoLaCorrente = inSettimanaCorrente();
       oggiK = nuovo;
-      if (guardavoLaCorrente) visualizzata = lunediCorrente();
+      if (guardavoLaCorrente) { visualizzata = lunediCorrente(); giornoScelto = null; }
       disegna();
     }
     document.addEventListener('visibilitychange', () => { if (!document.hidden) controllaGiorno(); });
@@ -1627,12 +2134,24 @@
 
       db.unisci(reg);
       salva(true);
+      menu.close();   // chiudo il menu: così vedi subito la settimana con i dati uniti
       state = db.vista();
       visualizzata = lunediCorrente();
       disegna();
       segnaSync('unito');
       mostraStato('File unito');
     });
+
+    /* ───────── Il menu ─────────
+       Un <dialog> aperto con showModal(): sta sopra alla pagina, che intanto non risponde ai tocchi.
+       Si chiude con la ×, con Esc, con un tocco fuori (sullo sfondo) o dopo aver unito un file. */
+    $('#apri-menu').addEventListener('click', () => {
+      aggiornaLibreria();
+      aggiornaSync();
+      menu.showModal();
+    });
+    $('#chiudi-menu').addEventListener('click', () => menu.close());
+    menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
 
     /* ───────── Finestra di conferma ───────── */
     // Apre la finestra di conferma e restituisce una Promise che si risolve con true (Conferma) o false
@@ -1654,6 +2173,7 @@
     /* ───────── Avvio ───────── */
     // Su schermi stretti la tabella scorre: porto la colonna di oggi al centro, così non devi cercarla.
     function mostraOggi() {
+      if (telefono.matches) return;   // su telefono non c'è la tabella: oggi è già il giorno mostrato
       const contenitore = $('.scorri');
       const th = rigaIntestazione.querySelector('[data-oggi]');
       if (!th || contenitore.scrollWidth <= contenitore.clientWidth) return;
@@ -1662,6 +2182,8 @@
       contenitore.scrollLeft = Math.max(0, th.offsetLeft - larghezzaNomi - spazio / 2);
     }
     $('#vai-oggi').addEventListener('click', mostraOggi);
+    // Ruoti il telefono o stringi la finestra oltre la soglia: si passa dall'una all'altra vista.
+    telefono.addEventListener('change', () => { disegna(); mostraOggi(); });
 
     // Si parte: prima tabella, colonna di oggi in vista, eventuale avviso sui dati illeggibili.
     disegna();

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const { creaSeme } = require('../strumenti/seme.js');
 const {
   LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
-  dettaglio, togli, apriPannello, foto,
+  dettaglio, togli, apriMenu, chiudiMenu, apriPannello, foto,
 } = require('./aiuti');
 
 test.describe('primo avvio', () => {
@@ -82,9 +82,11 @@ test.describe('con qualche settimana di storia', () => {
     await sviluppo.press('Enter');
     await conferma(p);                                           // avvisa che vale anche nel passato
     expect((await nomi(p))[0]).toBe('Sviluppare');
+    await chiudiMenu(p);
     await p.click('#sett-prec');
     expect((await nomi(p))[0]).toBe('Sviluppare');
     await p.click('#vai-oggi');
+    await apriPannello(p, 'Libreria');
 
     const camminare = p.locator('.lib-nome[data-id="camminare"]');
     await camminare.fill('chitarra');
@@ -93,8 +95,10 @@ test.describe('con qualche settimana di storia', () => {
     await expect(camminare).toHaveValue('Camminare');
 
     await expect(p.locator('button[data-azione][data-id="esame"]')).toHaveCount(0);   // usata: non si cancella
+    await chiudiMenu(p);
     await aggiungi(p, 'Prova');
     await togli(p, 'Prova');                                     // ora è "mai usata"
+    await apriPannello(p, 'Libreria');
     await p.click('button[data-azione="cancella"][data-id="prova"]');
     await conferma(p);
     await expect(p.locator('.lib-nome[data-id="prova"]')).toHaveCount(0);
@@ -102,19 +106,11 @@ test.describe('con qualche settimana di storia', () => {
 
   test('CSV dello storico: una riga per attività, con il dettaglio della settimana giusta', async ({ browser }) => {
     const p = await conStoria(browser);
+    await apriMenu(p);                                           // i CSV stanno nel menu, sezione «Esporta»
     const [scaricato] = await Promise.all([p.waitForEvent('download'), p.click('#scarica-storico')]);
     const righe = fs.readFileSync(await scaricato.path(), 'utf8').replace(/^﻿/, '').split('\r\n').map((r) => r.split(';'));
     expect(righe[0]).toEqual(['Settimana (lunedì)', 'Voce', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica', 'Dettaglio']);
     expect(righe).toContainEqual(['12/10/2026', 'Sviluppo', 'Sì', 'Sì', 'No', 'No', 'No', 'No', 'No', 'Programma A']);
     expect(righe).toContainEqual(['12/10/2026', 'Energia', ...Array(7).fill('Non indicato'), '']);
   });
-
-  for (const schema of ['light', 'dark']) {
-    test(`telefono, tema ${schema}: la pagina non scorre di lato`, async ({ browser }) => {
-      const p = await conStoria(browser, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme: schema });
-      await apriPannello(p, 'Sincronizzazione');
-      expect(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-      expect(p.errori).toEqual([]);
-    });
-  }
 });

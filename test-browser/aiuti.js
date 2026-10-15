@@ -37,7 +37,7 @@ async function suggerimenti(p) {
 
 /** Preme «Conferma» nella finestra di dialogo e aspetta che si chiuda. */
 async function conferma(p) {
-  await expect(p.locator('dialog[open]')).toBeVisible();
+  await expect(p.locator('#conferma[open]')).toBeVisible();
   // La finestra si chiude subito, ma la pagina prosegue solo all'evento "close", che il browser consegna più tardi.
   // Se il test andasse avanti appena la finestra sparisce, leggerebbe la tabella prima che la pagina l'aggiorni
   // (è successo: un test falliva una volta su venti). Quindi aspetto proprio "close", più un giro per lasciar
@@ -70,18 +70,33 @@ async function togli(p, nome) {
   await conferma(p);
 }
 
-/** Apre un pannello in fondo alla pagina («Libreria…», «Sincronizzazione…») se è chiuso. */
+/** Apre il menu (pulsante in alto a destra), se è chiuso. */
+async function apriMenu(p) {
+  if (!(await p.locator('#menu').evaluate((d) => d.open))) await p.click('#apri-menu');
+  await expect(p.locator('#menu')).toBeVisible();
+}
+
+/** Chiude il menu, se è aperto. Finché è aperto la pagina sotto non risponde ai tocchi. */
+async function chiudiMenu(p) {
+  if (await p.locator('#menu').evaluate((d) => d.open)) await p.click('#chiudi-menu');
+  await expect(p.locator('#menu')).toBeHidden();
+}
+
+/** Apre il menu e, per la libreria, anche il suo pannello richiudibile. */
 async function apriPannello(p, titolo) {
-  const pannello = p.locator('details', { has: p.locator('summary', { hasText: titolo }) });
+  await apriMenu(p);
+  if (!/libreria/i.test(titolo)) return;
+  const pannello = p.locator('#pannello-libreria');
   // attenzione: un pannello aperto ha open="" (stringa vuota, che in JavaScript vale come "falso"): si controlla null
   if ((await pannello.getAttribute('open')) === null) await pannello.locator('summary').click();
 }
 
-/** «Salva il file» di sincronizzazione: restituisce il percorso del file scaricato. */
+/** «Salva il file» di sincronizzazione (dal menu): restituisce il percorso del file scaricato. */
 async function salvaFile(p, percorso) {
-  await apriPannello(p, 'Sincronizzazione');
+  await apriMenu(p);
   const [scaricato] = await Promise.all([p.waitForEvent('download'), p.click('#salva-sync')]);
   await scaricato.saveAs(percorso);
+  await chiudiMenu(p);
   return percorso;
 }
 
@@ -90,16 +105,17 @@ async function salvaFile(p, percorso) {
  * Restituisce il testo della conferma, oppure null se la pagina non l'ha chiesta (niente da unire, file non valido).
  */
 async function unisciFile(p, percorso) {
-  await apriPannello(p, 'Sincronizzazione');
+  await apriMenu(p);
   await p.setInputFiles('#file-sync', percorso);
-  const dialogo = p.locator('dialog[open]');
-  try { await dialogo.waitFor({ timeout: 1000 }); } catch { return null; }
+  const dialogo = p.locator('#conferma[open]');
+  try { await dialogo.waitFor({ timeout: 1000 }); } catch { await chiudiMenu(p); return null; }
   const testo = await p.locator('#conferma-testo').textContent();
   await conferma(p);
+  await chiudiMenu(p);   // dopo un'unione la pagina chiude il menu da sola: qui è solo una sicurezza
   return testo;
 }
 
-/** Una "fotografia" della settimana visibile: righe con dettagli e spunte, energia, riposo. Serve a confrontare due dispositivi. */
+/** Una "fotografia" della tabella (vista computer): righe con dettagli e spunte, energia, riposo. Serve a confrontare due dispositivi. */
 function foto(p) {
   return p.evaluate(() => ({
     righe: [...document.querySelectorAll('#corpo-tabella tr')].filter((r) => r.querySelector('.nome-voce')).map((r) => ({
@@ -107,12 +123,12 @@ function foto(p) {
       dettaglio: r.querySelector('.dettaglio').value,
       fatto: [...r.querySelectorAll('input[type=checkbox]')].map((c) => c.checked),
     })),
-    energia: [...document.querySelectorAll('.energia')].map((g) => g.querySelector('[aria-pressed=true]')?.dataset.livello ?? null),
-    riposo: [...document.querySelectorAll('input.riposo')].map((c) => c.checked),
+    energia: [...document.querySelectorAll('#piede-tabella .energia')].map((g) => g.querySelector('[aria-pressed=true]')?.dataset.livello ?? null),
+    riposo: [...document.querySelectorAll('#piede-tabella input.riposo')].map((c) => c.checked),
   }));
 }
 
 module.exports = {
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
-  dettaglio, spunta, togli, apriPannello, salvaFile, unisciFile, foto,
+  dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, salvaFile, unisciFile, foto,
 };

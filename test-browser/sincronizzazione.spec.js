@@ -3,7 +3,7 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const {
-  apri, nomi, aggiungi, dettaglio, spunta, togli, apriPannello, salvaFile, unisciFile, foto,
+  apri, nomi, aggiungi, dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, salvaFile, unisciFile, foto,
 } = require('./aiuti');
 
 test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali', async ({ browser }, info) => {
@@ -23,7 +23,7 @@ test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali'
   await spunta(pc, 'sviluppo', 2);
   await spunta(pc, 'Chitarra', 2);
   await pc.click('.en[data-giorno="2"][data-livello="ok"]');
-  await pc.check('input.riposo[data-giorno="0"]');
+  await pc.check('#piede-tabella input.riposo[data-giorno="0"]');
 
   // Il telefono salva il file, il PC lo unisce
   const fileTel1 = await salvaFile(tel, info.outputPath('tel-1.json'));
@@ -87,7 +87,9 @@ test('il pannello mostra quando hai salvato e unito l’ultima volta', async ({ 
   const p = await apri(await browser.newContext());
   await apriPannello(p, 'Sincronizzazione');
   await expect(p.locator('#ultimo-salvataggio')).toHaveText('mai, finora');
+  await chiudiMenu(p);
   await aggiungi(p, 'Leggere');
   await salvaFile(p, info.outputPath('mio.json'));
+  await apriMenu(p);
   await expect(p.locator('#ultimo-salvataggio')).toContainText('(oggi)');
 });

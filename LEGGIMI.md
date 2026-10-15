@@ -5,7 +5,7 @@ Passi pratici: provarla, pubblicarla, installarla, usarla su più dispositivi, a
 
 ## 1. Provarla sul computer
 
-Serve [Node.js](https://nodejs.org) 20 o successivo.
+Serve [Node.js](https://nodejs.org) 22 o successivo (consigliata la LTS più recente).
 
 ```sh
 npm start              # apri http://localhost:8765/
@@ -43,9 +43,9 @@ Nel repository c’è solo il codice: i tuoi dati non ci finiscono mai.
 
 ## 4. Usarla su più dispositivi
 
-1. Sul primo dispositivo: *Sincronizzazione tra dispositivi → Salva il file* (sul telefono anche *Invia a…*,
-   che apre il menu Condividi, per esempio verso Drive).
-2. Sull’altro: *Unisci un file*. La pagina dice quante modifiche porta il file e chiede conferma.
+1. Sul primo dispositivo: **Menu** (in alto a destra) → *Sincronizza* → *Salva il file* (sul telefono anche
+   *Invia a…*, che apre il menu Condividi, per esempio verso Drive).
+2. Sull’altro: **Menu** → *Unisci un file*. La pagina dice quante modifiche porta il file e chiede conferma.
 3. Si può fare in qualsiasi ordine e quante volte vuoi: per ogni casella vince la modifica più recente.
    Il file è anche la tua copia di sicurezza.
 
@@ -55,7 +55,7 @@ a schermo intero, un file scaricato si apre in anteprima invece di essere salvat
 ## 5. Aggiornarla
 
 1. Sostituisci i file nel repository.
-2. In `sw.js` cambia `VERSIONE` (per esempio da `settimana-2` a `settimana-3`).
+2. In `sw.js` cambia `VERSIONE` (per esempio da `settimana-3` a `settimana-4`).
 3. Al primo avvio con la rete l’app prende la versione nuova; a volte serve chiuderla e riaprirla.
 
 Gli aggiornamenti non toccano i dati.
