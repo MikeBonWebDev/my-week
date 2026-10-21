@@ -107,6 +107,25 @@ test('dettaglio e «Togli» sulle schede', async ({ browser }) => {
   expect(await nomiCarte(p)).toEqual(['Sviluppo']);
 });
 
+test('togliendo un’attività, la conferma dice in quali giorni risulta svolta', async ({ browser }) => {
+  const p = await apriTelefono(browser);                        // mercoledì 14 ottobre
+  await aggiungi(p, 'Sviluppo');
+  await aggiungi(p, 'Prova');
+  await carta(p, 'Sviluppo').locator('input[type=checkbox]').check();   // mercoledì
+  await giorno(p, 0).click();
+  await carta(p, 'Sviluppo').locator('input[type=checkbox]').check();   // lunedì
+
+  await carta(p, 'Sviluppo').locator('.togli').click();
+  await expect(p.locator('#conferma-testo')).toContainText('Risulta svolta lunedì e mercoledì');
+  await p.click('#conferma button[value="annulla"]');           // annullo: non cambia niente
+  await expect(carta(p, 'Sviluppo')).toBeVisible();
+
+  await carta(p, 'Prova').locator('.togli').click();
+  await expect(p.locator('#conferma-testo')).toContainText('Non ha spunte in questa settimana');
+  await conferma(p);
+  expect(await nomiCarte(p)).toEqual(['Sviluppo']);
+});
+
 test('settimane passate: si consultano e correggono, senza aggiungere né togliere', async ({ browser }) => {
   const p = await apriTelefono(browser, LUNEDI_DOPO);
   await caricaDati(p, creaSeme());
