@@ -23,6 +23,12 @@ test('installabile, e senza rete si apre con i dati', async ({ page, context }) 
     return (await cache.keys()).length;
   });
   expect(inCache).toBe(10);
+  
+  // In fondo al menu si legge la versione installata: il nome della cache, cioè VERSIONE di sw.js
+  const versione = require('node:fs').readFileSync('sw.js', 'utf8').match(/const VERSIONE = '([^']+)'/)[1];
+  await page.click('#apri-menu');
+  await expect(page.locator('#versione-app')).toHaveText(`Versione: ${versione}`);
+  await page.click('#chiudi-menu');
 
   await aggiungi(page, 'Sviluppo');
   await context.setOffline(true);
