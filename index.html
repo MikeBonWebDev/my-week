@@ -640,6 +640,7 @@
     .sezione .copie { margin: 0 0 .9rem; padding: 0; list-style: none; font-size: .9rem; color: var(--tenue); }
     .sezione .azioni-dati { display: flex; flex-wrap: wrap; gap: .6rem; }
     .sezione.dati summary { font-weight: 600; color: var(--inchiostro); }
+    .versione { margin: .6rem 0 0; font-size: .8rem; color: var(--tenue); text-align: center; }
 
     /* ───────── Vista a un giorno (telefono) ─────────
        Sotto i 40rem la tabella si nasconde e compare questa vista: i sette giorni in alto, la giornata scelta,
@@ -953,6 +954,8 @@
       </p>
       <ul class="libreria" id="lista-libreria"></ul>
     </details>
+
+    <p class="versione" id="versione-app"></p>
   </dialog>
 
   <dialog id="conferma" aria-labelledby="conferma-testo">
@@ -1661,7 +1664,7 @@
         togli.type = 'button';
         togli.className = 'togli';
         togli.dataset.id = attivita.id;
-        togli.textContent = 'Togli';
+        togli.textContent = 'Togli dalla settimana';
         togli.setAttribute('aria-label', `Togli «${attivita.name}» da questa settimana`);
         piedeCarta.append(togli);
       }
@@ -1911,13 +1914,26 @@
       const v = voce(id);
       if (!v) return;
 
+      // In quali giorni di questa settimana l'attività risulta svolta: sono le spunte che si perderebbero.
+      const svolta = (state.weeks[visualizzata]?.done[id] ?? [])
+        .map((fatto, i) => (fatto ? GIORNI[i].toLowerCase() : null))
+        .filter(Boolean);
+      const spunte = svolta.length
+        ? `Risulta svolta ${elencoGiorni(svolta)}: queste spunte andranno perse, insieme al dettaglio della settimana.`
+        : 'Non ha spunte in questa settimana.';
+
       const ok = await conferma(
-        `Vuoi togliere «${v.name}» da questa settimana? Le sue spunte e il dettaglio di questa settimana spariranno. `
+        `Vuoi togliere «${v.name}» da tutta la settimana? ${spunte} `
         + 'La voce resta nella libreria e le altre settimane non cambiano.',
         'Togli');
       if (!ok) return;
 
       esito(db.togli(visualizzata, id));
+    }
+
+    // "lunedì", "lunedì e giovedì", "lunedì, martedì e giovedì"
+    function elencoGiorni(giorni) {
+      return giorni.length === 1 ? giorni[0] : `${giorni.slice(0, -1).join(', ')} e ${giorni.at(-1)}`;
     }
 
     for (const contenitore of [corpo, carte]) {
@@ -2148,8 +2164,27 @@
     $('#apri-menu').addEventListener('click', () => {
       aggiornaLibreria();
       aggiornaSync();
+      mostraVersione();
       menu.showModal();
     });
+
+    // La versione installata, in fondo al menu. Si legge dal nome della copia salvata dal service worker,
+    // che è proprio VERSIONE di sw.js ("settimana-4"): così il numero si aggiorna in un posto solo.
+    // Senza service worker (pagina aperta come file) non c'è nessuna copia salvata.
+    async function mostraVersione() {
+      const el = $('#versione-app');
+      try {
+        const numero = (nome) => Number(nome.split('-')[1]);
+        // ordino per numero, non come testo: come testo "settimana-10" verrebbe prima di "settimana-9"
+        const nomi = ('caches' in window ? await caches.keys() : [])
+          .filter((n) => /^settimana-\d+$/.test(n))
+          .sort((a, b) => numero(a) - numero(b));
+        el.textContent = nomi.length ? `Versione: ${nomi.at(-1)}` : 'Versione: non installata (senza uso offline)';
+      } catch {
+        el.textContent = 'Versione: non disponibile';
+      }
+    }
+    
     $('#chiudi-menu').addEventListener('click', () => menu.close());
     menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
 
