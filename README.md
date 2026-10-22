@@ -32,6 +32,9 @@ Sul telefono la stessa settimana si mostra **un giorno alla volta**, con i sette
 - Ogni settimana ha **la sua lista** di attività, indipendente dalle altre.
 - Le attività vengono da una **libreria di voci** ("Sviluppo", "Camminare"…); ogni attività, in ogni settimana,
   ha un **dettaglio** facoltativo ("Programma A").
+- Ad alcune voci si può dare una **cadenza** ("Pulizia bagno", ogni 14 giorni): diventano **faccende**, e la sezione
+  **Casa** mostra da quanto tempo non le fai. Si passa da una sezione all’altra con la colonna a sinistra (computer)
+  o la barra in basso (telefono).
 - Esporta **CSV** per l’analisi.
 - Si installa come **app** (PWA) e funziona **senza rete**.
 - **Non ha server.** I dati stanno nella memoria del browser di ogni dispositivo; per allinearli si usa un
@@ -53,6 +56,7 @@ settimana-pwa/
 │   ├── libreria.js       il pannello «Libreria delle attività»
 │   ├── azioni.js         aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
 │   ├── file.js           ultimo salvataggio e unione, CSV, sincronizzazione
+│   ├── casa.js           le sezioni (Settimana, Casa) e la sezione Casa: le faccende
 │   └── guscio.js         menu, finestra di conferma, avvio, app installabile
 ├── sw.js                 il service worker: copia dei file per l'uso senza rete
 ├── manifest.webmanifest  nome, colori e icone dell'app installata
@@ -63,6 +67,7 @@ settimana-pwa/
 │   ├── aiuti.js          azioni comuni: aggiungi, spunta, salva file, unisci…
 │   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
 │   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, menu dal basso
+│   ├── casa.spec.js      le sezioni e la sezione Casa: faccende, cadenza, «Aggiungi a questa settimana»
 │   ├── sincronizzazione.spec.js   due "dispositivi" che si scambiano il file
 │   └── pwa.spec.js       installabilità e funzionamento senza rete
 ├── strumenti/
@@ -378,6 +383,37 @@ gli stessi `data-id` e `data-giorno` della tabella, quindi i gestori sono gli st
 Nella vista a un giorno `giornoScelto` ricorda il giorno mostrato: oggi nella settimana corrente; passando a un’altra
 settimana resta lo stesso giorno della settimana, se non è nel futuro (`giornoMostrato`).
 
+### Le sezioni: Settimana e Casa
+
+La pagina è una sola; le sezioni sono due blocchi, e `mostraSezione(nome)` (in `js/casa.js`) nasconde l’uno e mostra
+l’altro, cambia titolo e sottotitolo e segna il pulsante attivo con `aria-current="page"`, che dice ai lettori di
+schermo "sei qui". La sezione scelta resta in `localStorage` (`settimana:sezione`): l’app riapre dove l’avevi
+lasciata. Non viaggia con il file di sincronizzazione: è una comodità di quel dispositivo, non un dato.
+
+I pulsanti delle sezioni sono sempre visibili: colonna a sinistra sul computer (`position: sticky`, alta quanto la
+finestra), barra in basso sul telefono (`position: fixed`). Niente menu a scomparsa: quello che non si vede si
+dimentica.
+
+Con la colonna accanto la tabella ha meno spazio: quando la sua scheda è più stretta di 56rem i giorni si abbreviano
+("Mer"). Lo decide una *container query* (`@container`), che guarda la larghezza della scheda e non quella della
+finestra. Il nome lungo resta, nascosto alla vista ma non ai lettori di schermo.
+
+### La sezione Casa
+
+Elenca le faccende, cioè le voci con una cadenza. I dati arrivano tutti da `Core.faccende(registro, oggi)` (§6):
+`disegnaCasa()` li trasforma in schede e basta. Per ognuna: «Fatta 16 giorni fa (martedì 6 ottobre)» oppure
+«Mai segnata», «Ogni 14 giorni», e i pulsanti «+ Aggiungi a questa settimana» (o la scritta «Già in questa
+settimana») e «Cadenza».
+
+- **L’ordine non si muove mentre guardi.** Si calcola quando apri la sezione (`ordineCasa`); dopo, un’azione
+  aggiorna le schede ma non le rimescola, e una faccenda nuova va in fondo. Riaprendo la sezione si riordina.
+- **Il foglio della faccenda** è un `<dialog>` aperto con `showModal()`, come il menu: il browser porta il fuoco
+  dentro, lo tiene lì, lo chiude con Esc e lo restituisce al pulsante che l’aveva aperto. Serve per una faccenda
+  nuova (da una voce della libreria, o con un nome nuovo: `db.nuovaFaccenda`) e per cambiare o togliere la cadenza.
+- **Le scelte della cadenza** sono pulsanti con `aria-pressed`: «Ogni settimana · 7 giorni», «Ogni 2 settimane · 14
+  giorni», «Ogni mese · 30 giorni» e «Personalizzato», che sblocca il campo dei giorni (un intero da 1 a 365).
+  Finché qualcosa non va, «Salva» resta disattivato e una riga dice perché.
+
 ### Il menu
 
 CSV, sincronizzazione e libreria stanno in un `<dialog id="menu">`, aperto dal pulsante in alto a destra con
@@ -537,6 +573,9 @@ si leggono come una storia.
 - **Telefono simulato.** `telefono.spec.js` apre contesti larghi 390 pixel, con tocco: verifica la vista a un giorno,
   il passaggio tra le due viste stringendo la finestra, e che ciò che segni sul telefono arrivi nella tabella del
   computer dopo l’unione.
+- **Casa.** `casa.spec.js` crea faccende come farebbe una persona (dal foglio, con le scelte e i valori sbagliati),
+  controlla l’ultima volta presa dai dati di prova, l’ordine che non si muove, la tastiera nel foglio, e che non ci
+  sia scorrimento di lato a 320, 360, 390 e 700 pixel, in tema chiaro e scuro.
 - **Orologio fermo.** `page.clock.install({ time })` fissa la data: i test girano "mercoledì 14 ottobre 2026" in
   qualunque giorno li lanci.
 - **Service worker bloccato**, tranne in `pwa.spec.js`, che verifica installabilità (lo chiede a Chrome stesso) e
@@ -553,6 +592,9 @@ passavano. Il server locale mandava il file con il tipo sbagliato (`application/
 il browser, giustamente, lo ignorava: la pagina funzionava ma era senza stile. Se ne è accorto solo il test che misura
 dove si apre il menu sul telefono. Ora `server.js` conosce i `.css`, e un test controlla apposta che lo stile sia
 applicato. Morale: i test che guardano *come appare* qualcosa colgono errori che i test sul comportamento non vedono.
+Lo stesso è successo con la sezione Casa: i giorni abbreviati nascondono il nome lungo con `position: absolute`, e
+senza `position: relative` sulla cella quel testo nascosto finiva fuori dalla tabella, allargando tutta la pagina di
+300 pixel. L’ha trovato il test a 700 pixel, non uno sguardo.
 
 E una terza: nel test di sincronizzazione ogni "dispositivo" ha un orologio finto che parte da zero quando la sua
 pagina si apre. Telefono e PC creano la stessa voce con nomi diversi («Sviluppo» e «sviluppo»), e vince il nome con

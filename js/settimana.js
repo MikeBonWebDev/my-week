@@ -508,4 +508,5 @@ function disegna() {
   aggiornaRiprendi();
   aggiornaLibreria();
   aggiornaSync();
+  disegnaCasa();   // js/casa.js: se la sezione Casa è aperta, si aggiorna anche lei
 }

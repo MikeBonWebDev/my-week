@@ -19,7 +19,7 @@
   --linea-forte:   light-dark(#c9c1ae, #50625a);
 
   --inchiostro:    light-dark(#38423d, #e5ece7);
-  --tenue:         light-dark(#6f7b75, #9aaaa1);
+  --tenue:         light-dark(#5f6b65, #9aaaa1);   /* contrasto almeno 4,5:1 sulle schede (WCAG AA) */
 
   --accento:       light-dark(#6f9b82, #86b394);
   --fatto:         light-dark(#e8f1ea, #29382f);
@@ -181,6 +181,17 @@ thead th:first-child {
   padding-left: 1.5rem;
 }
 .corto { display: none; }
+/* Quando la tabella è stretta (finestra media, con la colonna delle sezioni accanto) i giorni si abbreviano:
+   "Mer" invece di "Mercoledì". Il nome lungo resta per chi usa un lettore di schermo. Decide la larghezza della
+   scheda, non della finestra: è una container query. */
+.scheda { container-type: inline-size; }
+@container (max-width: 56rem) {
+  /* il nome lungo, nascosto alla vista ma non ai lettori di schermo: resta dentro la sua cella (position: relative),
+     altrimenti finirebbe fuori dalla tabella e farebbe scorrere di lato tutta la pagina */
+  thead th:not(:first-child) { position: relative; }
+  thead th .lungo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  thead th .corto { display: inline; }
+}
 
 .data {
   display: block;
@@ -192,7 +203,8 @@ thead th:first-child {
 }
 thead th[data-oggi] { color: var(--inchiostro); }
 thead th[data-oggi] .data { color: var(--fuoco); font-weight: 700; }
-thead th[data-futuro] { opacity: .55; }
+/* i giorni futuri si riconoscono dalle caselle sbiadite; il testo resta leggibile (contrasto WCAG AA) */
+thead th[data-futuro] { color: var(--tenue); }
 
 /* colonna delle voci, sempre visibile anche scorrendo */
 th[scope="row"], thead th:first-child {
@@ -630,13 +642,16 @@ dialog.foglio {
 /* ───────── Vista a un giorno (telefono) ─────────
    Sotto i 40rem la tabella si nasconde e compare questa vista: i sette giorni in alto, la giornata scelta,
    la riga per aggiungere, le attività come schede. Quale delle due mostrare lo decide il codice (disegna). */
-.vista-giorno { display: grid; gap: .9rem; }
+/* una colonna che può stringersi: senza minmax(0, 1fr) la colonna prende la larghezza del contenuto più largo */
+.vista-giorno { display: grid; grid-template-columns: minmax(0, 1fr); gap: .9rem; }
 
 /* la striscia dei giorni: sette pulsanti, con una barra che si riempie con le attività segnate */
-.striscia { display: grid; grid-template-columns: repeat(7, 1fr); gap: .3rem; }
+/* minmax(0, 1fr) e min-width: 0: i sette giorni si stringono anche a 320 px, invece di far scorrere la pagina di lato */
+.striscia { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .3rem; }
 .giorno {
   --pieno: 0;
   position: relative;
+  min-width: 0;
   display: grid;
   justify-items: center;
   gap: .1rem;
@@ -773,9 +788,168 @@ dialog.foglio {
 .carta-spunta input[type="checkbox"]::after { width: 1.35rem; height: 1.35rem; }
 .carta-vuota { padding: 1.2rem 1rem; color: var(--tenue); text-align: center; }
 
+/* ───────── Le sezioni: colonna a sinistra (computer), barra in basso (telefono) ─────────
+   Sempre visibili, mai dietro un'icona: quello che non si vede si dimentica. */
+@media (min-width: 40.0625rem) {
+  body { display: flex; align-items: flex-start; }
+  main {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    max-width: 62rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 3vw, 2.5rem);
+  }
+}
+.sezioni {
+  position: sticky;
+  top: 0;
+  flex: 0 0 13.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  height: 100dvh;
+  padding: calc(2rem + env(safe-area-inset-top)) 1rem 2rem calc(1rem + env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--scheda) 55%, transparent);
+  border-right: 1px solid var(--scheda-bordo);
+}
+.marchio {
+  margin: 0 0 1.2rem .6rem;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+.sezione-voce {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 3rem;
+  padding: 0 .9rem;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  color: var(--inchiostro);
+  background: transparent;
+  border: 0;
+  border-radius: .9rem;
+  cursor: pointer;
+  transition: background-color .25s ease, color .25s ease;
+}
+.sezione-voce:hover { background: color-mix(in srgb, var(--accento) 10%, transparent); }
+.sezione-voce[aria-current="page"] { color: var(--bottone-testo); background: var(--bottone); }
+.sezione-voce:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+.sezione-voce svg, #nuova-faccenda svg {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (max-width: 56.25rem) {
+  .sezioni { flex-basis: 11rem; padding-inline: .6rem; }
+}
+
+/* ───────── La sezione Casa ───────── */
+#nuova-faccenda { display: inline-flex; align-items: center; gap: .5rem; }
+#nuova-faccenda svg { width: 1.15rem; height: 1.15rem; stroke-width: 2.4; }
+.faccende {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+  gap: .9rem;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.faccenda {
+  display: grid;
+  align-content: start;
+  gap: .6rem;
+  padding: 1rem 1.15rem 1.05rem;
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 1.25rem;
+}
+.faccenda h2 { margin: 0; font-size: 1.1rem; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.faccenda-dati { display: grid; gap: .1rem; margin: 0; font-size: .95rem; }
+.faccenda-dati .ogni { color: var(--tenue); }
+.faccenda-azioni { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; }
+.gia { display: inline-flex; align-items: center; min-height: 2.5rem; font-size: .9rem; font-weight: 600; color: var(--fuoco); }
+.gia::before { content: "✓"; margin-right: .35rem; }
+.link-azione {
+  min-height: 2.5rem;
+  padding: 0 .2rem;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--fuoco);
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.link-azione:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; border-radius: .3rem; }
+.vuoto-casa { margin: 1.4rem 0 0; color: var(--tenue); }
+
+/* ───────── Il foglio della faccenda ───────── */
+.gruppo { display: grid; gap: .5rem; margin-top: 1rem; }
+.etichetta-foglio { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+.scelte { display: flex; flex-wrap: wrap; gap: .5rem; }
+.scelta {
+  min-height: 2.6rem;
+  padding: 0 .95rem;
+  font: inherit;
+  font-size: .92rem;
+  font-weight: 500;
+  color: var(--inchiostro);
+  background: var(--fascia);
+  border: 1.5px solid var(--scheda-bordo);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.scelta[aria-pressed="true"] { color: var(--bottone-testo); background: var(--bottone); border-color: var(--bottone); }
+.scelta:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+.campo {
+  min-height: 2.9rem;
+  padding: 0 1rem;
+  font: inherit;
+  color: var(--inchiostro);
+  background: var(--fascia);
+  border: 1.5px solid var(--scheda-bordo);
+  border-radius: .9rem;
+}
+.campo:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 1px; }
+.campo:disabled { opacity: .5; }
+.riga-numero { display: flex; align-items: center; gap: .6rem; color: var(--tenue); }
+.riga-numero .campo { width: 6rem; }
+.nota-foglio { margin: .2rem 0 0; font-size: .88rem; color: var(--tenue); }
+.nota-foglio:empty { display: none; }
+.piede-foglio { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; margin-top: 1.2rem; }
+button.pulsante:disabled { opacity: .45; cursor: default; transform: none; box-shadow: none; }
+
 /* ───────── Schermi stretti: telefono ───────── */
 @media (max-width: 40rem) {
-  main { padding-block: calc(1rem + env(safe-area-inset-top)) calc(5rem + env(safe-area-inset-bottom)); }
+  main { padding-block: calc(1rem + env(safe-area-inset-top)) calc(6.5rem + env(safe-area-inset-bottom)); }
+
+  /* le sezioni diventano una barra in basso, sempre visibile */
+  .sezioni {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 10;
+    flex-direction: row;
+    gap: .4rem;
+    height: auto;
+    padding: .45rem .75rem calc(.55rem + env(safe-area-inset-bottom));
+    background: var(--scheda);
+    border-right: 0;
+    border-top: 1px solid var(--scheda-bordo);
+  }
+  .marchio { display: none; }
+  .sezione-voce { flex: 1; flex-direction: column; justify-content: center; gap: .1rem; min-height: 3.4rem; font-size: .82rem; }
+  .stato { bottom: calc(5.4rem + env(safe-area-inset-bottom)); }
   h1 { font-size: 1.75rem; }
   .sottotitolo, .apri-menu .lungo { display: none; }
   .apri-menu { margin-top: 0; padding: 0 .85rem; }

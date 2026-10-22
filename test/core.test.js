@@ -58,7 +58,7 @@ function modificaCasuale(r, db) {
     case 7: return db.energia(sett, giorno, scegli(r, [null, 'pesa', 'ok', 'leggero']));
     case 8: return voce && (r() < 0.5 ? db.rinomina(voce.id, scegli(r, NOMI) + (r() < 0.5 ? ' bis' : '')) : db.cancella(voce.id));
     // le faccende: cadenza, salto, intensità
-    case 9: return voce && db.cadenza(voce.id, scegli(r, [null, 1, 7, 14, 15, 30]));
+    case 9: return r() < 0.3 ? db.nuovaFaccenda(scegli(r, NOMI), scegli(r, [7, 14])) : voce && db.cadenza(voce.id, scegli(r, [null, 1, 7, 14, 15, 30]));
     case 10: return voce && db.salta(voce.id, scegli(r, [null, '2026-10-01', '2026-10-14', '2026-10-20']));
     case 11: return db.intensita(scegli(r, ['nessuna', 'morbida', 'decisa']));
     default: return db.riprendi(sett, scegli(r, SETTIMANE));
@@ -479,4 +479,23 @@ test('date: aritmetica in giorni di calendario', () => {
   assert.equal(Core.giorniTra('2026-10-06', '2026-10-22'), 16);
   assert.equal(Core.eData('2026-02-29'), false);
   assert.equal(Core.eData('2028-02-29'), true);
+});
+
+test('nuova faccenda da Casa: nasce senza settimana, riusa la voce che esiste, non tocca una faccenda già fatta', () => {
+  const tel = dispositivo('telefono');
+  const r = tel.nuovaFaccenda('Pulire i vetri', 30);
+  assert.equal(r.id, 'pulire-i-vetri');
+  assert.deepEqual(tel.vista().weeks, {});                                   // in nessuna settimana
+  assert.deepEqual(Core.faccende(tel.registro, OGGI).map((f) => [f.nome, f.cadenza, f.ultima]), [['Pulire i vetri', 30, null]]);
+  tel.aggiungi('2026-10-19', 'Leggere');
+  assert.equal(tel.nuovaFaccenda('  leggere ', 7).id, 'leggere');            // stessa voce, non un doppione
+  assert.equal(tel.vista().libreria.length, 2);
+  assert.deepEqual(tel.nuovaFaccenda('PULIRE I VETRI', 7), { ok: false, errore: 'gia-faccenda', nome: 'Pulire i vetri' });
+  assert.equal(Core.faccende(tel.registro, OGGI).find((f) => f.id === 'pulire-i-vetri').cadenza, 30);
+  assert.equal(tel.nuovaFaccenda('', 7).errore, 'vuoto');
+  assert.equal(tel.nuovaFaccenda('Riposo', 7).errore, 'riservato');
+  assert.equal(tel.nuovaFaccenda('Spolverare', 0).errore, 'valore');
+  tel.cancella('leggere');   // usata in una settimana: resta
+  assert.equal(tel.cadenza('leggere', null).ok, true);
+  assert.equal(tel.nuovaFaccenda('Leggere', 14).ok, true);                  // senza cadenza si può ridare
 });

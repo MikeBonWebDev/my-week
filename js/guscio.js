@@ -65,8 +65,9 @@ $('#vai-oggi').addEventListener('click', mostraOggi);
 // Ruoti il telefono o stringi la finestra oltre la soglia: si passa dall'una all'altra vista.
 telefono.addEventListener('change', () => { disegna(); mostraOggi(); });
 
-// Si parte: prima tabella, colonna di oggi in vista, eventuale avviso sui dati illeggibili.
-disegna();
+// Si parte: la sezione dove l'avevi lasciata (di solito la settimana), colonna di oggi in vista,
+// eventuale avviso sui dati illeggibili.
+mostraSezione(sezione);
 mostraOggi();
 if (avvisoIniziale) mostraStato(avvisoIniziale, true, 9000);
 

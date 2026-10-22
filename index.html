@@ -26,19 +26,34 @@
     <p style="padding:1rem;text-align:center">Questa pagina ha bisogno di JavaScript per funzionare.</p>
   </noscript>
 
+  <!-- Le sezioni dell'app: colonna a sinistra sul computer, barra in basso sul telefono (stile.css) -->
+  <nav class="sezioni" id="sezioni" aria-label="Sezioni">
+    <span class="marchio" aria-hidden="true">La mia settimana</span>
+    <button type="button" class="sezione-voce" data-sezione="settimana" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span>Settimana</span>
+    </button>
+    <button type="button" class="sezione-voce" data-sezione="casa">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg>
+      <span>Casa</span>
+    </button>
+  </nav>
+
   <main>
     <header class="intestazione">
       <div class="testata">
-        <h1>La mia settimana</h1>
+        <h1 id="titolo-sezione">La mia settimana</h1>
         <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog"
                 aria-label="Menu: sincronizza, esporta, libreria delle attività">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
           <span class="lungo">Menu</span>
         </button>
       </div>
-      <p class="sottotitolo">Segna ciò che hai fatto, con calma. Anche il riposo conta. Tutto si salva da solo, su questo dispositivo.</p>
+      <p class="sottotitolo" id="sottotitolo">Le attività della settimana, giorno per giorno.</p>
     </header>
 
+    <!-- ═════ Sezione Settimana ═════ -->
+    <div id="sezione-settimana">
     <nav class="settimane" aria-label="Scegli la settimana">
       <button type="button" class="giro" id="sett-prec" aria-label="Settimana precedente">‹</button>
       <div class="periodo" aria-live="polite">
@@ -98,6 +113,17 @@
       </p>
       </div>
     </section>
+    </div>
+
+    <!-- ═════ Sezione Casa: le faccende con una cadenza, e da quanto tempo non le fai (js/casa.js) ═════ -->
+    <section id="sezione-casa" aria-labelledby="titolo-sezione" hidden>
+      <button type="button" class="pulsante" id="nuova-faccenda">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Aggiungi una faccenda
+      </button>
+      <ul class="faccende" id="faccende" aria-label="Faccende"></ul>
+      <p class="vuoto-casa" id="casa-vuota" hidden>Ancora nessuna faccenda.</p>
+    </section>
 
     <p class="stato" id="stato" role="status" aria-live="polite" popover="manual"></p>
   </main>
@@ -150,6 +176,39 @@
     <p class="versione" id="versione-app"></p>
   </dialog>
 
+  <!-- Una faccenda: nuova (da una voce che usi già o con un nome nuovo) oppure la sua cadenza -->
+  <dialog id="foglio-faccenda" class="foglio" aria-labelledby="titolo-faccenda">
+    <div class="foglio-testa">
+      <h2 id="titolo-faccenda">Aggiungi una faccenda</h2>
+      <button type="button" class="chiudi" id="chiudi-faccenda" aria-label="Chiudi">×</button>
+    </div>
+
+    <div class="gruppo" id="gruppo-voci">
+      <span class="etichetta-foglio" id="etichetta-voci">Una voce che usi già</span>
+      <div class="scelte" id="voci-libere" role="group" aria-labelledby="etichetta-voci"></div>
+      <label class="etichetta-foglio" for="nome-faccenda">Oppure un nome nuovo</label>
+      <input type="text" class="campo" id="nome-faccenda" maxlength="60" autocomplete="off" placeholder="Per esempio: Pulire i vetri">
+    </div>
+
+    <div class="gruppo">
+      <span class="etichetta-foglio" id="etichetta-cadenza">Ogni quanto</span>
+      <div class="scelte" id="scelte-cadenza" role="group" aria-labelledby="etichetta-cadenza"></div>
+      <div class="riga-numero">
+        <label for="giorni-faccenda">Ogni</label>
+        <input type="number" class="campo" id="giorni-faccenda" min="1" max="365" step="1" inputmode="numeric">
+        <span>giorni</span>
+      </div>
+      <p class="nota-foglio" id="nota-faccenda" aria-live="polite"></p>
+    </div>
+
+    <p class="nota-foglio" id="nota-togli-cadenza">Togliendo la cadenza, la voce e le sue spunte restano.</p>
+    <div class="piede-foglio">
+      <button type="button" class="pulsante secondario" id="togli-cadenza">Togli la cadenza</button>
+      <button type="button" class="pulsante secondario" id="annulla-faccenda">Annulla</button>
+      <button type="button" class="pulsante" id="salva-faccenda">Salva</button>
+    </div>
+  </dialog>
+
   <dialog id="conferma" aria-labelledby="conferma-testo">
     <form method="dialog">
       <p id="conferma-testo"></p>
@@ -168,6 +227,7 @@
   <script src="js/libreria.js"></script>
   <script src="js/azioni.js"></script>
   <script src="js/file.js"></script>
+  <script src="js/casa.js"></script>
   <script src="js/guscio.js"></script>
 </body>
 </html>

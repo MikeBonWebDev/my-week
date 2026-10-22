@@ -23,6 +23,7 @@
      libreria.js   il pannello «Libreria delle attività»
      azioni.js     aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
      file.js       ultimo salvataggio e unione, CSV, sincronizzazione
+     casa.js       le sezioni (Settimana, Casa) e la sezione Casa: le faccende
      guscio.js     menu, finestra di conferma, avvio, app installabile
 
    PERCHÉ FUNZIONA SENZA import/export
@@ -213,6 +214,7 @@ const MESSAGGI = {
   'gia-in-settimana': (n) => `«${n}» è già in questa settimana.`,
   esiste: (n) => `Esiste già la voce «${n}».`,
   usata: () => 'Questa voce compare nello storico: non si può cancellare.',
+  'gia-faccenda': (n) => `«${n}» è già in Casa: la cadenza si cambia dalla sua scheda.`,
 };
 
 // Dopo ogni richiesta al nucleo: se è andata, salvo e ricostruisco la vista; se no, dico perché.

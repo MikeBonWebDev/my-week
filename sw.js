@@ -8,7 +8,7 @@
    - icone e manifest: prima la copia salvata.
    Quando cambi un file, cambia anche VERSIONE: la vecchia copia viene buttata e si riparte puliti. */
 
-const VERSIONE = 'settimana-6';
+const VERSIONE = 'settimana-7';
 const FILE = [
   './',
   './index.html',
@@ -19,6 +19,7 @@ const FILE = [
   './js/libreria.js',
   './js/azioni.js',
   './js/file.js',
+  './js/casa.js',
   './js/guscio.js',
   './manifest.webmanifest',
   './icone/icona-192.png',

@@ -394,6 +394,22 @@
         return { ok: true };
       },
 
+      // Una faccenda nuova dalla sezione Casa, senza metterla in nessuna settimana. Se il nome c'è già in libreria
+      // usa quella voce; se quella voce è già una faccenda, non ne cambia la cadenza (si cambia dalla sua scheda).
+      nuovaFaccenda(nomeGrezzo, giorni) {
+        const nome = pulisci(nomeGrezzo, MAX_NOME);
+        if (!nome) return errore('vuoto');
+        if (eRiservato(nome)) return errore('riservato', nome);
+        if (!cadenzaValida(giorni)) return errore('valore');
+        const esistente = perNome(vista(reg), nome);
+        if (esistente && cadenzaValida(reg[`v/${esistente.id}/cad`]?.v)) return errore('gia-faccenda', esistente.name);
+        const id = esistente?.id ?? idPer(nome);
+        if (!reg[`v/${id}/nome`]) scrivi(`v/${id}/nome`, nome);
+        scrivi(`v/${id}/del`, false);
+        scrivi(`v/${id}/cad`, giorni);
+        return { ok: true, id };
+      },
+
       // Dà (o toglie, con null) una cadenza in giorni a una voce della libreria: diventa una faccenda.
       cadenza(id, giorni) {
         if (!vista(reg).libreria.some((v) => v.id === id)) return errore('non-trovata');
