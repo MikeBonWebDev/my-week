@@ -55,7 +55,9 @@ a schermo intero, un file scaricato si apre in anteprima invece di essere salvat
 ## 5. Aggiornarla
 
 1. Sostituisci i file nel repository.
-2. In `sw.js` cambia `VERSIONE` (per esempio da `settimana-3` a `settimana-4`).
+2. In `sw.js` cambia `VERSIONE` (per esempio da `settimana-9` a `settimana-10`), e in `index.html` il numero
+   dopo `?v=` negli indirizzi di stile e script (da `?v=9` a `?v=10`). Devono coincidere: se ti dimentichi,
+   `npm run test:browser` te lo dice.
 3. Al primo avvio con la rete l’app prende la versione nuova; a volte serve chiuderla e riaprirla.
 
 Gli aggiornamenti non toccano i dati.

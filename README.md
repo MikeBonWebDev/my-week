@@ -570,12 +570,29 @@ Una **PWA** (*Progressive Web App*) è un sito che il browser permette di instal
 
 Il service worker di quest’app fa una cosa sola: tiene una copia dei file per aprire l’app senza rete.
 
-- All’**installazione** scarica in cache l’elenco `FILE`.
+- All’**installazione** scarica in cache l’elenco `FILE`, chiedendolo al server (`cache: 'reload'`), non alla
+  memoria del browser.
 - All’**attivazione** cancella le cache delle versioni precedenti (quelle con un altro valore di `VERSIONE`).
 - Per ogni **richiesta**:
-  - pagina, script e stile (`index.html`, `core.js`, `js/*.js`, `stile.css`): **prima la rete**, e se manca la copia
-    salvata. Così arrivano sempre aggiornati e sempre insieme;
+  - pagina, script e stile (`index.html`, `core.js`, `js/*.js`, `stile.css`): **prima la rete**, chiedendo sempre al
+    server se il file è cambiato (`cache: 'no-cache'`), e se la rete manca la copia salvata;
   - icone e manifest: **prima la copia salvata**.
+
+**La lezione dei passi 4-5.** GitHub Pages dice al browser che ogni file vale 10 minuti. Dopo il deploy dei passi
+4-5, sul telefono è arrivata la pagina nuova insieme agli script vecchi, presi dalla memoria del browser: la
+sezione Dati vuota, il menu senza pulsanti. Sul computer no, perché lì i file erano tutti della stessa versione.
+L’abbiamo riprodotto con un server che si comporta come Pages, e corretto con tre difese:
+
+1. stile e script hanno nell’indirizzo il numero di versione (`js/casa.js?v=9`): per il browser, versione nuova =
+   file nuovo, e non può più mescolarli. È la difesa che conta di più: le altre due da sole non bastavano
+   ricaricando la pagina, perché il browser può riusare uno script già in memoria senza nemmeno chiederlo al
+   service worker;
+2. il service worker chiede sempre al server (`no-cache`): se il file non è cambiato, il server risponde
+   "non è cambiato" e costa pochissimo;
+3. installandosi, il service worker scarica i file da capo (`reload`), così la copia per l’uso senza rete è
+   tutta della stessa versione.
+
+Il numero dopo `?v=` deve coincidere con `VERSIONE`: lo controlla `pwa.spec.js`.
 
 I dati non passano mai dal service worker: stanno in `localStorage`. Gli aggiornamenti dell’app non li toccano.
 All’avvio la pagina chiede anche `navigator.storage.persist()`, cioè di non cancellare i dati quando lo spazio

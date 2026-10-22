@@ -18,7 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <link rel="stylesheet" href="stile.css">
+  <!-- ?v=9: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=9">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -298,14 +299,17 @@
   </dialog>
 
   <!-- Il codice: prima il nucleo (registro dei dati, unione tra dispositivi, regole: core.js), poi la pagina,
-       divisa per argomento in js/. L’ordine conta: guscio.js, l’ultimo, avvia l’app quando tutto è definito. -->
-  <script src="core.js"></script>
-  <script src="js/base.js"></script>
-  <script src="js/settimana.js"></script>
-  <script src="js/libreria.js"></script>
-  <script src="js/azioni.js"></script>
-  <script src="js/file.js"></script>
-  <script src="js/casa.js"></script>
-  <script src="js/guscio.js"></script>
+       divisa per argomento in js/. L’ordine conta: guscio.js, l’ultimo, avvia l’app quando tutto è definito.
+       Il «?v=9» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       può mescolare la pagina nuova con gli script vecchi che ha in memoria. Si aggiorna insieme a VERSIONE
+       (un test controlla che coincidano). -->
+  <script src="core.js?v=9"></script>
+  <script src="js/base.js?v=9"></script>
+  <script src="js/settimana.js?v=9"></script>
+  <script src="js/libreria.js?v=9"></script>
+  <script src="js/azioni.js?v=9"></script>
+  <script src="js/file.js?v=9"></script>
+  <script src="js/casa.js?v=9"></script>
+  <script src="js/guscio.js?v=9"></script>
 </body>
 </html>

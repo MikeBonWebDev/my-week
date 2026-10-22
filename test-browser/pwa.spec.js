@@ -19,7 +19,7 @@ test('installabile, e senza rete si apre con i dati', async ({ page, context }) 
 
   // Tutti i file dell'elenco di sw.js sono in cache: li conto direttamente da sw.js, così il test non va
   // aggiornato a ogni file nuovo
-  const elenco = require('node:fs').readFileSync('sw.js', 'utf8').match(/const FILE = \[([\s\S]*?)\];/)[1].match(/'[^']+'/g).length;
+  const elenco = require('node:fs').readFileSync('sw.js', 'utf8').match(/const FILE = \[([\s\S]*?)\];/)[1].match(/['`][^'`]+['`]/g).length;   // le voci tra apici o tra apici inversi (`./core.js${V}`)
   const inCache = await page.evaluate(async () => {
     const cache = await caches.open((await caches.keys())[0]);
     return (await cache.keys()).length;
@@ -27,6 +27,14 @@ test('installabile, e senza rete si apre con i dati', async ({ page, context }) 
   expect(inCache).toBe(elenco);
   expect(elenco).toBeGreaterThan(10);
   
+  // Gli indirizzi di stile e script in index.html portano il numero di VERSIONE (?v=…): così una versione
+  // nuova non può mescolarsi con file vecchi rimasti nella cache del browser. Se cambi VERSIONE, cambia anche quelli.
+  const numero = require('node:fs').readFileSync('sw.js', 'utf8').match(/const VERSIONE = 'settimana-(\d+)'/)[1];
+  const indirizzi = await page.evaluate(() => [...document.querySelectorAll('script[src], link[rel=stylesheet]')]
+    .map((e) => e.getAttribute('src') ?? e.getAttribute('href')));
+  expect(indirizzi.length).toBe(9);
+  for (const a of indirizzi) expect(a, a).toMatch(new RegExp(`\\?v=${numero}$`));
+
   // In fondo al menu si legge la versione installata: il nome della cache, cioè VERSIONE di sw.js
   const versione = require('node:fs').readFileSync('sw.js', 'utf8').match(/const VERSIONE = '([^']+)'/)[1];
   await page.click('#apri-menu');
