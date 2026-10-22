@@ -18,6 +18,10 @@ test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali'
   await dettaglio(tel, 'Sviluppo', 'Programma A');
   await tel.click('.en[data-giorno="1"][data-livello="pesa"]');
 
+  // Il PC lavora un minuto dopo il telefono, così il nome scritto dal PC («sviluppo») è il più recente e vince.
+  // Senza, ogni pagina ha il suo orologio finto che parte da zero quando si apre: se il PC ci metteva più del
+  // telefono ad aprirsi, il suo orologio restava indietro, vinceva «Sviluppo» e il test falliva più avanti.
+  await pc.clock.fastForward('01:00');
   await aggiungi(pc, '  sviluppo ');
   await aggiungi(pc, 'Chitarra');
   await spunta(pc, 'sviluppo', 2);

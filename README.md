@@ -554,6 +554,13 @@ il browser, giustamente, lo ignorava: la pagina funzionava ma era senza stile. S
 dove si apre il menu sul telefono. Ora `server.js` conosce i `.css`, e un test controlla apposta che lo stile sia
 applicato. Morale: i test che guardano *come appare* qualcosa colgono errori che i test sul comportamento non vedono.
 
+E una terza: nel test di sincronizzazione ogni "dispositivo" ha un orologio finto che parte da zero quando la sua
+pagina si apre. Telefono e PC creano la stessa voce con nomi diversi («Sviluppo» e «sviluppo»), e vince il nome con
+il momento più recente. Se la pagina del PC ci metteva ad aprirsi più di quanto il telefono impiegasse a lavorare, il
+suo orologio restava indietro e vinceva il nome sbagliato. Il test dipendeva dalla velocità della macchina: passava
+qui e falliva su un computer più lento. Ora il PC fa avanzare il suo orologio di un minuto (`clock.fastForward`)
+prima di lavorare: l’ordine degli eventi è scritto nel test, non lasciato al caso.
+
 ## 12. Limiti e scelte consapevoli
 
 - **Il trasporto del file è manuale.** Ricordarsi di salvare e unire è un piccolo rituale. Un passo successivo
