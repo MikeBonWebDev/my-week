@@ -1,19 +1,21 @@
 'use strict';
-// js/casa.js — le sezioni dell'app (Settimana, Casa) e la sezione Casa: le faccende, e da quanto tempo non le fai.
+// js/casa.js — le sezioni dell'app (Settimana, Casa, Dati) e la sezione Casa: le faccende, e da quanto tempo non le fai.
 // Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
 // (vedi l’elenco in index.html e la nota in base.js).
 
 /* ───────── Le sezioni ─────────
-   Una sola pagina, due sezioni: si mostra l'una o l'altra. La scelta resta su questo dispositivo
+   Una sola pagina, tre sezioni: se ne mostra una. La scelta resta su questo dispositivo
    (localStorage), così l'app riapre dove l'avevi lasciata. Non è un dato da sincronizzare. */
 const CHIAVE_SEZIONE = 'settimana:sezione';
 const SEZIONI = {
   settimana: { titolo: 'La mia settimana', sottotitolo: 'Le attività della settimana, giorno per giorno.' },
   casa: { titolo: 'Casa', sottotitolo: 'Le faccende con una cadenza.' },
+  dati: { titolo: 'Dati', sottotitolo: 'Copie, altri dispositivi, CSV.' },
 };
 const navSezioni = $('#sezioni');
 const sezioneSettimana = $('#sezione-settimana');
 const sezioneCasa = $('#sezione-casa');
+const sezioneDati = $('#sezione-dati');
 
 function leggiSezione() {
   try {
@@ -29,13 +31,14 @@ function mostraSezione(nome) {
   try { localStorage.setItem(CHIAVE_SEZIONE, nome); } catch { /* pazienza: si riaprirà sulla settimana */ }
   sezioneSettimana.hidden = nome !== 'settimana';
   sezioneCasa.hidden = nome !== 'casa';
+  sezioneDati.hidden = nome !== 'dati';
   for (const b of navSezioni.querySelectorAll('[data-sezione]')) {
     if (b.dataset.sezione === nome) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   }
   $('#titolo-sezione').textContent = SEZIONI[nome].titolo;
   $('#sottotitolo').textContent = SEZIONI[nome].sottotitolo;
-  document.title = nome === 'casa' ? 'Casa · La mia settimana' : 'La mia settimana';
+  document.title = nome === 'settimana' ? 'La mia settimana' : `${SEZIONI[nome].titolo} · La mia settimana`;
   // L'ordine di Casa si decide quando la apri, e poi non si muove mentre la guardi
   if (nome === 'casa') ordineCasa = Core.faccende(db.registro, oggiK).map((f) => f.id);
   disegna();
@@ -54,16 +57,11 @@ const listaFaccende = $('#faccende');
 const casaVuota = $('#casa-vuota');
 let ordineCasa = [];
 
-const fmtGiorno = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
-const ogniGiorni = (n) => (n === 1 ? 'Ogni giorno' : `Ogni ${n} giorni`);
-
-// "Fatta 16 giorni fa (martedì 6 ottobre)", "Fatta oggi", "Mai segnata"
+// "Fatta 16 giorni fa (martedì 6 ottobre)", "Fatta oggi", "Mai segnata" (fmtGiorno e daQuando: settimana.js)
 function testoUltima(ultima) {
   if (!ultima) return 'Mai segnata';
-  const giorni = Core.giorniTra(ultima, oggiK);
-  if (giorni <= 0) return 'Fatta oggi';
-  const quando = giorni === 1 ? 'ieri' : `${giorni} giorni fa`;
-  return `Fatta ${quando} (${fmtGiorno.format(dataDaChiave(ultima))})`;
+  if (Core.giorniTra(ultima, oggiK) <= 0) return 'Fatta oggi';
+  return `Fatta ${daQuando(ultima)} (${fmtGiorno.format(dataDaChiave(ultima))})`;
 }
 
 const inQuestaSettimana = (id) => Boolean(state.weeks[lunediCorrente()]?.activities.some((a) => a.id === id));
@@ -75,14 +73,19 @@ function disegnaCasa() {
   ordineCasa = ordineCasa.filter((id) => perId.has(id));
   for (const id of perId.keys()) if (!ordineCasa.includes(id)) ordineCasa.push(id);
 
-  listaFaccende.replaceChildren(...ordineCasa.map((id) => cartaFaccenda(perId.get(id))));
+  // oggi è un giorno di riposo? Allora le schede si ammorbidiscono, senza calore (il conteggio non cambia)
+  const iOggi = (dataDaChiave(oggiK).getDay() + 6) % 7;
+  const riposoOggi = state.weeks[lunediCorrente()]?.rest[iOggi] === true;
+  listaFaccende.replaceChildren(...ordineCasa.map((id) => cartaFaccenda(perId.get(id), riposoOggi)));
   casaVuota.hidden = perId.size > 0;
 }
 
-function cartaFaccenda(f) {
+function cartaFaccenda(f, riposoOggi) {
   const li = document.createElement('li');
   li.className = 'faccenda';
   li.dataset.id = f.id;
+  li.toggleAttribute('data-riposo', riposoOggi);
+  segnaCalore(li, f, { riposo: riposoOggi });
 
   const titolo = document.createElement('h2');
   titolo.textContent = f.nome;
@@ -96,6 +99,18 @@ function cartaFaccenda(f) {
   ogni.textContent = ogniGiorni(f.cadenza);
   dati.append(ultima, ogni);
 
+  // Il salto: resta scritto finché non la segni di nuovo, e si può annullare
+  let saltato = null;
+  if (f.salto) {
+    saltato = document.createElement('p');
+    saltato.className = 'saltato';
+    const t = document.createElement('span');
+    t.textContent = `Giro saltato ${quandoSalto(f.salto)}.`;
+    const annulla = bottoneAzione('Annulla', 'link-azione', 'annulla-salto', f);
+    annulla.setAttribute('aria-label', `Annulla il salto di ${f.nome}`);
+    saltato.append(t, annulla);
+  }
+
   const azioni = document.createElement('div');
   azioni.className = 'faccenda-azioni';
   if (inQuestaSettimana(f.id)) {
@@ -106,11 +121,19 @@ function cartaFaccenda(f) {
   } else {
     azioni.append(bottoneAzione('+ Aggiungi a questa settimana', 'pulsante piccolo', 'aggiungi', f));
   }
+  // «Salto questo giro» solo se il conteggio non parte già da oggi (fatta oggi, o saltata oggi)
+  if (f.giorni === null || f.giorni > 0) {
+    const salta = bottoneAzione('Salto questo giro', 'pulsante secondario piccolo', 'salta', f);
+    salta.setAttribute('aria-label', `Salto questo giro di ${f.nome}`);
+    azioni.append(salta);
+  }
   const cadenza = bottoneAzione('Cadenza', 'link-azione', 'cadenza', f);
   cadenza.setAttribute('aria-label', `Cadenza di ${f.nome}`);
   azioni.append(cadenza);
 
-  li.append(titolo, dati, azioni);
+  li.append(titolo, dati);
+  if (saltato) li.append(saltato);
+  li.append(azioni);
   return li;
 }
 
@@ -130,6 +153,14 @@ listaFaccende.addEventListener('click', (e) => {
   const f = Core.faccende(db.registro, oggiK).find((x) => x.id === b.dataset.id);
   if (!f) return;
   if (b.dataset.azione === 'cadenza') apriCadenza(f);
+  // Saltare il giro: il conteggio riparte da oggi, senza segnarla come fatta. Il fuoco va su «Annulla».
+  if (b.dataset.azione === 'salta' && esito(db.salta(f.id, oggiK))) {
+    mostraStato(`«${f.nome}»: giro saltato.`);
+    listaFaccende.querySelector(`li[data-id="${f.id}"] [data-azione="annulla-salto"]`)?.focus();
+  }
+  if (b.dataset.azione === 'annulla-salto' && esito(db.salta(f.id, null))) {
+    listaFaccende.querySelector(`li[data-id="${f.id}"] [data-azione="cadenza"]`)?.focus();
+  }
   if (b.dataset.azione === 'aggiungi' && esito(db.aggiungi(lunediCorrente(), f.nome))) {
     mostraStato(`«${f.nome}» è in questa settimana.`);
     // il bottone è stato ridisegnato: il fuoco va su «Cadenza» della stessa faccenda, non si perde

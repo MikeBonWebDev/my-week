@@ -19,6 +19,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
   <link rel="stylesheet" href="stile.css">
+  <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
+       Senza scelta, segue il sistema (vedi js/base.js). -->
+  <script>
+    try {
+      const t = localStorage.getItem('settimana:tema');
+      if (t === 'chiaro' || t === 'scuro') document.documentElement.dataset.tema = t;
+    } catch { /* memoria non accessibile: si segue il sistema */ }
+  </script>
 </head>
 
 <body>
@@ -37,6 +45,11 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg>
       <span>Casa</span>
     </button>
+    <button type="button" class="sezione-voce" data-sezione="dati">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14l3 3 3-3"/></svg>
+      <span>Dati</span>
+      <span class="puntino-dati" id="puntino-dati" aria-hidden="true" hidden></span>
+    </button>
   </nav>
 
   <main>
@@ -44,7 +57,7 @@
       <div class="testata">
         <h1 id="titolo-sezione">La mia settimana</h1>
         <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog"
-                aria-label="Menu: sincronizza, esporta, libreria delle attività">
+                aria-label="Menu: tema, colore delle faccende, libreria delle attività">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
           <span class="lungo">Menu</span>
         </button>
@@ -125,41 +138,106 @@
       <p class="vuoto-casa" id="casa-vuota" hidden>Ancora nessuna faccenda.</p>
     </section>
 
+    <!-- ═════ Sezione Dati: dove sono i dati, copie, altri dispositivi, CSV (js/file.js) ═════ -->
+    <section id="sezione-dati" class="dati-sezione" aria-labelledby="titolo-sezione" hidden>
+      <section class="riquadro invito-copia" id="invito-copia" aria-labelledby="invito-titolo" hidden>
+        <div class="azione">
+          <div>
+            <strong id="invito-titolo"></strong>
+            <p>Conviene salvarne una nuova, per sicurezza.</p>
+          </div>
+          <button type="button" class="pulsante piccolo" id="salva-sync-invito">Salva il file</button>
+        </div>
+      </section>
+
+      <section class="riquadro" aria-labelledby="titolo-dove">
+        <h2 id="titolo-dove">Dove sono</h2>
+        <p>Solo su questo dispositivo, nella memoria del browser. Non c’è un account né un server: per averli altrove,
+          o per non perderli, si salva un file.</p>
+        <ul class="stato-dati">
+          <li><span>Ultimo file salvato da qui</span> <strong id="ultimo-salvataggio"></strong></li>
+          <li><span>Ultima unione su questo dispositivo</span> <strong id="ultima-unione"></strong></li>
+        </ul>
+      </section>
+
+      <section class="riquadro" aria-labelledby="titolo-copie">
+        <h2 id="titolo-copie">Copia e altri dispositivi</h2>
+        <div class="azione">
+          <div>
+            <strong>Salva il file</strong>
+            <p>Un file con tutti i dati. È la copia di sicurezza, e serve per portarli su un altro dispositivo.</p>
+            <p class="dove" id="dove-file"></p>
+          </div>
+          <button type="button" class="pulsante piccolo" id="salva-sync">Salva il file</button>
+        </div>
+        <div class="azione" id="azione-invia" hidden>
+          <div>
+            <strong>Invia a…</strong>
+            <p>Lo stesso file, mandato con il menu Condividi del telefono: per esempio a Drive o per email.</p>
+          </div>
+          <button type="button" class="pulsante secondario piccolo" id="invia-sync">Invia a…</button>
+        </div>
+        <div class="azione">
+          <div>
+            <strong>Unisci un file</strong>
+            <p>Porta qui le modifiche fatte su un altro dispositivo. Non cancella niente: per ogni casella vale la
+              modifica più recente.</p>
+          </div>
+          <button type="button" class="pulsante secondario piccolo" id="unisci-sync">Unisci un file</button>
+        </div>
+        <input type="file" id="file-sync" accept="application/json,.json" hidden>
+      </section>
+
+      <section class="riquadro" aria-labelledby="titolo-csv">
+        <h2 id="titolo-csv">CSV</h2>
+        <div class="azione">
+          <div>
+            <strong>Scarica la settimana</strong>
+            <p>La tabella della settimana mostrata in Settimana, da aprire con Excel o Fogli. Serve per leggere i dati,
+              non per ripristinarli.</p>
+          </div>
+          <button type="button" class="pulsante secondario piccolo" id="scarica-settimana">Scarica la settimana</button>
+        </div>
+        <div class="azione">
+          <div>
+            <strong>Scarica lo storico</strong>
+            <p>Tutte le settimane con dei dati, una sotto l’altra.</p>
+          </div>
+          <button type="button" class="pulsante secondario piccolo" id="scarica-storico">Scarica lo storico</button>
+        </div>
+      </section>
+
+      <details class="riquadro spiegazione">
+        <summary>Come funziona tra più dispositivi</summary>
+        <ol>
+          <li>Sul primo dispositivo: <strong>Salva il file</strong>, oppure <strong>Invia a…</strong> per metterlo su Drive.</li>
+          <li>Sull’altro: <strong>Unisci un file</strong> e scegli quel file. Prima di confermare vedi quante modifiche porta.</li>
+          <li>Si può fare in qualsiasi ordine e quante volte serve. Unire due volte lo stesso file non cambia niente.</li>
+        </ol>
+        <p>Svuotando i dati del browser, o disinstallando l’app, i dati di questo dispositivo spariscono. I file salvati
+          restano dove li hai messi.</p>
+      </details>
+    </section>
+
     <p class="stato" id="stato" role="status" aria-live="polite" popover="manual"></p>
   </main>
 
-  <!-- Il menu: sincronizzazione, esportazione, libreria. Si apre dal pulsante in alto a destra. -->
+  <!-- Il menu: tema, colore delle faccende, libreria. Si apre dal pulsante in alto a destra. -->
   <dialog id="menu" class="foglio" aria-labelledby="titolo-menu">
     <div class="foglio-testa">
       <h2 id="titolo-menu">Menu</h2>
       <button type="button" class="chiudi" id="chiudi-menu" aria-label="Chiudi il menu">×</button>
     </div>
 
-    <section class="sezione" aria-labelledby="titolo-sync">
-      <h3 id="titolo-sync">Sincronizza</h3>
-      <p>
-        Per portare i dati da un dispositivo all’altro: salva il file qui (per esempio su Drive) e uniscilo sull’altro.
-        Vince sempre la modifica più recente. Il file è anche la tua copia di sicurezza.
-      </p>
-      <ul class="copie">
-        <li>Ultimo file salvato da qui: <span id="ultimo-salvataggio"></span></li>
-        <li>Ultima unione su questo dispositivo: <span id="ultima-unione"></span></li>
-      </ul>
-      <div class="azioni-dati">
-        <button type="button" class="pulsante secondario piccolo" id="salva-sync">Salva il file</button>
-        <button type="button" class="pulsante secondario piccolo" id="invia-sync" hidden>Invia a… (Drive, email)</button>
-        <button type="button" class="pulsante secondario piccolo" id="unisci-sync">Unisci un file</button>
-      </div>
-      <input type="file" id="file-sync" accept="application/json,.json" hidden>
+    <section class="sezione" aria-labelledby="titolo-tema">
+      <h3 id="titolo-tema">Tema</h3>
+      <div class="scelte" id="scelte-tema" role="group" aria-labelledby="titolo-tema"></div>
+      <p class="nota-foglio">Vale per questo dispositivo.</p>
     </section>
 
-    <section class="sezione" aria-labelledby="titolo-esporta">
-      <h3 id="titolo-esporta">Esporta</h3>
-      <p>CSV da aprire con Excel o da analizzare: una riga per attività, con i sette giorni e il dettaglio.</p>
-      <div class="azioni-dati">
-        <button type="button" class="pulsante secondario piccolo" id="scarica-settimana">CSV · settimana mostrata</button>
-        <button type="button" class="pulsante secondario piccolo" id="scarica-storico">CSV · storico</button>
-      </div>
+    <section class="sezione" aria-labelledby="titolo-intensita">
+      <h3 id="titolo-intensita">Colore delle faccende</h3>
+      <div class="opzioni" id="scelte-intensita" role="group" aria-labelledby="titolo-intensita"></div>
     </section>
 
     <details class="dati sezione" id="pannello-libreria">

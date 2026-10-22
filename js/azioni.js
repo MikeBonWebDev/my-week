@@ -63,7 +63,10 @@ function suCambio(e) {
 
   if (el.matches('input[type="checkbox"]')) {
     const { id, giorno } = el.dataset;
-    esito(db.spunta(visualizzata, id, Number(giorno), el.checked), { ridisegna: telefono.matches });
+    // su computer la casella è già spuntata: aggiorno solo testo e calore della faccenda, se lo è
+    if (esito(db.spunta(visualizzata, id, Number(giorno), el.checked), { ridisegna: telefono.matches }) && !telefono.matches) {
+      aggiornaFaccendeTabella();
+    }
     return;
   }
 
@@ -120,7 +123,10 @@ for (const contenitore of [corpo, carte]) {
 piede.addEventListener('change', (e) => {
   const el = e.target;
   if (!el.matches('input.riposo')) return;
-  if (esito(db.riposo(visualizzata, Number(el.dataset.giorno), el.checked), { ridisegna: false })) aggiornaColonne();
+  if (esito(db.riposo(visualizzata, Number(el.dataset.giorno), el.checked), { ridisegna: false })) {
+    aggiornaColonne();
+    aggiornaFaccendeTabella();   // con il riposo oggi, le faccende perdono il calore
+  }
 });
 
 // Il livello di energia dopo un tocco su `livello`: un secondo tocco sullo stesso livello toglie la scelta.

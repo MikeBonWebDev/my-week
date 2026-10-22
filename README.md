@@ -55,9 +55,9 @@ settimana-pwa/
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
 │   ├── libreria.js       il pannello «Libreria delle attività»
 │   ├── azioni.js         aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
-│   ├── file.js           ultimo salvataggio e unione, CSV, sincronizzazione
-│   ├── casa.js           le sezioni (Settimana, Casa) e la sezione Casa: le faccende
-│   └── guscio.js         menu, finestra di conferma, avvio, app installabile
+│   ├── file.js           la sezione Dati: ultimo salvataggio, invito alla copia, CSV, sincronizzazione
+│   ├── casa.js           le sezioni (Settimana, Casa, Dati) e la sezione Casa: le faccende
+│   └── guscio.js         menu (tema, colore delle faccende, libreria), conferma, avvio, app installabile
 ├── sw.js                 il service worker: copia dei file per l'uso senza rete
 ├── manifest.webmanifest  nome, colori e icone dell'app installata
 ├── icone/                icone per Android, iPhone, scheda del browser
@@ -68,6 +68,8 @@ settimana-pwa/
 │   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
 │   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, menu dal basso
 │   ├── casa.spec.js      le sezioni e la sezione Casa: faccende, cadenza, «Aggiungi a questa settimana»
+│   ├── colore.spec.js    calore delle faccende, intensità, tema, riposo, «Salto questo giro», parole vietate
+│   ├── dati.spec.js      la sezione Dati: puntino e invito alla copia, «Salva con nome», CSV, unione
 │   ├── sincronizzazione.spec.js   due "dispositivi" che si scambiano il file
 │   └── pwa.spec.js       installabilità e funzionamento senza rete
 ├── strumenti/
@@ -414,12 +416,62 @@ settimana») e «Cadenza».
   giorni», «Ogni mese · 30 giorni» e «Personalizzato», che sblocca il campo dei giorni (un intero da 1 a 365).
   Finché qualcosa non va, «Salva» resta disattivato e una riga dice perché.
 
-### Il menu
+### Il calore delle faccende
 
-CSV, sincronizzazione e libreria stanno in un `<dialog id="menu">`, aperto dal pulsante in alto a destra con
-`showModal()`: sta sopra alla pagina, che intanto non risponde ai tocchi. Su computer è un pannello al centro, su
-telefono sale dal basso (stesso elemento, CSS diverso). Si chiude con la ×, con Esc, con un tocco fuori, e da solo
-dopo aver unito un file, così vedi subito il risultato.
+Nella settimana corrente, la scheda di una faccenda (o la cella del nome, nella tabella) dice da quanto non la fai:
+«16 giorni fa · ogni 14 giorni», e oltre la cadenza **si scalda**. Il calore (da 0 a 1) lo calcola il nucleo; la
+pagina lo mette sull’elemento come attributo e variabile CSS:
+
+```html
+<li class="carta" data-calore style="--calore: 0.143">…</li>
+```
+
+Il colore lo fa `stile.css`, con `color-mix()`: mescola la tinta calda con quella della scheda in proporzione al
+calore. Niente colori calcolati in JavaScript, e il tema scuro viene da solo, perché le tinte sono `light-dark()`.
+L’intensità sta su `<html data-intensita="…">`: *Nessuno* (solo il testo), *Morbido* (sabbia), *Deciso* (dal giallo
+all’arancio). Mai il rosso. Sulle schede scaldate il testo grigio diventa pieno, per restare leggibile: lo controlla
+axe-core, che misura il contrasto.
+
+Tre regole di precedenza: una scheda **fatta** quel giorno è verde e basta; in un **giorno di riposo** tutte le
+schede prendono la tinta quieta del riposo, senza calore (il conteggio non cambia: il riposo descrive te, non la
+casa); nelle **settimane passate** niente calore, perché il calore parla di oggi.
+
+Sul computer, dopo una spunta, la tabella non si ridisegna (la casella toccata perderebbe il fuoco):
+`aggiornaFaccendeTabella()` aggiorna sul posto testo e calore delle sole righe delle faccende.
+
+### Salto questo giro
+
+In Casa, «Salto questo giro» scrive `v/<id>/salto = oggi`: il conteggio (e il calore) riparte da lì, ma l’ultima
+volta mostrata resta quella vera. Il salto resta scritto finché non segni di nuovo la faccenda («Giro saltato ieri»,
+poi la data), e «Annulla» lo toglie. Non si può saltare una faccenda fatta oggi: il conteggio parte già da oggi.
+
+### Il menu: tema, colore, libreria
+
+Un `<dialog id="menu">`, aperto dal pulsante in alto a destra con `showModal()`: sta sopra alla pagina, che intanto
+non risponde ai tocchi. Su computer è un pannello al centro, su telefono sale dal basso (stesso elemento, CSS
+diverso). Si chiude con la ×, con Esc o con un tocco fuori.
+
+- **Tema**: Automatico (segue il sistema), Chiaro, Scuro. Vale **per il dispositivo** (`localStorage`,
+  `settimana:tema`): si può volere il telefono scuro e il computer chiaro. `<html data-tema>` forza il
+  `color-scheme`, e tutte le tinte `light-dark()` lo seguono. Uno scriptino in testa a `index.html` lo applica prima
+  che la pagina si disegni, altrimenti all’avvio si vedrebbe un lampo del tema sbagliato.
+- **Colore delle faccende**: vale **su tutti i dispositivi**, quindi sta nel registro (`i/intensita`) e viaggia
+  con il file.
+- **Libreria delle attività** e, in fondo, la versione installata.
+
+### La sezione Dati
+
+Raccoglie quello che prima stava nel menu: copie, sincronizzazione, CSV. Ogni azione ha una frase che dice cosa fa.
+
+- **Dove sono**: i dati stanno solo su questo dispositivo; sotto, l’ultimo file salvato e l’ultima unione.
+- **«Salva con nome».** Dove il browser lo offre (Chrome ed Edge per computer: `window.showSaveFilePicker`) e
+  l’app non gira dentro un riquadro di un’altra pagina, si apre la finestra del sistema e la cartella la scegli tu.
+  Altrove resta il download di sempre, e una riga lo dice («Il file va nella cartella dei download del browser»).
+  Chiudere la finestra senza salvare non è un errore: semplicemente la copia non risulta fatta.
+- **Il puntino e l’invito.** Se l’ultima copia ha più di 30 giorni (o non ce n’è mai stata una e l’app si usa da
+  più di 30 giorni), compare un puntino color sabbia sulla voce «Dati» e, in cima alla sezione, un invito a salvare.
+  Niente notifiche, niente numeri; chi usa un lettore di schermo sente «Dati, nuova copia consigliata». È l’unico
+  richiamo dell’app: perdere i dati per un telefono rotto è l’unico danno vero che può fare.
 
 ### Concetti del web usati
 
@@ -573,6 +625,10 @@ si leggono come una storia.
 - **Telefono simulato.** `telefono.spec.js` apre contesti larghi 390 pixel, con tocco: verifica la vista a un giorno,
   il passaggio tra le due viste stringendo la finestra, e che ciò che segni sul telefono arrivi nella tabella del
   computer dopo l’unione.
+- **Colore e dati.** `colore.spec.js` controlla il calore (anche che una spunta lo aggiorni senza togliere il fuoco
+  alla casella), le tre intensità, il tema, il riposo, il salto (guardando anche "domani" e "dopodomani": stessa
+  memoria, orologio più avanti) e che nessuna parola di colpa compaia nell’app. `dati.spec.js` usa un «Salva con
+  nome» **finto**, perché quello vero aprirebbe una finestra del sistema che un test non può toccare.
 - **Casa.** `casa.spec.js` crea faccende come farebbe una persona (dal foglio, con le scelte e i valori sbagliati),
   controlla l’ultima volta presa dai dati di prova, l’ordine che non si muove, la tastiera nel foglio, e che non ci
   sia scorrimento di lato a 320, 360, 390 e 700 pixel, in tema chiaro e scuro.
@@ -595,6 +651,10 @@ applicato. Morale: i test che guardano *come appare* qualcosa colgono errori che
 Lo stesso è successo con la sezione Casa: i giorni abbreviati nascondono il nome lungo con `position: absolute`, e
 senza `position: relative` sulla cella quel testo nascosto finiva fuori dalla tabella, allargando tutta la pagina di
 300 pixel. L’ha trovato il test a 700 pixel, non uno sguardo.
+E un’ultima, più strana: un test di unione falliva senza nessun errore. Il file da unire stava in una cartella il cui
+nome conteneva l’apostrofo tipografico del titolo del test (’), e con quel percorso il file scelto non arrivava alla
+pagina. Ora `unisciFile()` passa il **contenuto** del file, non il percorso. Quando qualcosa "non succede", senza
+errori, il primo sospetto è l’ingresso: il dato è davvero arrivato?
 
 E una terza: nel test di sincronizzazione ogni "dispositivo" ha un orologio finto che parte da zero quando la sua
 pagina si apre. Telefono e PC creano la stessa voce con nomi diversi («Sviluppo» e «sviluppo»), e vince il nome con

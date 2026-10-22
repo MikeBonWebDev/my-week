@@ -3,7 +3,7 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const {
-  apri, nomi, aggiungi, dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, salvaFile, unisciFile, foto,
+  apri, nomi, aggiungi, dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
 } = require('./aiuti');
 
 test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali', async ({ browser }, info) => {
@@ -87,13 +87,18 @@ test('due schede sullo stesso browser non si cancellano le modifiche a vicenda',
   expect((await nomi(s2)).sort()).toEqual(['Chitarra', 'Leggere']);
 });
 
-test('il pannello mostra quando hai salvato e unito l’ultima volta', async ({ browser }, info) => {
+test('la sezione Dati mostra quando hai salvato e unito un file', async ({ browser }, info) => {
   const p = await apri(await browser.newContext());
-  await apriPannello(p, 'Sincronizzazione');
+  await vaiA(p, 'dati');
   await expect(p.locator('#ultimo-salvataggio')).toHaveText('mai, finora');
-  await chiudiMenu(p);
+  await expect(p.locator('#ultima-unione')).toHaveText('mai, finora');
+  await vaiA(p, 'settimana');
   await aggiungi(p, 'Leggere');
-  await salvaFile(p, info.outputPath('mio.json'));
-  await apriMenu(p);
+  const file = await salvaFile(p, info.outputPath('mio.json'));
+  await vaiA(p, 'dati');
   await expect(p.locator('#ultimo-salvataggio')).toContainText('(oggi)');
+  const altro = await apri(await browser.newContext());
+  expect(await unisciFile(altro, file)).toContain('Porta 2 modifiche');
+  await vaiA(altro, 'dati');
+  await expect(altro.locator('#ultima-unione')).toContainText('(oggi)');
 });

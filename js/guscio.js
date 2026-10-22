@@ -5,13 +5,111 @@
 
 /* ───────── Il menu ─────────
    Un <dialog> aperto con showModal(): sta sopra alla pagina, che intanto non risponde ai tocchi.
-   Si chiude con la ×, con Esc, con un tocco fuori (sullo sfondo) o dopo aver unito un file. */
+   Si chiude con la ×, con Esc o con un tocco fuori (sullo sfondo). Dentro: tema, colore delle faccende,
+   libreria, versione. */
 $('#apri-menu').addEventListener('click', () => {
   aggiornaLibreria();
-  aggiornaSync();
+  disegnaScelteMenu();
   mostraVersione();
   menu.showModal();
 });
+
+/* ───────── Tema: Automatico (segue il sistema), Chiaro, Scuro ─────────
+   Vale per questo dispositivo (localStorage, settimana:tema): si può volere il telefono scuro e il computer chiaro.
+   Lo applica <html data-tema>, che stile.css trasforma in color-scheme. Uno script in testa a index.html lo
+   applica già prima che la pagina si disegni, per non farla lampeggiare. */
+const CHIAVE_TEMA = 'settimana:tema';
+const TEMI = [['auto', 'Automatico'], ['chiaro', 'Chiaro'], ['scuro', 'Scuro']];
+const COLORE_BARRA = { chiaro: '#f8f3e9', scuro: '#141c19' };   // la barra di sistema del telefono, come lo sfondo
+
+function leggiTema() {
+  try {
+    const t = localStorage.getItem(CHIAVE_TEMA);
+    return t === 'chiaro' || t === 'scuro' ? t : 'auto';
+  } catch { return 'auto'; }
+}
+
+function applicaTema(tema) {
+  if (tema === 'auto') delete document.documentElement.dataset.tema;
+  else document.documentElement.dataset.tema = tema;
+  // le due righe theme-color di index.html (una per il sistema chiaro, una per lo scuro): con una scelta a mano,
+  // tutte e due dicono lo stesso colore
+  const [chiaro, scuro] = document.querySelectorAll('meta[name="theme-color"]');
+  chiaro?.setAttribute('content', COLORE_BARRA[tema === 'scuro' ? 'scuro' : 'chiaro']);
+  scuro?.setAttribute('content', COLORE_BARRA[tema === 'chiaro' ? 'chiaro' : 'scuro']);
+}
+
+/* ───────── Colore delle faccende: Nessuno, Morbido, Deciso ─────────
+   Vale su tutti i dispositivi: sta nel registro (i/intensita), e passa con il file di sincronizzazione. */
+const SCELTE_INTENSITA = [
+  ['nessuna', 'Nessuno', 'Solo il testo.'],
+  ['morbida', 'Morbido', 'Toni sabbia, leggeri.'],
+  ['decisa', 'Deciso', 'Dal giallo all’arancio.'],
+];
+
+function disegnaScelteMenu() {
+  const tema = leggiTema();
+  $('#scelte-tema').replaceChildren(...TEMI.map(([valore, nome]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'scelta';
+    b.dataset.tema = valore;
+    b.textContent = nome;
+    b.setAttribute('aria-pressed', String(tema === valore));
+    return b;
+  }));
+
+  $('#scelte-intensita').replaceChildren(...SCELTE_INTENSITA.map(([valore, nome, descrizione]) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'opzione';
+    b.dataset.intensita = valore;
+    b.setAttribute('aria-pressed', String(state.intensita === valore));
+    const radio = document.createElement('span');
+    radio.className = 'radio';
+    radio.setAttribute('aria-hidden', 'true');
+    const testi = document.createElement('span');
+    const t = document.createElement('strong');
+    t.textContent = nome;
+    const d = document.createElement('small');
+    d.textContent = descrizione;
+    testi.append(t, d);
+    // tre campioni: appena oltre la cadenza, a metà, al massimo. Sono piccole schede con il loro data-calore,
+    // dentro un contenitore con la sua data-intensita: lo stesso CSS delle schede vere
+    const campioni = document.createElement('span');
+    campioni.className = 'campioni';
+    campioni.dataset.intensitaCampione = valore;
+    campioni.setAttribute('aria-hidden', 'true');
+    for (const calore of [0.05, 0.5, 1]) {
+      const c = document.createElement('span');
+      c.className = 'campione';
+      if (valore !== 'nessuna') { c.dataset.calore = ''; c.style.setProperty('--calore', String(calore)); }
+      campioni.append(c);
+    }
+    b.append(radio, testi, campioni);
+    return b;
+  }));
+}
+
+$('#scelte-tema').addEventListener('click', (e) => {
+  const b = e.target.closest('.scelta');
+  if (!b) return;
+  try { localStorage.setItem(CHIAVE_TEMA, b.dataset.tema); } catch { /* pazienza: vale fino alla chiusura */ }
+  applicaTema(b.dataset.tema);
+  disegnaScelteMenu();
+  $(`#scelte-tema [data-tema="${b.dataset.tema}"]`).focus();
+});
+
+$('#scelte-intensita').addEventListener('click', (e) => {
+  const b = e.target.closest('.opzione');
+  if (!b) return;
+  if (esito(db.intensita(b.dataset.intensita))) {
+    disegnaScelteMenu();
+    $(`#scelte-intensita [data-intensita="${b.dataset.intensita}"]`).focus();
+  }
+});
+
+applicaTema(leggiTema());
 
 // La versione installata, in fondo al menu. Si legge dal nome della copia salvata dal service worker,
 // che è proprio VERSIONE di sw.js ("settimana-4"): così il numero si aggiorna in un posto solo.

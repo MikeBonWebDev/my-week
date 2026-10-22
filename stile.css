@@ -39,9 +39,20 @@
   --bottone-testo: light-dark(#ffffff, #12201a);
   --bottone-sec:   light-dark(#eef1e7, #2a3832);
 
+  /* il calore delle faccende oltre la cadenza: sabbia (Morbido), dal giallo all'arancio (Deciso). Mai il rosso. */
+  --sabbia:        light-dark(#efd6a4, #5a4a2e);
+  --sabbia-bordo:  light-dark(#d3ad6c, #8a6d3e);
+  --giallo:        light-dark(#fbe9a3, #4f4620);
+  --giallo-bordo:  light-dark(#e2c25c, #a08a3a);
+  --arancio:       light-dark(#f5b37c, #6b3e21);
+  --arancio-bordo: light-dark(#d98a4c, #c0703c);
+
   --ombra: 0 1px 2px rgb(60 70 55 / .06), 0 12px 32px -12px rgb(60 70 55 / .22);
   --raggio: 1.4rem;
 }
+/* Tema scelto a mano nel menu: light-dark() segue il color-scheme, quindi basta forzare quello. */
+:root[data-tema="chiaro"] { color-scheme: light; }
+:root[data-tema="scuro"] { color-scheme: dark; }
 
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -760,6 +771,9 @@ dialog.foglio {
   transition: background-color .3s ease;
 }
 .carta[data-fatto] { background: var(--fatto); }
+/* la riga «16 giorni fa · ogni 14 giorni» delle faccende, sotto il nome */
+.riga-cadenza { display: block; font-size: .82rem; font-weight: 400; color: var(--tenue); line-height: 1.35; }
+.testi .riga-cadenza { padding: 0 .4rem; }
 .carta-testi { min-width: 0; display: grid; gap: .1rem; }
 .carta .nome-voce { padding: 0; font-size: 1.02rem; }
 .carta .dettaglio { padding: .2rem 0; font-size: .86rem; }
@@ -893,6 +907,7 @@ dialog.foglio {
 }
 .link-azione:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; border-radius: .3rem; }
 .vuoto-casa { margin: 1.4rem 0 0; color: var(--tenue); }
+.saltato { display: flex; flex-wrap: wrap; align-items: center; gap: 0 .5rem; margin: 0; font-size: .92rem; color: var(--tenue); }
 
 /* ───────── Il foglio della faccenda ───────── */
 .gruppo { display: grid; gap: .5rem; margin-top: 1rem; }
@@ -930,6 +945,90 @@ dialog.foglio {
 .piede-foglio { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; margin-top: 1.2rem; }
 button.pulsante:disabled { opacity: .45; cursor: default; transform: none; box-shadow: none; }
 
+
+/* ───────── Il calore delle faccende ─────────
+   Una scheda (o la cella del nome, nella tabella) di una faccenda oltre la cadenza ha data-calore e --calore,
+   da 0 a 1, calcolati dal nucleo (Core.faccende). L'intensità la sceglie l'utente nel menu: <html data-intensita>.
+   Il colore si mescola con color-mix: niente colori calcolati in JavaScript, e chiaro e scuro vengono da soli. */
+[data-calore] {
+  --t: calc(.25 + .75 * var(--calore));   /* Morbido parte già visibile, poi si scalda */
+  transition: background-color .4s ease, border-color .4s ease;
+}
+html[data-intensita="morbida"] [data-calore], .campioni[data-intensita-campione="morbida"] [data-calore] {
+  background: color-mix(in srgb, var(--sabbia) calc(var(--t) * 100%), var(--scheda));
+  border-color: color-mix(in srgb, var(--sabbia-bordo) calc(var(--t) * 100%), var(--scheda-bordo));
+}
+html[data-intensita="decisa"] [data-calore], .campioni[data-intensita-campione="decisa"] [data-calore] {
+  background: color-mix(in srgb, var(--arancio) calc(var(--calore) * 100%), var(--giallo));
+  border-color: color-mix(in srgb, var(--arancio-bordo) calc(var(--calore) * 100%), var(--giallo-bordo));
+}
+/* sulle schede scaldate il testo secondario usa l'inchiostro pieno: resta leggibile (contrasto WCAG AA) */
+html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro); --fuoco: var(--inchiostro); }
+
+/* Il giorno di riposo ammorbidisce: le schede di quel giorno prendono la tinta del riposo, senza calore. */
+.carta[data-riposo], .faccenda[data-riposo] { background: var(--riposo); border-color: color-mix(in srgb, var(--riposo-accento) 25%, var(--riposo)); }
+.carta, .faccenda { transition: background-color .4s ease, border-color .4s ease; }
+.giornata { transition: background-color .4s ease; }
+.giornata[data-riposo] { background: var(--riposo); }
+
+/* ───────── Il menu: tema e colore delle faccende ───────── */
+.opzioni { display: grid; gap: .5rem; }
+.opzione {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .8rem;
+  width: 100%;
+  padding: .7rem .9rem;
+  font: inherit;
+  text-align: left;
+  color: var(--inchiostro);
+  background: var(--fascia);
+  border: 1.5px solid var(--scheda-bordo);
+  border-radius: 1rem;
+  cursor: pointer;
+}
+.opzione[aria-pressed="true"] { border-color: var(--bottone); background: color-mix(in srgb, var(--accento) 12%, var(--scheda)); }
+.opzione:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+.opzione strong { display: block; }
+.opzione small { display: block; font-size: .84rem; color: var(--tenue); }
+.radio { width: 1.2rem; height: 1.2rem; border-radius: 50%; border: 2px solid var(--linea-forte); }
+.opzione[aria-pressed="true"] .radio { border: .38rem solid var(--bottone); }
+.campioni { display: flex; gap: .25rem; }
+.campione { width: 1.35rem; height: 1.8rem; border-radius: .45rem; border: 1px solid var(--scheda-bordo); background: var(--scheda); }
+
+/* ───────── La sezione Dati ───────── */
+.dati-sezione { display: grid; gap: .9rem; max-width: 48rem; }
+.riquadro { display: grid; gap: .6rem; padding: 1.1rem 1.25rem; background: var(--scheda); border: 1px solid var(--scheda-bordo); border-radius: 1.25rem; }
+.riquadro h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.riquadro p { margin: 0; }
+.stato-dati { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; font-size: .95rem; }
+.stato-dati li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .2rem 1rem; padding: .5rem .8rem; border-radius: .8rem; background: var(--fascia); }
+.stato-dati span { color: var(--tenue); }
+.azione { display: flex; align-items: center; gap: 1rem; padding-top: .8rem; border-top: 1px solid var(--linea); }
+.azione > div { flex: 1; min-width: 0; }
+.azione p { font-size: .9rem; color: var(--tenue); }
+.azione .pulsante { flex: none; }
+.azione .dove { margin-top: .25rem; color: var(--inchiostro); }
+.invito-copia { background: color-mix(in srgb, var(--en-ok) 16%, var(--scheda)); border-color: color-mix(in srgb, var(--en-ok) 45%, var(--scheda-bordo)); }
+.invito-copia .azione { padding-top: 0; border-top: 0; }
+.invito-copia p { color: var(--inchiostro); }
+.spiegazione summary { font-weight: 600; cursor: pointer; min-height: 1.8rem; }
+.spiegazione summary:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; border-radius: .3rem; }
+.spiegazione ol { margin: .3rem 0 0; padding-left: 1.3rem; display: grid; gap: .4rem; }
+/* il puntino sulla voce «Dati»: una nuova copia è consigliata. Sabbia, non rosso; nessun numero */
+.sezione-voce { position: relative; }
+.puntino-dati {
+  position: absolute;
+  top: .55rem;
+  left: 1.95rem;
+  width: .62rem;
+  height: .62rem;
+  border-radius: 50%;
+  background: var(--en-ok);
+  box-shadow: 0 0 0 2px var(--scheda);
+}
+
 /* ───────── Schermi stretti: telefono ───────── */
 @media (max-width: 40rem) {
   main { padding-block: calc(1rem + env(safe-area-inset-top)) calc(6.5rem + env(safe-area-inset-bottom)); }
@@ -950,6 +1049,9 @@ button.pulsante:disabled { opacity: .45; cursor: default; transform: none; box-s
   .marchio { display: none; }
   .sezione-voce { flex: 1; flex-direction: column; justify-content: center; gap: .1rem; min-height: 3.4rem; font-size: .82rem; }
   .stato { bottom: calc(5.4rem + env(safe-area-inset-bottom)); }
+  .puntino-dati { top: .35rem; left: calc(50% + .45rem); }
+  .azione { flex-wrap: wrap; }
+  .azione .pulsante { width: 100%; }
   h1 { font-size: 1.75rem; }
   .sottotitolo, .apri-menu .lungo { display: none; }
   .apri-menu { margin-top: 0; padding: 0 .85rem; }

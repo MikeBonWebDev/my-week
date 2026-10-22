@@ -1,9 +1,13 @@
 'use strict';
-// js/file.js — i file: quando hai salvato e unito l’ultima volta, CSV, sincronizzazione tra dispositivi.
+// js/file.js — la sezione Dati: quando hai salvato e unito l’ultima volta, invito alla copia, CSV, sincronizzazione.
 // Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
 // (vedi l’elenco in index.html e la nota in base.js).
 
-/* ───────── Quando hai salvato e unito l'ultima volta (solo un'informazione, nessun richiamo) ───────── */
+/* ───────── Quando hai salvato e unito l'ultima volta ─────────
+   È un'informazione di questo dispositivo (localStorage, settimana:sync), non un dato da sincronizzare.
+   Un solo richiamo, discreto: se l'ultima copia ha più di GIORNI_COPIA giorni, un puntino sulla voce «Dati»
+   e un invito in cima alla sezione. Niente notifiche, niente numeri. */
+const GIORNI_COPIA = 30;
 function leggiSync() {
   try {
     const c = JSON.parse(localStorage.getItem(CHIAVE_SYNC));
@@ -19,10 +23,34 @@ function descriviData(k) {
   return `${fmtLungo.format(dataDaChiave(k))} (${quando})`;
 }
 
+// Da quanti giorni non c'è una copia: dall'ultimo file salvato; se non ce n'è mai stato uno, dal primo giorno
+// d'uso (il lunedì della settimana più vecchia con dati). Senza dati, 0: non c'è niente da mettere al sicuro.
+function giorniSenzaCopia() {
+  const c = leggiSync();
+  if (typeof c.salvato === 'string' && RE_CHIAVE.test(c.salvato)) return Core.giorniTra(c.salvato, oggiK);
+  const primo = Core.primoUso(db.registro);
+  return primo ? Core.giorniTra(primo, oggiK) : 0;
+}
+
 function aggiornaSync() {
   const c = leggiSync();
   $('#ultimo-salvataggio').textContent = descriviData(c.salvato);
   $('#ultima-unione').textContent = descriviData(c.unito);
+
+  const serve = giorniSenzaCopia() > GIORNI_COPIA;
+  $('#puntino-dati').hidden = !serve;
+  // il puntino si vede; chi usa un lettore di schermo lo sente nel nome del pulsante
+  const voceDati = $('.sezione-voce[data-sezione="dati"]');
+  if (serve) voceDati.setAttribute('aria-label', 'Dati, nuova copia consigliata');
+  else voceDati.removeAttribute('aria-label');
+  $('#invito-copia').hidden = !serve;
+  if (serve) {
+    const salvato = typeof c.salvato === 'string' && RE_CHIAVE.test(c.salvato);
+    $('#invito-titolo').textContent = salvato
+      ? `L’ultima copia dei dati è di ${Core.giorniTra(c.salvato, oggiK)} giorni fa.`
+      : 'Non c’è ancora una copia dei dati.';
+  }
+  $('#dove-file').textContent = doveFinisceIlFile();
 }
 
 // Ricorda che oggi hai salvato ('salvato') o unito ('unito') un file.
@@ -110,11 +138,11 @@ $('#scarica-storico').addEventListener('click', () => {
 const nomeFileSync = () => `settimana-sync-${oggiK}.json`;
 const contenutoSync = () => JSON.stringify(Core.perFile(db.registro, db.dispositivo, new Date().toISOString()));
 
-$('#salva-sync').addEventListener('click', () => {
-  scarica(nomeFileSync(), contenutoSync(), 'application/json');
-  segnaSync('salvato');
-  mostraStato('File di sincronizzazione salvato');
-});
+// «Salva con nome»: dove il browser lo offre (Chrome ed Edge per computer), la cartella la scegli tu.
+// Non funziona se l'app gira dentro un riquadro di un'altra pagina (iframe): lì resta il download.
+const puoScegliereCartella = (() => {
+  try { return typeof window.showSaveFilePicker === 'function' && window.self === window.top; } catch { return false; }
+})();
 
 // Sul telefono: il menu "Condividi" del sistema, per mandare il file direttamente a Drive (o dove vuoi).
 const puoInviare = (() => {
@@ -123,7 +151,42 @@ const puoInviare = (() => {
       && Boolean(navigator.canShare?.({ files: [new File(['{}'], 'prova.json', { type: 'application/json' })] }));
   } catch { return false; }
 })();
-$('#invia-sync').hidden = !puoInviare;
+$('#azione-invia').hidden = !puoInviare;
+
+// La riga sotto «Salva il file»: dove finirà
+function doveFinisceIlFile() {
+  if (puoScegliereCartella) return 'Si apre «Salva con nome»: la cartella la scegli tu.';
+  if (telefono.matches) {
+    return 'Il file va nella cartella Download del telefono.'
+      + (puoInviare ? ' Per scegliere dove metterlo, usa «Invia a…».' : '');
+  }
+  return 'Il file va nella cartella dei download del browser.';
+}
+
+async function salvaFileSync() {
+  if (puoScegliereCartella) {
+    try {
+      const file = await window.showSaveFilePicker({
+        suggestedName: nomeFileSync(),
+        types: [{ description: 'File di sincronizzazione', accept: { 'application/json': ['.json'] } }],
+      });
+      const scrittura = await file.createWritable();
+      await scrittura.write(contenutoSync());
+      await scrittura.close();
+      segnaSync('salvato');
+      mostraStato('File di sincronizzazione salvato');
+      return;
+    } catch (err) {
+      if (err?.name === 'AbortError') return;   // hai chiuso «Salva con nome» senza salvare: nessun problema
+      // qualcos'altro non è andato: si ripiega sul download di sempre
+    }
+  }
+  scarica(nomeFileSync(), contenutoSync(), 'application/json');
+  segnaSync('salvato');
+  mostraStato('File di sincronizzazione salvato');
+}
+$('#salva-sync').addEventListener('click', salvaFileSync);
+$('#salva-sync-invito').addEventListener('click', salvaFileSync);
 $('#invia-sync').addEventListener('click', async () => {
   try {
     const file = new File([contenutoSync()], nomeFileSync(), { type: 'application/json' });
@@ -173,7 +236,6 @@ $('#file-sync').addEventListener('change', async (e) => {
 
   db.unisci(reg);
   salva(true);
-  menu.close();   // chiudo il menu: così vedi subito la settimana con i dati uniti
   state = db.vista();
   visualizzata = lunediCorrente();
   disegna();

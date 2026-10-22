@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const { creaSeme } = require('../strumenti/seme.js');
 const {
   LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
-  dettaglio, togli, apriMenu, chiudiMenu, apriPannello, foto,
+  dettaglio, togli, apriMenu, chiudiMenu, apriPannello, vaiA, foto,
 } = require('./aiuti');
 
 // Lo stile e il codice stanno in file separati (stile.css, js/): se uno non arriva, la pagina sembra viva ma non lo è
@@ -114,7 +114,7 @@ test.describe('con qualche settimana di storia', () => {
 
   test('CSV dello storico: una riga per attività, con il dettaglio della settimana giusta', async ({ browser }) => {
     const p = await conStoria(browser);
-    await apriMenu(p);                                           // i CSV stanno nel menu, sezione «Esporta»
+    await vaiA(p, 'dati');                                       // i CSV stanno nella sezione Dati
     const [scaricato] = await Promise.all([p.waitForEvent('download'), p.click('#scarica-storico')]);
     const righe = fs.readFileSync(await scaricato.path(), 'utf8').replace(/^﻿/, '').split('\r\n').map((r) => r.split(';'));
     expect(righe[0]).toEqual(['Settimana (lunedì)', 'Voce', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica', 'Dettaglio']);

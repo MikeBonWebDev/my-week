@@ -1,6 +1,8 @@
 // Funzioni d'appoggio per i test nel browser: aprono la pagina a una data fissa e fanno le azioni
 // come le farebbe una persona (scrivere, toccare, confermare), così i test si leggono come una storia.
 'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
 const { expect } = require('@playwright/test');
 
 // Le date di riferimento dei test: un mercoledì e il lunedì successivo (ora locale)
@@ -11,7 +13,10 @@ const LUNEDI_DOPO = new Date(2026, 9, 19, 9, 0);
  * Apre l'app in un contesto (= un "dispositivo" con la sua memoria) con l'orologio fermato a `quando`.
  * Raccoglie gli errori JavaScript della pagina in `pagina.errori`, da controllare alla fine.
  */
-async function apri(contesto, quando = MERCOLEDI) {
+async function apri(contesto, quando = MERCOLEDI, { salvaConNome = false } = {}) {
+  // «Salva con nome» aprirebbe una finestra del sistema, che un test non può usare: di solito qui il file si
+  // scarica. I test di «Salva con nome» (dati.spec.js) ne mettono uno finto e chiedono di lasciarlo.
+  if (!salvaConNome) await contesto.addInitScript(() => { delete window.showSaveFilePicker; });
   const pagina = await contesto.newPage();
   pagina.errori = [];
   pagina.on('pageerror', (e) => pagina.errori.push(String(e)));
@@ -91,12 +96,22 @@ async function apriPannello(p, titolo) {
   if ((await pannello.getAttribute('open')) === null) await pannello.locator('summary').click();
 }
 
-/** «Salva il file» di sincronizzazione (dal menu): restituisce il percorso del file scaricato. */
+/** Va a una sezione: 'settimana', 'casa', 'dati'. */
+async function vaiA(p, sezione) {
+  await p.click(`.sezione-voce[data-sezione="${sezione}"]`);
+  await expect(p.locator(`.sezione-voce[data-sezione="${sezione}"]`)).toHaveAttribute('aria-current', 'page');
+}
+
+/** La sezione mostrata adesso. */
+const sezioneAttuale = (p) => p.locator('.sezione-voce[aria-current="page"]').getAttribute('data-sezione');
+
+/** «Salva il file» di sincronizzazione (sezione Dati): restituisce il percorso del file scaricato. Poi torna dov'era. */
 async function salvaFile(p, percorso) {
-  await apriMenu(p);
+  const prima = await sezioneAttuale(p);
+  await vaiA(p, 'dati');
   const [scaricato] = await Promise.all([p.waitForEvent('download'), p.click('#salva-sync')]);
   await scaricato.saveAs(percorso);
-  await chiudiMenu(p);
+  await vaiA(p, prima);
   return percorso;
 }
 
@@ -105,13 +120,19 @@ async function salvaFile(p, percorso) {
  * Restituisce il testo della conferma, oppure null se la pagina non l'ha chiesta (niente da unire, file non valido).
  */
 async function unisciFile(p, percorso) {
-  await apriMenu(p);
-  await p.setInputFiles('#file-sync', percorso);
+  const prima = await sezioneAttuale(p);
+  await vaiA(p, 'dati');
+  // il file si passa come contenuto, non come percorso: con certi caratteri nel percorso (l’apostrofo tipografico
+  // dei titoli dei test finisce nella cartella di info.outputPath) il file non arrivava alla pagina, senza errori
+  await p.setInputFiles('#file-sync', { name: path.basename(percorso), mimeType: 'application/json', buffer: fs.readFileSync(percorso) });
   const dialogo = p.locator('#conferma[open]');
-  try { await dialogo.waitFor({ timeout: 1000 }); } catch { await chiudiMenu(p); return null; }
-  const testo = await p.locator('#conferma-testo').textContent();
-  await conferma(p);
-  await chiudiMenu(p);   // dopo un'unione la pagina chiude il menu da sola: qui è solo una sicurezza
+  let testo = null;
+  try { await dialogo.waitFor({ timeout: 1000 }); } catch { /* niente da unire, o file non valido */ }
+  if (await dialogo.count()) {
+    testo = await p.locator('#conferma-testo').textContent();
+    await conferma(p);
+  }
+  await vaiA(p, prima);
   return testo;
 }
 
@@ -130,5 +151,5 @@ function foto(p) {
 
 module.exports = {
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
-  dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, salvaFile, unisciFile, foto,
+  dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
 };

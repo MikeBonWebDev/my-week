@@ -25,6 +25,38 @@ const haContenuto = (w) => Boolean(w) && (w.activities.length > 0 || haSegni(w))
 // In quante settimane compare una voce (serve alla libreria: una voce usata non si cancella)
 const settimaneConVoce = (id) => Object.values(state.weeks).filter((w) => w.activities.some((a) => a.id === id)).length;
 
+/* ───────── Faccende nella settimana ─────────
+   Una voce con una cadenza è una faccenda (vedi core.js, faccende). Nella settimana corrente la sua scheda
+   (o la cella del nome, nella tabella) dice da quanto non la fai e, oltre la cadenza, si scalda: data-calore e
+   --calore, che stile.css trasforma in colore secondo l'intensità scelta nel menu. Nelle settimane passate no:
+   il calore parla di oggi. */
+const faccendeDiOggi = () => new Map(Core.faccende(db.registro, oggiK).map((f) => [f.id, f]));
+const fmtGiorno = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
+const ogniGiorni = (n) => (n === 1 ? 'Ogni giorno' : `Ogni ${n} giorni`);
+
+// "oggi", "ieri", "16 giorni fa"
+function daQuando(k) {
+  const giorni = Core.giorniTra(k, oggiK);
+  return giorni <= 0 ? 'oggi' : giorni === 1 ? 'ieri' : `${giorni} giorni fa`;
+}
+// "oggi", "ieri", "giovedì 22 ottobre": quando hai saltato il giro
+const quandoSalto = (k) => (Core.giorniTra(k, oggiK) <= 1 ? daQuando(k) : fmtGiorno.format(dataDaChiave(k)));
+
+// "16 giorni fa · ogni 14 giorni", "Mai segnata · ogni 30 giorni", "11 giorni fa · giro saltato ieri · ogni 7 giorni"
+function testoCadenza(f) {
+  return (f.ultima ? daQuando(f.ultima) : 'Mai segnata')
+    + (f.salto ? ` · giro saltato ${quandoSalto(f.salto)}` : '')
+    + ` · ${ogniGiorni(f.cadenza).toLowerCase()}`;
+}
+
+// Mette (o toglie) il calore su un elemento. Con il riposo, al posto del calore la tinta quieta del riposo.
+function segnaCalore(el, f, { riposo = false } = {}) {
+  const caldo = Boolean(f && f.calore > 0 && !riposo);
+  el.toggleAttribute('data-calore', caldo);
+  if (caldo) el.style.setProperty('--calore', f.calore.toFixed(3));
+  else el.style.removeProperty('--calore');
+}
+
 // L'ultima settimana prima di quella corrente che aveva delle attività: da lì si può riprendere la lista
 function settimanaDaRiprendere() {
   const corrente = lunediCorrente();
@@ -90,7 +122,14 @@ function creaRiga(attivita) {
   dettaglio.placeholder = 'dettaglio (facoltativo)';
   dettaglio.dataset.id = attivita.id;
   dettaglio.setAttribute('aria-label', `Dettaglio di «${attivita.name}» per questa settimana`);
-  testi.append(nome, dettaglio);
+  testi.append(nome);
+  if (inSettimanaCorrente() && faccendeTabella.has(attivita.id)) {
+    intestazioneRiga.dataset.faccenda = attivita.id;
+    const riga = document.createElement('span');
+    riga.className = 'riga-cadenza';
+    testi.append(riga);
+  }
+  testi.append(dettaglio);
   contenitore.append(testi);
 
   if (inSettimanaCorrente()) {
@@ -334,8 +373,23 @@ function aggiornaRiprendi() {
   }
 }
 
+// Le faccende della tabella: testo della cadenza e calore, aggiornati sul posto (dopo una spunta o un riposo
+// la tabella non si ridisegna, per non far perdere il fuoco alla casella appena toccata).
+let faccendeTabella = new Map();
+function aggiornaFaccendeTabella() {
+  faccendeTabella = faccendeDiOggi();
+  const iOggi = (dataDaChiave(oggiK).getDay() + 6) % 7;
+  const riposoOggi = inSettimanaCorrente() && state.weeks[visualizzata]?.rest[iOggi] === true;
+  corpo.querySelectorAll('th[data-faccenda]').forEach((th) => {
+    const f = faccendeTabella.get(th.dataset.faccenda);
+    th.querySelector('.riga-cadenza').textContent = f ? testoCadenza(f) : '';
+    segnaCalore(th, f, { riposo: riposoOggi });
+  });
+}
+
 // La tabella della settimana (computer).
 function disegnaTabella() {
+  faccendeTabella = faccendeDiOggi();
   creaIntestazione();
   const attivita = attivitaDi(visualizzata);
   corpo.replaceChildren(...(attivita.length
@@ -345,6 +399,7 @@ function disegnaTabella() {
         : 'In questa settimana non c’erano attività.')]));
   piede.replaceChildren(creaRigaEnergia(), creaRigaRiposo());
   aggiornaColonne();
+  aggiornaFaccendeTabella();
 }
 
 /* ───────── Vista a un giorno (telefono) ───────── */
@@ -413,13 +468,15 @@ function disegnaGiorno() {
     b.setAttribute('aria-pressed', String(w?.energy[g] === livello));
     return b;
   }));
+  $('.giornata').toggleAttribute('data-riposo', w?.rest[g] === true);
   riposoGiorno.dataset.giorno = String(g);
   riposoGiorno.checked = w?.rest[g] === true;
   riposoGiorno.setAttribute('aria-label', `Giorno di riposo – ${GIORNI[g]}`);
 
   // Le schede delle attività
+  const faccende = inSettimanaCorrente() ? faccendeDiOggi() : new Map();
   carte.replaceChildren(...(attivita.length
-    ? attivita.map((a) => creaCarta(a, g))
+    ? attivita.map((a) => creaCarta(a, g, faccende.get(a.id)))
     : [creaCartaVuota(inSettimanaCorrente()
         ? 'Nessuna attività, per ora: aggiungine una qui sopra.'
         : 'In questa settimana non c’erano attività.')]));
@@ -427,12 +484,17 @@ function disegnaGiorno() {
 
 // Una scheda: nome, dettaglio, sette puntini della settimana, "Togli"; a destra l'interruttore del giorno scelto.
 // Le caselle hanno gli stessi data-id e data-giorno della tabella: i gestori degli eventi sono gli stessi.
-function creaCarta(attivita, g) {
+// f: la faccenda, se la voce ne è una (solo nella settimana corrente). Fatta quel giorno, la scheda è verde;
+// altrimenti, in un giorno di riposo prende la tinta del riposo; altrimenti, oltre la cadenza, si scalda.
+function creaCarta(attivita, g, f) {
   const w = state.weeks[visualizzata];
   const fatto = w?.done[attivita.id] ?? [];
   const li = document.createElement('li');
   li.className = 'carta';
   li.toggleAttribute('data-fatto', fatto[g] === true);
+  const riposo = w?.rest[g] === true && fatto[g] !== true;
+  li.toggleAttribute('data-riposo', riposo);
+  if (fatto[g] !== true) segnaCalore(li, f, { riposo });
 
   const testi = document.createElement('div');
   testi.className = 'carta-testi';
@@ -470,7 +532,14 @@ function creaCarta(attivita, g) {
     togli.setAttribute('aria-label', `Togli «${attivita.name}» da questa settimana`);
     piedeCarta.append(togli);
   }
-  testi.append(nome, dettaglio, piedeCarta);
+  testi.append(nome);
+  if (f) {
+    const riga = document.createElement('span');
+    riga.className = 'riga-cadenza';
+    riga.textContent = testoCadenza(f);
+    testi.append(riga);
+  }
+  testi.append(dettaglio, piedeCarta);
 
   const etichetta = document.createElement('label');
   etichetta.className = 'carta-spunta';
@@ -496,6 +565,8 @@ function creaCartaVuota(testo) {
 // Ridisegna tutto dalla vista (state). Rifare la tabella intera costa pochissimo (poche decine di righe)
 // e ha un grande vantaggio: ciò che vedi viene sempre e solo dai dati, non può restare indietro.
 function disegna() {
+  // l'intensità del colore delle faccende (menu): vale su tutti i dispositivi, quindi sta nei dati
+  document.documentElement.dataset.intensita = state.intensita;
   const suTelefono = telefono.matches;
   scheda.hidden = suTelefono;
   vistaGiorno.hidden = !suTelefono;

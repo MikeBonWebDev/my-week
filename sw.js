@@ -8,7 +8,7 @@
    - icone e manifest: prima la copia salvata.
    Quando cambi un file, cambia anche VERSIONE: la vecchia copia viene buttata e si riparte puliti. */
 
-const VERSIONE = 'settimana-7';
+const VERSIONE = 'settimana-8';
 const FILE = [
   './',
   './index.html',

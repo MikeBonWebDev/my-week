@@ -4,7 +4,7 @@
 const { test, expect } = require('@playwright/test');
 const { creaSeme } = require('../strumenti/seme.js');
 const {
-  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, conferma, aggiungi, apriMenu, chiudiMenu, salvaFile, unisciFile, foto,
+  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, conferma, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto,
 } = require('./aiuti');
 
 const TELEFONO = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
@@ -148,14 +148,16 @@ test('settimane passate: si consultano e correggono, senza aggiungere né toglie
   await expect(p.locator('#titolo-giorno')).toContainText('Lunedì 19 ottobre');
 });
 
-test('il menu si apre dal basso: CSV e libreria ci sono, e si chiude', async ({ browser }) => {
+test('il menu si apre dal basso, con tema, colore e libreria; il CSV sta nella sezione Dati', async ({ browser }) => {
   const p = await apriTelefono(browser);
   await aggiungi(p, 'Sviluppo');
+  await vaiA(p, 'dati');
+  const [scaricato] = await Promise.all([p.waitForEvent('download'), p.click('#scarica-settimana')]);
+  expect(scaricato.suggestedFilename()).toBe('settimana-2026-10-12.csv');
   await apriMenu(p);
   const menu = await p.locator('#menu').boundingBox();
   expect(Math.round(menu.y + menu.height)).toBe(844);                             // appoggiato al fondo dello schermo
-  const [scaricato] = await Promise.all([p.waitForEvent('download'), p.click('#scarica-settimana')]);
-  expect(scaricato.suggestedFilename()).toBe('settimana-2026-10-12.csv');
+  expect(await p.locator('#menu h3').allTextContents()).toEqual(['Tema', 'Colore delle faccende']);
   await p.locator('#pannello-libreria summary').click();
   await expect(p.locator('.lib-nome[data-id="sviluppo"]')).toBeVisible();
   await chiudiMenu(p);

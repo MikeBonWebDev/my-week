@@ -43,9 +43,9 @@ Nel repository c’è solo il codice: i tuoi dati non ci finiscono mai.
 
 ## 4. Usarla su più dispositivi
 
-1. Sul primo dispositivo: **Menu** (in alto a destra) → *Sincronizza* → *Salva il file* (sul telefono anche
-   *Invia a…*, che apre il menu Condividi, per esempio verso Drive).
-2. Sull’altro: **Menu** → *Unisci un file*. La pagina dice quante modifiche porta il file e chiede conferma.
+1. Sul primo dispositivo: sezione **Dati** → *Salva il file* (sul telefono anche *Invia a…*, che apre il menu
+   Condividi, per esempio verso Drive).
+2. Sull’altro: sezione **Dati** → *Unisci un file*. La pagina dice quante modifiche porta il file e chiede conferma.
 3. Si può fare in qualsiasi ordine e quante volte vuoi: per ogni casella vince la modifica più recente.
    Il file è anche la tua copia di sicurezza.
 
