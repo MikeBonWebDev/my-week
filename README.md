@@ -44,8 +44,16 @@ sono quelli che il browser esegue.
 
 ```
 settimana-pwa/
-├── index.html            la pagina: struttura (HTML), aspetto (CSS), comportamento (JavaScript)
-├── core.js               il nucleo: dati, regola di unione, operazioni. Nessun browser: gira anche in Node
+├── index.html            la pagina: la struttura (HTML) e l’elenco dei file da caricare
+├── stile.css             l’aspetto (CSS)
+├── core.js               il nucleo: dati, regola di unione, faccende, operazioni. Nessun browser: gira anche in Node
+├── js/                   il comportamento della pagina (JavaScript), diviso per argomento
+│   ├── base.js           impostazioni, elementi, date, dati (caricare, salvare, esito delle azioni)
+│   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
+│   ├── libreria.js       il pannello «Libreria delle attività»
+│   ├── azioni.js         aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
+│   ├── file.js           ultimo salvataggio e unione, CSV, sincronizzazione
+│   └── guscio.js         menu, finestra di conferma, avvio, app installabile
 ├── sw.js                 il service worker: copia dei file per l'uso senza rete
 ├── manifest.webmanifest  nome, colori e icone dell'app installata
 ├── icone/                icone per Android, iPhone, scheda del browser
@@ -66,7 +74,7 @@ settimana-pwa/
 └── LEGGIMI.md            come pubblicarla, installarla, usarla
 ```
 
-L’app vera e propria sono i primi cinque elementi. Il resto serve a sviluppare e verificare.
+L’app vera e propria sono i primi sette elementi. Il resto serve a sviluppare e verificare.
 
 ## 3. Provarla sul tuo computer
 
@@ -95,7 +103,7 @@ come un sito diverso da `localhost` (quindi con dati separati).
                          ▼                               │
                   settimana-sync-….json  ── Drive, email… ──►  l'altro dispositivo
                          │
-   sw.js (service worker): tiene una copia di index.html, core.js, icone… per aprire l'app senza rete
+   sw.js (service worker): tiene una copia di index.html, stile.css, core.js, js/, icone… per l'uso senza rete
 ```
 
 Tre idee reggono tutto:
@@ -166,9 +174,13 @@ e dispositivo (`d`).
 | `s/2026-10-12/a/sviluppo/f/2` | `true` / `false` | fatto il giorno 2 (0 = lunedì, quindi mercoledì) |
 | `s/2026-10-12/r/6` | `true` / `false` | domenica è giorno di riposo |
 | `s/2026-10-12/e/2` | `"pesa"` / `"ok"` / `"leggero"` / `null` | energia di mercoledì |
+| `v/bagno/cad` | `14` / `false` | la voce `bagno` è una faccenda, da fare ogni 14 giorni (`false`: nessuna cadenza) |
+| `v/bagno/salto` | `"2026-10-22"` / `''` | il giorno dell’ultimo «salto questo giro» |
+| `i/intensita` | `"nessuna"` / `"morbida"` / `"decisa"` | quanto si colorano le faccende oltre la cadenza |
 
 `v` sta per *voce*, `s` per *settimana*, `m` per *membro* (della lista), `a` per *attività*, `f` per *fatto*,
-`r` per *riposo*, `e` per *energia*.
+`r` per *riposo*, `e` per *energia*, `cad` per *cadenza*, `i` per *impostazione* (una scelta che vale su tutti i
+dispositivi).
 
 Perché piatto? Perché così l’unione di due registri è un ciclo su chiavi, che non deve sapere niente di settimane o
 attività (§7). Quando arriveranno le fasce orarie saranno semplicemente chiavi nuove
@@ -195,7 +207,33 @@ c’è già. Così il registro contiene solo ciò che hai davvero fatto.
 }
 ```
 
-La vista non si salva mai: si ricalcola ogni volta (bastano pochi millisecondi).
+La vista non si salva mai: si ricalcola ogni volta (bastano pochi millisecondi). Contiene anche `intensita`
+(`'morbida'` se nessuno l’ha mai scelta).
+
+### Le faccende: «da quanto tempo non fai cosa»
+
+Una voce con una cadenza è una **faccenda**. `Core.faccende(registro, oggi)` restituisce, per ognuna:
+
+| Campo | Significato |
+|---|---|
+| `ultima` | il giorno più recente con una spunta, in **qualunque** settimana — anche da cui la voce è stata tolta |
+| `salto` | il giorno dell’ultimo «salto questo giro», solo se è dopo l’ultima spunta |
+| `riferimento` | da qui si conta: il più recente tra `ultima` e `salto` |
+| `giorni` | giorni passati dal riferimento a `oggi` |
+| `calore` | `0` finché la cadenza non è superata; poi cresce fino a `1` dopo un’altra cadenza intera, e lì si ferma |
+
+Esempio: cadenza 14, ultima volta 16 giorni fa → `calore = (16 − 14) / 14 ≈ 0,14`. A 28 giorni o più, `1`.
+
+Tre scelte da notare:
+- **niente si salva**: «l’ultima volta» si ricalcola dalle spunte, quindi non può andare fuori sincrono tra
+  telefono e computer;
+- **`oggi` è un parametro**: la funzione non legge l’orologio, così i test possono chiederle «e domani?»;
+- **le date sono di calendario**: i conti si fanno in UTC sui giorni (`piuGiorni`, `giorniTra`), quindi il cambio
+  dell’ora legale non sposta niente.
+
+L’elenco è già in ordine: prima chi ha superato di più la propria cadenza, in proporzione; le faccende mai segnate
+in fondo. `Core.primoUso(registro)` dà il lunedì della settimana più vecchia con dati: servirà a contare da quando
+si usa l’app.
 
 ### Dove stanno i dati nel browser
 
@@ -264,6 +302,11 @@ ancora `m/… = true`) la riporterebbe indietro: la chiave "non c’è" non può
 **scrive** `false` con il suo momento: è una modifica come le altre, e vince se è più recente.
 Questi valori-segnale si chiamano in gergo *tombstone* ("lapidi").
 
+Togliere un’attività da una settimana scrive **solo** `m/… = false`: le spunte e il dettaglio di quella settimana
+restano nel registro. La tabella non li mostra, perché la voce non fa più parte della lista; ma contano per
+«l’ultima volta» delle faccende (§6) e ricompaiono se la voce torna in quella settimana. Per lo stesso
+motivo una voce con anche una sola spunta, in qualunque settimana, fa parte dello storico e non si può cancellare.
+
 ### L’orologio che non torna indietro
 
 "Più recente" dipende dall’orologio del dispositivo, e gli orologi non sono perfetti. Esempio: il PC è indietro di
@@ -304,9 +347,17 @@ rinominata), si usa `-2`, `-3`… (`idPer` in `core.js`).
 
 ## 8. La pagina: index.html
 
-Un solo file con tre parti: HTML (struttura), CSS (aspetto), JavaScript (comportamento). Il JavaScript è diviso in
-sezioni, segnate da commenti `/* ───── … ───── */`, nell’ordine: impostazioni → date → dati → disegno → azioni →
-CSV → sincronizzazione → menu → avvio. In testa allo script c’è un riassunto del giro di una modifica.
+Tre parti in file separati: `index.html` (struttura), `stile.css` (aspetto), i file di `js/` (comportamento).
+Fino alla Fase 1 erano un unico file di oltre duemila righe; sono stati divisi senza cambiare una riga di codice,
+mantenendo l’ordine di prima. Dentro ogni file, le sezioni sono segnate da commenti `/* ───── … ───── */`.
+In testa a `js/base.js` c’è un riassunto del giro di una modifica e l’elenco dei file.
+
+**Più file senza `import`.** I file di `js/` sono *script classici*, non moduli: le costanti e le funzioni dichiarate
+in cima a uno script finiscono in un ambito comune a tutta la pagina, quindi `guscio.js` può chiamare `disegna()` di
+`settimana.js`. Due regole lo rendono sicuro: un nome si dichiara una volta sola, e il codice che gira subito
+(fuori dalle funzioni) usa solo ciò che sta nei file caricati prima; per questo `guscio.js`, che avvia l’app, è
+l’ultimo. I moduli (`<script type="module">`) sarebbero più ordinati, ma non funzionano aprendo la pagina come
+file locale, e richiederebbero di riscrivere ogni collegamento tra le parti.
 
 ### Due viste della stessa settimana
 
@@ -434,8 +485,8 @@ Il service worker di quest’app fa una cosa sola: tiene una copia dei file per 
 - All’**installazione** scarica in cache l’elenco `FILE`.
 - All’**attivazione** cancella le cache delle versioni precedenti (quelle con un altro valore di `VERSIONE`).
 - Per ogni **richiesta**:
-  - pagina e script (`index.html`, `core.js`): **prima la rete**, e se manca la copia salvata. Così pagina e nucleo
-    arrivano sempre aggiornati e sempre insieme;
+  - pagina, script e stile (`index.html`, `core.js`, `js/*.js`, `stile.css`): **prima la rete**, e se manca la copia
+    salvata. Così arrivano sempre aggiornati e sempre insieme;
   - icone e manifest: **prima la copia salvata**.
 
 I dati non passano mai dal service worker: stanno in `localStorage`. Gli aggiornamenti dell’app non li toccano.
@@ -457,7 +508,10 @@ moltissimi casi.
 - **Test di proprietà**: invece di un esempio, una *regola che deve valere sempre*. Tre dispositivi simulati (uno con
   l’orologio un’ora indietro) fanno centinaia di modifiche casuali e qualche unione parziale; poi si controlla che
   l’ordine delle unioni non conti, che ripetere un’unione non cambi niente, che un file vecchio non tolga niente, che
-  la vista sia coerente. Si ripete con decine di semi diversi.
+  la vista sia coerente. Si ripete con decine di semi diversi. Le modifiche casuali comprendono anche cadenze,
+  salti e intensità, e un test controlla che dopo lo scambio dei file tutti vedano **le stesse faccende**.
+- **Faccende**: l’ultima volta presa da settimane diverse (anche da una voce tolta), il calore che si ferma a 1, il
+  salto che fa ripartire il conteggio ma non cambia l’ultima volta, una spunta nel futuro che non conta, l’ordine.
 
 Il generatore casuale ha un **seme** fisso (`casuale(seme)`): stesso seme, stessa sequenza. Se un test fallisce, il
 messaggio dice il seme, e il caso si riproduce identico.
@@ -493,6 +547,12 @@ la pagina proseguiva solo all’evento `close`, che il browser consegna un attim
 in quell’attimo. La correzione (in `conferma()` di `aiuti.js`) aspetta proprio quell’evento. Regola generale: nei test
 nel browser si aspetta **un segnale preciso**, mai un tempo fisso. Un test che fallisce ogni tanto (*flaky*) va
 capito, non rilanciato finché passa.
+
+Un’altra lezione, dalla divisione di `index.html`: dopo lo spostamento dello stile in `stile.css`, 22 test su 23
+passavano. Il server locale mandava il file con il tipo sbagliato (`application/octet-stream` invece di `text/css`), e
+il browser, giustamente, lo ignorava: la pagina funzionava ma era senza stile. Se ne è accorto solo il test che misura
+dove si apre il menu sul telefono. Ora `server.js` conosce i `.css`, e un test controlla apposta che lo stile sia
+applicato. Morale: i test che guardano *come appare* qualcosa colgono errori che i test sul comportamento non vedono.
 
 ## 12. Limiti e scelte consapevoli
 
@@ -543,7 +603,7 @@ Così lo stesso file funziona in entrambi.
 1. Questo README, §4 e §5: il quadro e il giro di una modifica.
 2. `core.js`, dall’alto: il commento iniziale, poi `scrivi`, `vince`, `unisci`, `vista`, le operazioni.
 3. `test/core.test.js`: i test su esempi in fondo al file, poi i test di proprietà in cima.
-4. `index.html`, lo script: la panoramica in testa, poi le sezioni "Dati" e "Azioni".
+4. `js/base.js`: la panoramica in testa e la sezione "Dati"; poi `js/azioni.js`.
 5. `test-browser/sincronizzazione.spec.js` e `telefono.spec.js`, con `aiuti.js` accanto.
 6. `sw.js` e il §10.
 

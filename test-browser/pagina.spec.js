@@ -8,6 +8,14 @@ const {
   dettaglio, togli, apriMenu, chiudiMenu, apriPannello, foto,
 } = require('./aiuti');
 
+// Lo stile e il codice stanno in file separati (stile.css, js/): se uno non arriva, la pagina sembra viva ma non lo è
+test('stile e script caricati: aspetto della pagina e nessun errore', async ({ browser }) => {
+  const p = await apri(await browser.newContext());
+  expect(await p.evaluate(() => getComputedStyle(document.body).backgroundImage)).toContain('gradient');
+  expect(await p.evaluate(() => getComputedStyle(document.querySelector('h1')).fontFamily)).toContain('Palatino');
+  expect(p.errori).toEqual([]);
+});
+
 test.describe('primo avvio', () => {
   test('tabella vuota, sei proposte di esempio, nessun dato scritto finché non scegli', async ({ page: _p, browser }) => {
     const p = await apri(await browser.newContext());

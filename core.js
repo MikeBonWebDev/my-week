@@ -16,6 +16,9 @@
      "s/2026-10-12/a/sviluppo/f/2"    → { v: true,          t: …, d: … }         fatto mercoledì (0 = lunedì)
      "s/2026-10-12/r/6"               → { v: true,          t: …, d: … }         domenica di riposo
      "s/2026-10-12/e/2"               → { v: "ok",          t: …, d: … }         energia di mercoledì
+     "v/bagno/cad"                    → { v: 14,            t: …, d: … }         faccenda: ogni 14 giorni
+     "v/bagno/salto"                  → { v: "2026-10-22",  t: …, d: … }         ultimo «salto questo giro»
+     "i/intensita"                    → { v: "morbida",     t: …, d: … }         colore delle faccende
 
    La tabella che vedi si ricostruisce da qui (vista).
 
@@ -30,6 +33,10 @@
 
    Togliere qualcosa NON cancella la chiave: la porta a false / '' con il suo momento,
    altrimenti la copia dell'altro dispositivo la farebbe ricomparire.
+
+   LE FACCENDE
+   Una voce con una cadenza (v/<id>/cad) è una faccenda. "L'ultima volta" non si salva: si ricava
+   dalle spunte di tutte le settimane, anche di quelle da cui la voce è stata tolta (faccende).
    ───────────────────────────────────────────────────────────────────────────── */
 (function (radice, fabbrica) {
   const modulo = fabbrica();
@@ -41,6 +48,8 @@
   const FORMATO = 'settimana-sync';
   const VERSIONE = 1;
   const LIVELLI = ['pesa', 'ok', 'leggero'];
+  const INTENSITA = ['nessuna', 'morbida', 'decisa'];   // quanto si colorano le faccende oltre la cadenza
+  const MAX_CADENZA = 365;
   const MAX_NOME = 60;
   const MAX_DETTAGLIO = 200;
   const ID = '[a-z0-9-]{1,48}';
@@ -50,6 +59,7 @@
   const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
   const isBool = (v) => v === true || v === false;
   const giornoValido = (i) => Number.isInteger(i) && i >= 0 && i < 7;
+  const cadenzaValida = (n) => Number.isInteger(n) && n >= 1 && n <= MAX_CADENZA;
   const pulisci = (t, max) => (typeof t === 'string' ? t.replace(/\s+/g, ' ').trim().slice(0, max) : '');
   const chiaveNome = (n) => n.replace(/\s+/g, ' ').trim().toLowerCase();
   // "Riposo" ed "Energia" hanno la loro riga, e nel CSV si distinguono per nome
@@ -64,6 +74,21 @@
     const d = new Date(Date.UTC(a, m - 1, g));
     return d.getUTCFullYear() === a && d.getUTCMonth() === m - 1 && d.getUTCDate() === g && d.getUTCDay() === 1;
   }
+
+  // Una data vera, nella forma AAAA-MM-GG
+  function eData(k) {
+    if (typeof k !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(k)) return false;
+    const [a, m, g] = k.split('-').map(Number);
+    const d = new Date(Date.UTC(a, m - 1, g));
+    return d.getUTCFullYear() === a && d.getUTCMonth() === m - 1 && d.getUTCDate() === g;
+  }
+
+  // Aritmetica dei giorni, in UTC: le date sono etichette di calendario, il fuso non deve contare
+  const GIORNO_MS = 86_400_000;
+  const msData = (k) => { const [a, m, g] = k.split('-').map(Number); return Date.UTC(a, m - 1, g); };
+  const dataDaMs = (ms) => new Date(ms).toISOString().slice(0, 10);
+  const piuGiorni = (k, n) => dataDaMs(msData(k) + n * GIORNO_MS);
+  const giorniTra = (da, a) => Math.round((msData(a) - msData(da)) / GIORNO_MS);
 
   // L'identificativo di una voce si ricava dal nome: "Città nuova" → "citta-nuova".
   // Così la stessa voce creata su due dispositivi, prima di unirli, è una voce sola.
@@ -86,6 +111,9 @@
     [new RegExp(`^s/${SETT}/a/${ID}/f/[0-6]$`), isBool],
     [new RegExp(`^s/${SETT}/r/[0-6]$`), isBool],
     [new RegExp(`^s/${SETT}/e/[0-6]$`), (v) => v === null || LIVELLI.includes(v)],
+    [new RegExp(`^v/${ID}/cad$`), (v) => v === false || cadenzaValida(v)],
+    [new RegExp(`^v/${ID}/salto$`), (v) => v === '' || eData(v)],
+    [/^i\/intensita$/, (v) => INTENSITA.includes(v)],
   ];
 
   // Tiene solo le informazioni ben formate. Le chiavi che questa versione non conosce
@@ -140,6 +168,7 @@
     const nomi = {};
     const cancellate = {};
     const grezze = {};
+    const usate = new Set();   // voci che fanno parte dello storico: in una lista, o con una spunta
     for (const [k, x] of Object.entries(reg)) {
       const p = k.split('/');
       if (p[0] === 'v' && p.length === 3) {
@@ -153,18 +182,21 @@
       const w = (grezze[p[1]] ??= { membri: [], det: {}, fatto: {}, rest: Array(7).fill(false), energy: Array(7).fill(null) });
       if (p.length === 4 && p[2] === 'm') { if (x.v === true) w.membri.push([p[3], x.t]); }
       else if (p.length === 5 && p[2] === 'a' && p[4] === 'det') w.det[p[3]] = x.v;
-      else if (p.length === 6 && p[2] === 'a' && p[4] === 'f' && giorno(5) >= 0) (w.fatto[p[3]] ??= Array(7).fill(false))[giorno(5)] = x.v;
+      else if (p.length === 6 && p[2] === 'a' && p[4] === 'f' && giorno(5) >= 0) {
+        (w.fatto[p[3]] ??= Array(7).fill(false))[giorno(5)] = x.v;
+        if (x.v === true) usate.add(p[3]);
+      }
       else if (p.length === 4 && p[2] === 'r' && giorno(3) >= 0) w.rest[giorno(3)] = x.v;
       else if (p.length === 4 && p[2] === 'e' && giorno(3) >= 0) w.energy[giorno(3)] = x.v;
     }
 
-    const usate = new Set();
     const weeks = {};
     for (const [k, w] of Object.entries(grezze)) {
       // l'ordine delle righe è quello in cui le hai aggiunte alla settimana
       const membri = w.membri.filter(([id]) => typeof nomi[id] === 'string')
         .sort((a, b) => a[1] - b[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
       const activities = membri.map(([id]) => ({ id, dettaglio: w.det[id] ?? '' }));
+      // le spunte di una voce tolta dalla settimana restano nel registro (storico), ma la tabella non le mostra
       const done = {};
       for (const { id } of activities) {
         usate.add(id);
@@ -177,7 +209,55 @@
     const libreria = Object.keys(nomi).sort()
       .filter((id) => cancellate[id] !== true || usate.has(id))
       .map((id) => ({ id, name: nomi[id] }));
-    return { libreria, weeks };
+    const intensita = INTENSITA.includes(reg['i/intensita']?.v) ? reg['i/intensita'].v : 'morbida';
+    return { libreria, weeks, intensita };
+  }
+
+  /* ───────── Faccende: da quanto tempo non fai cosa ─────────
+     Per ogni voce della libreria con una cadenza, vista dal giorno «oggi» (AAAA-MM-GG):
+       ultima      il giorno più recente con una spunta, in qualunque settimana (anche tolta) — o null
+       salto       il giorno dell'ultimo «salto questo giro», solo se è dopo l'ultima spunta — o null
+       riferimento da qui si conta: il più recente tra ultima e salto — o null se non c'è nessuno dei due
+       giorni      giorni passati dal riferimento (null se non c'è)
+       calore      0 finché la cadenza non è superata; poi cresce fino a 1 dopo un'altra cadenza intera
+     L'elenco è in ordine: prima chi ha superato di più la propria cadenza (in proporzione),
+     a parità il nome; le faccende mai segnate in fondo. */
+  function faccende(reg, oggi) {
+    if (!eData(oggi)) throw new Error('oggi deve essere una data AAAA-MM-GG');
+    const vis = vista(reg);
+    const ultime = {};
+    for (const [k, x] of Object.entries(reg)) {
+      if (x.v !== true) continue;
+      const p = k.split('/');
+      if (p.length !== 6 || p[0] !== 's' || p[2] !== 'a' || p[4] !== 'f' || !/^[0-6]$/.test(p[5])) continue;
+      const quando = piuGiorni(p[1], Number(p[5]));
+      if (quando > oggi) continue;   // una spunta nel futuro (orologio sbagliato) non conta
+      if (!ultime[p[3]] || quando > ultime[p[3]]) ultime[p[3]] = quando;
+    }
+    const elenco = [];
+    for (const { id, name } of vis.libreria) {
+      const cadenza = reg[`v/${id}/cad`]?.v;
+      if (!cadenzaValida(cadenza)) continue;
+      const ultima = ultime[id] ?? null;
+      const s = reg[`v/${id}/salto`]?.v;
+      const salto = eData(s) && s <= oggi && (!ultima || s > ultima) ? s : null;
+      const riferimento = salto ?? ultima;
+      const giorni = riferimento ? giorniTra(riferimento, oggi) : null;
+      const calore = giorni === null ? 0 : Math.max(0, Math.min(1, (giorni - cadenza) / cadenza));
+      elenco.push({ id, nome: name, cadenza, ultima, salto, riferimento, giorni, calore });
+    }
+    const peso = (f) => (f.giorni === null ? -1 : f.giorni / f.cadenza);
+    return elenco.sort((a, b) => peso(b) - peso(a) || a.nome.localeCompare(b.nome, 'it'));
+  }
+
+  // Il lunedì della settimana più vecchia con dei dati: serve a contare da quando si usa l'app
+  function primoUso(reg) {
+    let primo = null;
+    for (const k of Object.keys(reg)) {
+      const w = k.split('/')[1];
+      if (k.startsWith('s/') && eLunedi(w) && (!primo || w < primo)) primo = w;
+    }
+    return primo;
   }
 
   /* ───────── Un dispositivo: registro, orologio, operazioni ───────── */
@@ -244,12 +324,12 @@
         return { ok: true, id };
       },
 
-      // Toglie una voce da una settimana, con le sue spunte e il dettaglio di quella settimana.
+      // Toglie una voce dalla lista di una settimana. Spunte e dettaglio restano nel registro, come storico:
+      // la tabella non li mostra, ma contano per «l'ultima volta» delle faccende, e ricompaiono
+      // se la voce torna in quella settimana.
       togli(sett, id) {
         if (!membro(vista(reg), sett, id)) return errore('non-trovata');
         scrivi(`s/${sett}/m/${id}`, false);
-        scrivi(`s/${sett}/a/${id}/det`, '');
-        for (let i = 0; i < 7; i++) scrivi(`s/${sett}/a/${id}/f/${i}`, false);
         return { ok: true };
       },
 
@@ -303,12 +383,38 @@
         return { ok: true, valore: nome };
       },
 
-      // Solo una voce mai usata si può cancellare: una voce usata fa parte dello storico.
+      // Solo una voce mai usata si può cancellare: una voce usata (in una lista, o con una spunta) fa parte dello storico.
       cancella(id) {
         const vis = vista(reg);
         if (!vis.libreria.some((v) => v.id === id)) return errore('non-trovata');
-        if (Object.values(vis.weeks).some((w) => w.activities.some((a) => a.id === id))) return errore('usata');
+        const inLista = Object.values(vis.weeks).some((w) => w.activities.some((a) => a.id === id));
+        const conSpunte = Object.entries(reg).some(([k, x]) => x.v === true && /^s\/[^/]+\/a\/[^/]+\/f\/[0-6]$/.test(k) && k.split('/')[3] === id);
+        if (inLista || conSpunte) return errore('usata');
         scrivi(`v/${id}/del`, true);
+        return { ok: true };
+      },
+
+      // Dà (o toglie, con null) una cadenza in giorni a una voce della libreria: diventa una faccenda.
+      cadenza(id, giorni) {
+        if (!vista(reg).libreria.some((v) => v.id === id)) return errore('non-trovata');
+        if (giorni !== null && !cadenzaValida(giorni)) return errore('valore');
+        scrivi(`v/${id}/cad`, giorni ?? false);
+        return { ok: true };
+      },
+
+      // «Salto questo giro»: il conteggio riparte da quel giorno, senza segnare la faccenda come fatta.
+      // Con null si annulla il salto.
+      salta(id, data) {
+        if (!vista(reg).libreria.some((v) => v.id === id)) return errore('non-trovata');
+        if (data !== null && !eData(data)) return errore('valore');
+        scrivi(`v/${id}/salto`, data ?? '');
+        return { ok: true };
+      },
+
+      // Quanto si colorano le faccende oltre la cadenza: vale su tutti i dispositivi.
+      intensita(livello) {
+        if (!INTENSITA.includes(livello)) return errore('valore');
+        scrivi('i/intensita', livello);
         return { ok: true };
       },
     };
@@ -323,5 +429,9 @@
     return valida(dati.registro);
   }
 
-  return { FORMATO, VERSIONE, LIVELLI, MAX_NOME, MAX_DETTAGLIO, crea, unisci, vista, valida, vince, eLunedi, slug, chiaveNome, eRiservato, pulisci, perFile, daFile };
+  return {
+    FORMATO, VERSIONE, LIVELLI, INTENSITA, MAX_NOME, MAX_DETTAGLIO, MAX_CADENZA,
+    crea, unisci, vista, faccende, primoUso, valida, vince, eLunedi, eData, piuGiorni, giorniTra,
+    slug, chiaveNome, eRiservato, pulisci, perFile, daFile,
+  };
 });

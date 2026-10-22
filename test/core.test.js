@@ -48,17 +48,19 @@ function modificaCasuale(r, db) {
   const presenti = vis.weeks[sett]?.activities ?? [];
   const id = presenti.length ? scegli(r, presenti).id : null;
   const giorno = Math.floor(r() * 7);
-  switch (Math.floor(r() * 10)) {
+  const voce = vis.libreria.length ? scegli(r, vis.libreria) : null;
+  switch (Math.floor(r() * 13)) {
     case 0: case 1: return db.aggiungi(sett, scegli(r, NOMI));
     case 2: return id && db.togli(sett, id);
     case 3: case 4: return id && db.spunta(sett, id, giorno, r() < 0.7);
     case 5: return id && db.dettaglio(sett, id, scegli(r, DETTAGLI));
     case 6: return db.riposo(sett, giorno, r() < 0.5);
     case 7: return db.energia(sett, giorno, scegli(r, [null, 'pesa', 'ok', 'leggero']));
-    case 8: {
-      const voce = vis.libreria.length ? scegli(r, vis.libreria) : null;
-      return voce && (r() < 0.5 ? db.rinomina(voce.id, scegli(r, NOMI) + (r() < 0.5 ? ' bis' : '')) : db.cancella(voce.id));
-    }
+    case 8: return voce && (r() < 0.5 ? db.rinomina(voce.id, scegli(r, NOMI) + (r() < 0.5 ? ' bis' : '')) : db.cancella(voce.id));
+    // le faccende: cadenza, salto, intensità
+    case 9: return voce && db.cadenza(voce.id, scegli(r, [null, 1, 7, 14, 15, 30]));
+    case 10: return voce && db.salta(voce.id, scegli(r, [null, '2026-10-01', '2026-10-14', '2026-10-20']));
+    case 11: return db.intensita(scegli(r, ['nessuna', 'morbida', 'decisa']));
     default: return db.riprendi(sett, scegli(r, SETTIMANE));
   }
 }
@@ -137,6 +139,22 @@ test('proprietà: la vista è sempre coerente (niente righe orfane, niente doppi
       assert.equal(new Set(visti).size, visti.length, `seme ${seme}, ${k}: doppione`);
       for (const id of visti) assert.ok(ids.has(id), `seme ${seme}, ${k}: ${id} non è in libreria`);
       for (const id of Object.keys(w.done)) assert.ok(visti.includes(id), `seme ${seme}, ${k}: spunta orfana`);
+    }
+  }
+});
+
+test('proprietà: dopo lo scambio dei file, tutti i dispositivi vedono le stesse faccende', () => {
+  for (let seme = 600; seme <= 630; seme++) {
+    const dev = simulazione(seme);
+    const tutto = unito(...dev.map((d) => d.registro));
+    for (const d of dev) d.unisci(copia(tutto));
+    const elenchi = dev.map((d) => canonico(Core.faccende(d.registro, '2026-10-22')));
+    assert.equal(elenchi[1], elenchi[0], `seme ${seme}`);
+    assert.equal(elenchi[2], elenchi[0], `seme ${seme}`);
+    for (const f of Core.faccende(tutto, '2026-10-22')) {
+      assert.ok(f.calore >= 0 && f.calore <= 1, `seme ${seme}: calore ${f.calore}`);
+      assert.ok(f.ultima === null || f.ultima <= '2026-10-22', `seme ${seme}: ultima nel futuro`);
+      assert.ok(f.salto === null || f.ultima === null || f.salto > f.ultima, `seme ${seme}: salto prima dell'ultima volta`);
     }
   }
 });
@@ -319,4 +337,146 @@ test('validazione: scarta ciò che è malformato, conserva le chiavi sconosciute
   assert.deepEqual(Core.vista(reg).weeks['2026-10-12'].done, {});
   assert.equal(Core.daFile({ formato: 'altro', registro: {} }), null);
   assert.equal(Core.daFile({ versione: 2, activities: [] }), null);
+});
+
+/* ───────── Faccende ───────── */
+const OGGI = '2026-10-22';   // un giovedì
+
+test('cadenza: si dà, si cambia, si toglie; valori non validi rifiutati', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-10-19', 'Pulizia bagno');
+  assert.equal(tel.cadenza('pulizia-bagno', 14).ok, true);
+  assert.deepEqual(Core.faccende(tel.registro, OGGI).map((f) => [f.id, f.cadenza]), [['pulizia-bagno', 14]]);
+  for (const v of [0, 366, 2.5, -3, '14', NaN]) assert.equal(tel.cadenza('pulizia-bagno', v).errore, 'valore', String(v));
+  assert.equal(tel.cadenza('nessuna-voce', 7).errore, 'non-trovata');
+  tel.cadenza('pulizia-bagno', null);
+  assert.deepEqual(Core.faccende(tel.registro, OGGI), []);
+  assert.equal(tel.registro['v/pulizia-bagno/cad'].v, false);   // tolta, non cancellata: l'altro dispositivo la vedrà sparire
+});
+
+test('l’ultima volta viene dalle spunte di tutte le settimane; mai segnata = neutra', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-10-05', 'Pulizia bagno');
+  tel.spunta('2026-10-05', 'pulizia-bagno', 1, true);   // martedì 6 ottobre
+  tel.aggiungi('2026-10-19', 'Pulire il frigo');
+  tel.cadenza('pulizia-bagno', 14);
+  tel.cadenza('pulire-il-frigo', 30);
+  const [bagno, frigo] = Core.faccende(tel.registro, OGGI);
+  assert.equal(bagno.ultima, '2026-10-06');
+  assert.equal(bagno.giorni, 16);
+  assert.equal(bagno.calore, 2 / 14);
+  assert.deepEqual([frigo.ultima, frigo.giorni, frigo.calore], [null, null, 0]);
+});
+
+test('calore: zero entro la cadenza, poi cresce, e si ferma a 1 dopo un’altra cadenza', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-09-21', 'Lenzuola');
+  tel.cadenza('lenzuola', 7);
+  const calore = (oggi) => Core.faccende(tel.registro, oggi)[0].calore;
+  tel.spunta('2026-09-21', 'lenzuola', 0, true);   // lunedì 21 settembre
+  assert.equal(calore('2026-09-28'), 0);           // 7 giorni: ancora dentro
+  assert.equal(calore('2026-09-29'), 1 / 7);
+  assert.equal(calore('2026-10-05'), 1);           // 14 giorni: massimo
+  assert.equal(calore('2026-12-01'), 1);           // e non va oltre
+});
+
+test('ordine delle faccende: chi ha superato di più la cadenza prima, le mai segnate in fondo', () => {
+  const tel = dispositivo('telefono');
+  for (const [nome, cad, sett, g] of [['Lavatrice', 7, '2026-10-19', 0], ['Piante', 7, '2026-10-12', 0], ['Lenzuola', 14, '2026-09-21', 2], ['Bagno', 14, '2026-10-05', 1]]) {
+    tel.aggiungi(sett, nome); tel.spunta(sett, Core.slug(nome), g, true); tel.cadenza(Core.slug(nome), cad);
+  }
+  tel.aggiungi('2026-10-19', 'Frigo'); tel.cadenza('frigo', 30);
+  tel.aggiungi('2026-10-19', 'Aria'); tel.cadenza('aria', 30);
+  assert.deepEqual(Core.faccende(tel.registro, OGGI).map((f) => f.id), ['lenzuola', 'piante', 'bagno', 'lavatrice', 'aria', 'frigo']);
+});
+
+test('salto: fa ripartire il conteggio senza toccare l’ultima volta; un salto più vecchio dell’ultima spunta non conta', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-09-21', 'Lenzuola'); tel.spunta('2026-09-21', 'lenzuola', 2, true); tel.cadenza('lenzuola', 14);
+  assert.equal(tel.salta('lenzuola', OGGI).ok, true);
+  let f = Core.faccende(tel.registro, OGGI)[0];
+  assert.deepEqual([f.ultima, f.salto, f.riferimento, f.giorni, f.calore], ['2026-09-23', OGGI, OGGI, 0, 0]);
+  f = Core.faccende(tel.registro, '2026-10-23')[0];   // il giorno dopo: il salto è ancora lì, «ieri»
+  assert.deepEqual([f.salto, f.giorni], [OGGI, 1]);
+  tel.aggiungi('2026-10-19', 'Lenzuola');
+  tel.spunta('2026-10-19', 'lenzuola', 4, true);       // poi la fai, venerdì 23
+  f = Core.faccende(tel.registro, '2026-10-24')[0];
+  assert.deepEqual([f.ultima, f.salto, f.giorni], ['2026-10-23', null, 1]);
+  tel.salta('lenzuola', null);
+  assert.equal(tel.registro['v/lenzuola/salto'].v, '');
+  assert.equal(tel.salta('lenzuola', '2026-02-30').errore, 'valore');
+  assert.equal(tel.salta('nessuna', OGGI).errore, 'non-trovata');
+});
+
+test('una spunta nel futuro (orologio sbagliato) non è «l’ultima volta»', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-10-19', 'Bagno'); tel.cadenza('bagno', 7);
+  tel.spunta('2026-10-19', 'bagno', 6, true);   // domenica 25: dopo «oggi»
+  assert.equal(Core.faccende(tel.registro, OGGI)[0].ultima, null);
+  assert.throws(() => Core.faccende(tel.registro, '22/10/2026'));
+});
+
+test('togli: le spunte e il dettaglio restano come storico, e ricompaiono rimettendo la voce', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-10-19', 'Sviluppo');
+  tel.spunta('2026-10-19', 'sviluppo', 0, true);
+  tel.dettaglio('2026-10-19', 'sviluppo', 'Programma B');
+  tel.cadenza('sviluppo', 7);
+  tel.togli('2026-10-19', 'sviluppo');
+  const w = tel.vista().weeks['2026-10-19'];
+  assert.deepEqual([w.activities, w.done], [[], {}]);                       // la tabella non le mostra
+  assert.equal(Core.faccende(tel.registro, OGGI)[0].ultima, '2026-10-19');   // ma contano
+  assert.equal(tel.cancella('sviluppo').errore, 'usata');                    // e la voce fa parte dello storico
+  tel.aggiungi('2026-10-19', 'Sviluppo');
+  const dopo = tel.vista().weeks['2026-10-19'];
+  assert.deepEqual(dopo.activities, [{ id: 'sviluppo', dettaglio: 'Programma B' }]);
+  assert.equal(dopo.done.sviluppo[0], true);
+});
+
+test('intensità: predefinita «morbida», si sincronizza, rifiuta valori sconosciuti', () => {
+  const tel = dispositivo('telefono');
+  const pc = dispositivo('pc');
+  assert.equal(tel.vista().intensita, 'morbida');
+  assert.equal(tel.intensita('rossa').errore, 'valore');
+  tel.intensita('decisa');
+  pc.unisci(copia(tel.registro));
+  assert.equal(pc.vista().intensita, 'decisa');
+});
+
+test('cadenza e salto viaggiano tra dispositivi, e vince l’ultima modifica', () => {
+  const tel = dispositivo('telefono');
+  const pc = dispositivo('pc');
+  tel.aggiungi('2026-10-19', 'Bagno'); tel.cadenza('bagno', 14);
+  pc.unisci(copia(tel.registro));
+  pc.avanza(1000); pc.cadenza('bagno', 15);
+  tel.avanza(500); tel.salta('bagno', OGGI);
+  tel.unisci(copia(pc.registro)); pc.unisci(copia(tel.registro));
+  for (const d of [tel, pc]) assert.deepEqual(Core.faccende(d.registro, OGGI).map((f) => [f.cadenza, f.salto]), [[15, OGGI]]);
+});
+
+test('primo uso: il lunedì della settimana più vecchia con dei dati', () => {
+  const tel = dispositivo('telefono');
+  assert.equal(Core.primoUso(tel.registro), null);
+  tel.aggiungi('2026-10-12', 'Sviluppo');
+  tel.riposo('2026-09-28', 6, true);
+  assert.equal(Core.primoUso(tel.registro), '2026-09-28');
+});
+
+test('validazione delle chiavi nuove', () => {
+  const e = (v) => ({ v, t: 1, d: 'pc' });
+  const reg = Core.valida({
+    'v/a/cad': e(14), 'v/b/cad': e(false), 'v/c/cad': e(0), 'v/d/cad': e(2.5), 'v/e/cad': e('14'),
+    'v/a/salto': e('2026-10-22'), 'v/b/salto': e(''), 'v/c/salto': e('2026-02-30'), 'v/d/salto': e(true),
+    'i/intensita': e('decisa'),
+  });
+  assert.deepEqual(Object.keys(reg).sort(), ['i/intensita', 'v/a/cad', 'v/a/salto', 'v/b/cad', 'v/b/salto']);
+  assert.equal(Core.vista(Core.valida({ 'i/intensita': e('rossa') })).intensita, 'morbida');
+});
+
+test('date: aritmetica in giorni di calendario', () => {
+  assert.equal(Core.piuGiorni('2026-10-19', 3), '2026-10-22');
+  assert.equal(Core.piuGiorni('2026-03-28', 2), '2026-03-30');   // cambio dell'ora legale: non conta
+  assert.equal(Core.giorniTra('2026-10-06', '2026-10-22'), 16);
+  assert.equal(Core.eData('2026-02-29'), false);
+  assert.equal(Core.eData('2028-02-29'), true);
 });

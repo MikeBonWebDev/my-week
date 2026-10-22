@@ -17,12 +17,15 @@ test('installabile, e senza rete si apre con i dati', async ({ page, context }) 
   expect((await devtools.send('Page.getAppManifest')).errors).toEqual([]);
   expect((await devtools.send('Page.getInstallabilityErrors')).installabilityErrors).toEqual([]);
 
-  // Tutti i file dell'elenco di sw.js sono in cache
+  // Tutti i file dell'elenco di sw.js sono in cache: li conto direttamente da sw.js, così il test non va
+  // aggiornato a ogni file nuovo
+  const elenco = require('node:fs').readFileSync('sw.js', 'utf8').match(/const FILE = \[([\s\S]*?)\];/)[1].match(/'[^']+'/g).length;
   const inCache = await page.evaluate(async () => {
     const cache = await caches.open((await caches.keys())[0]);
     return (await cache.keys()).length;
   });
-  expect(inCache).toBe(10);
+  expect(inCache).toBe(elenco);
+  expect(elenco).toBeGreaterThan(10);
   
   // In fondo al menu si legge la versione installata: il nome della cache, cioè VERSIONE di sw.js
   const versione = require('node:fs').readFileSync('sw.js', 'utf8').match(/const VERSIONE = '([^']+)'/)[1];

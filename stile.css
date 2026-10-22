@@ -1,0 +1,813 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   stile.css — l’aspetto di «La mia settimana».
+   Colori come variabili su :root (chiaro e scuro con light-dark()), poi i blocchi della pagina
+   nello stesso ordine in cui compaiono, poi le regole per il telefono (sotto i 40rem).
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ───────── Colori: un'unica palette, chiara e scura, che segue il sistema ───────── */
+:root {
+  color-scheme: light dark;
+
+  --sfondo-1: light-dark(#f8f3e9, #141c19);
+  --sfondo-2: light-dark(#eff2e8, #1a2420);
+  --sfondo-3: light-dark(#e6eee9, #19231f);
+
+  --scheda:        light-dark(#fffdf8, #202b27);
+  --scheda-bordo:  light-dark(#e9e3d5, #2f3e38);
+  --fascia:        light-dark(#faf7ee, #1d2824);
+  --linea:         light-dark(#ece6d9, #2c3a34);
+  --linea-forte:   light-dark(#c9c1ae, #50625a);
+
+  --inchiostro:    light-dark(#38423d, #e5ece7);
+  --tenue:         light-dark(#6f7b75, #9aaaa1);
+
+  --accento:       light-dark(#6f9b82, #86b394);
+  --fatto:         light-dark(#e8f1ea, #29382f);
+  --oggi:          light-dark(#f8efdc, #2b3029);
+  --fuoco:         light-dark(#4a7459, #a9d2b7);
+
+  /* il riposo ha una sua tinta, fredda e quieta, distinta dal verde del "fatto" */
+  --riposo:          light-dark(#e8eef3, #25323b);
+  --riposo-accento:  light-dark(#7d96ab, #8fb0c8);
+
+  /* i tre livelli di energia: terra, sabbia, salvia */
+  --en-pesa:       light-dark(#c4846a, #d6987f);
+  --en-ok:         light-dark(#cfae55, #dcc176);
+  --en-leggero:    light-dark(#6f9b82, #86b394);
+
+  --bottone:       light-dark(#4a7459, #86b394);
+  --bottone-testo: light-dark(#ffffff, #12201a);
+  --bottone-sec:   light-dark(#eef1e7, #2a3832);
+
+  --ombra: 0 1px 2px rgb(60 70 55 / .06), 0 12px 32px -12px rgb(60 70 55 / .22);
+  --raggio: 1.4rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+/* il colore di fondo sta anche su html: così lo sfondo copre tutta la pagina, anche lunga, anche dove "fixed" non è supportato */
+html { -webkit-text-size-adjust: 100%; background-color: var(--sfondo-2); }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--inchiostro);
+  background: linear-gradient(160deg, var(--sfondo-1) 0%, var(--sfondo-2) 55%, var(--sfondo-3) 100%);
+  background-attachment: fixed;
+}
+
+/* un alone appena percettibile, per dare profondità */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20% -10% auto auto;
+  width: 60vmax;
+  height: 60vmax;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accento) 20%, transparent), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+main {
+  width: min(100% - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right), 62rem);
+  margin-inline: auto;
+  padding-block: calc(clamp(1.5rem, 5vw, 3.5rem) + env(safe-area-inset-top)) calc(3rem + env(safe-area-inset-bottom));
+}
+
+/* ───────── Intestazione ───────── */
+.intestazione { margin-bottom: 1.4rem; }
+
+h1 {
+  margin: 0 0 .35rem;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  letter-spacing: -.01em;
+  line-height: 1.15;
+}
+
+.intestazione p {
+  margin: 0;
+  color: var(--tenue);
+  max-width: 38rem;
+}
+
+/* ───────── Scelta della settimana ───────── */
+.settimane {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+  margin: 0 0 1rem;
+}
+
+.giro {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  padding: 0 0 .15rem;
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--inchiostro);
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgb(60 70 55 / .06);
+  cursor: pointer;
+  transition: transform .2s ease, border-color .25s ease, opacity .25s ease;
+}
+.giro:hover:not(:disabled) { border-color: var(--accento); transform: translateY(-1px); }
+.giro:disabled { opacity: .35; cursor: default; }
+.giro:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+
+.periodo {
+  min-width: 12.5rem;
+  text-align: center;
+  line-height: 1.3;
+}
+.periodo strong { display: block; font-weight: 600; }
+.periodo small { display: block; color: var(--tenue); font-size: .85rem; }
+
+/* ───────── Scheda con la tabella ───────── */
+.scheda {
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: var(--raggio);
+  box-shadow: var(--ombra);
+  overflow: clip;
+}
+
+.scorri {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--linea-forte) transparent;
+}
+.scorri:focus-visible { outline: 3px solid var(--fuoco); outline-offset: -3px; }
+
+table {
+  width: 100%;
+  min-width: 54rem;
+  table-layout: fixed;   /* la colonna dei nomi ha la sua larghezza, i sette giorni si dividono il resto */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th, td { padding: 0; border-bottom: 1px solid var(--linea); }
+tbody tr:last-child > * { border-bottom: 0; }
+tfoot tr:first-child > * { border-top: 1px solid var(--linea-forte); }
+tfoot tr:last-child > * { border-bottom: 0; }
+
+thead th {
+  padding: .9rem .5rem .8rem;
+  font-weight: 600;
+  font-size: .8rem;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  text-align: center;
+  line-height: 1.25;
+  transition: background-color .35s ease, opacity .35s ease;
+}
+thead th:first-child {
+  text-align: left;
+  padding-left: 1.5rem;
+}
+.corto { display: none; }
+
+.data {
+  display: block;
+  margin-top: .15rem;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+thead th[data-oggi] { color: var(--inchiostro); }
+thead th[data-oggi] .data { color: var(--fuoco); font-weight: 700; }
+thead th[data-futuro] { opacity: .55; }
+
+/* colonna delle voci, sempre visibile anche scorrendo */
+th[scope="row"], thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--scheda);
+  min-width: 19rem;
+  width: 19rem;
+  text-align: left;
+}
+thead th:first-child { z-index: 2; }
+tfoot th[scope="row"] { background: var(--fascia); }
+
+.riga-nome {
+  display: flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .35rem .6rem .35rem 1.1rem;
+}
+
+/* nome della voce (dalla libreria) e, sotto, il dettaglio di questa settimana */
+.testi {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: .35rem 0;
+}
+.nome-voce {
+  padding: .1rem .4rem 0;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.dettaglio, .lib-nome {
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  border-radius: .35rem;
+  text-overflow: ellipsis;
+  transition: border-color .25s ease, background-color .25s ease;
+}
+.dettaglio {
+  width: 100%;
+  padding: .15rem .4rem .25rem;
+  font-size: .82rem;
+  font-weight: 400;
+  color: var(--tenue);
+}
+.dettaglio::placeholder { color: var(--tenue); opacity: .55; font-style: italic; }
+.dettaglio:hover, .lib-nome:hover { background: color-mix(in srgb, var(--accento) 8%, transparent); }
+.dettaglio:focus-visible, .lib-nome:focus-visible {
+  outline: none;
+  color: var(--inchiostro);
+  border-bottom-color: var(--accento);
+  background: color-mix(in srgb, var(--accento) 10%, transparent);
+}
+
+.elimina {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  font: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--tenue);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .2s ease, background-color .2s ease, color .2s ease;
+}
+tr:hover .elimina, tr:focus-within .elimina { opacity: .8; }
+.elimina:hover { opacity: 1; background: color-mix(in srgb, #c0705f 16%, transparent); color: light-dark(#a24f3f, #e59a8a); }
+.elimina:focus-visible { opacity: 1; outline: 3px solid var(--fuoco); outline-offset: 1px; }
+@media (hover: none) { .elimina { opacity: .55; } }
+
+/* voci "di servizio" in fondo: energia e riposo */
+.voce {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: .6rem .6rem .6rem 1.5rem;
+  line-height: 1.3;
+}
+.voce-testo { font-weight: 500; }
+.legenda { font-size: .76rem; color: var(--tenue); }
+
+.vuota { padding: 1.6rem 1.5rem; color: var(--tenue); text-align: left; }
+/* la tabella scorre di lato: il messaggio resta ancorato a sinistra e va a capo dentro lo schermo */
+.vuota span {
+  position: sticky;
+  left: 1.5rem;
+  display: inline-block;
+  max-width: min(36rem, calc(100vw - 5rem));
+}
+
+/* ───────── Celle: oggi, riposo, fatto, futuro ───────── */
+td { text-align: center; transition: background-color .35s ease; }
+tfoot td { background: var(--fascia); }
+
+td[data-oggi], thead th[data-oggi]     { background: var(--oggi); }
+td[data-riposo], thead th[data-riposo] { background: var(--riposo); }
+td[data-oggi][data-riposo], thead th[data-oggi][data-riposo] {
+  background: color-mix(in srgb, var(--riposo) 60%, var(--oggi));
+}
+tbody td:has(input:checked) { background: var(--fatto); }
+tbody td[data-oggi]:has(input:checked)   { background: color-mix(in srgb, var(--fatto) 70%, var(--oggi)); }
+tbody td[data-riposo]:has(input:checked) { background: color-mix(in srgb, var(--fatto) 65%, var(--riposo)); }
+
+td[data-futuro] .cella, td[data-futuro] .energia { opacity: .35; }
+
+.cella {
+  display: grid;
+  place-items: center;
+  min-height: 3.6rem;
+  cursor: pointer;
+}
+.cella:has(input:disabled) { cursor: default; }
+
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin: 0;
+  border: 2px solid var(--linea-forte);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color .3s ease, border-color .3s ease, transform .25s ease;
+}
+input[type="checkbox"]:disabled { cursor: default; }
+input[type="checkbox"]::after {
+  content: "";
+  width: 1rem;
+  height: 1rem;
+  background: #fff;
+  -webkit-mask: var(--spunta) center / contain no-repeat;
+          mask: var(--spunta) center / contain no-repeat;
+  transform: scale(0);
+  transition: transform .3s cubic-bezier(.2, .9, .3, 1.35);
+  --spunta: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.cella:hover input[type="checkbox"]:not(:disabled) { border-color: var(--accento); transform: scale(1.06); }
+input[type="checkbox"]:checked { background: var(--accento); border-color: var(--accento); }
+input[type="checkbox"]:checked::after { transform: scale(1); }
+input[type="checkbox"]:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+
+input.riposo:checked { background: var(--riposo-accento); border-color: var(--riposo-accento); }
+input.riposo:checked::after { background: light-dark(#fff, #14202a); }
+.cella:hover input.riposo:not(:disabled) { border-color: var(--riposo-accento); }
+
+/* ───────── Energia: tre punti, da "pesa" a "leggero" ───────── */
+.energia {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 3.2rem;
+  transition: opacity .35s ease;
+}
+.en {
+  --c: var(--accento);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.en[data-livello="pesa"]    { --c: var(--en-pesa); }
+.en[data-livello="ok"]      { --c: var(--en-ok); }
+.en[data-livello="leggero"] { --c: var(--en-leggero); }
+.en::before {
+  content: "";
+  width: .95rem;
+  height: .95rem;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--c) 55%, var(--linea-forte));
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  transition: transform .25s ease, background-color .3s ease, border-color .3s ease;
+}
+.en:hover:not(:disabled)::before { border-color: var(--c); transform: scale(1.14); }
+.en[aria-pressed="true"]::before { background: var(--c); border-color: var(--c); transform: scale(1.2); }
+.en:disabled { cursor: default; }
+.en:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 1px; }
+
+/* ───────── Aggiungere un'attività ───────── */
+.aggiungi {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  padding: 1rem 1.1rem 1.2rem 1.5rem;
+  border-top: 1px solid var(--linea);
+}
+.riga-aggiungi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+.aggiungi input[type="text"] {
+  flex: 1 1 14rem;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  padding: .65rem 1rem;
+  background: color-mix(in srgb, var(--accento) 7%, var(--scheda));
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  transition: border-color .25s ease, background-color .25s ease;
+}
+.aggiungi input[type="text"]::placeholder { color: var(--tenue); }
+.aggiungi input[type="text"]:focus-visible { outline: none; border-color: var(--accento); }
+
+/* le voci della libreria, un tocco per aggiungerle alla settimana */
+.suggerimenti { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
+.suggerimenti-titolo { font-size: .82rem; color: var(--tenue); margin-right: .2rem; }
+.chip {
+  font: inherit;
+  font-size: .88rem;
+  padding: .35rem .85rem;
+  color: var(--inchiostro);
+  background: transparent;
+  border: 1.5px solid var(--linea-forte);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+.chip:hover { border-color: var(--accento); background: color-mix(in srgb, var(--accento) 10%, transparent); }
+.chip:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+
+/* settimana nuova e vuota: riprendere la lista della precedente */
+.riprendi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem 1rem;
+  padding: 1rem 1.1rem 1rem 1.5rem;
+  border-top: 1px solid var(--linea);
+  background: var(--fascia);
+}
+.riprendi p { flex: 1 1 18rem; margin: 0; font-size: .92rem; color: var(--tenue); }
+
+/* pannello della libreria */
+.libreria { margin: 0 0 .9rem; padding: 0; list-style: none; max-width: 38rem; }
+.lib-voce {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .2rem .6rem;
+  padding: .3rem 0;
+  border-bottom: 1px solid var(--linea);
+}
+.lib-nome { flex: 1 1 12rem; padding: .35rem .4rem; color: var(--inchiostro); }
+.lib-info { font-size: .82rem; }
+.lib-vuota { padding: .3rem 0; font-size: .92rem; }
+
+.nota {
+  margin: 0;
+  padding: 1rem 1.5rem 1.2rem;
+  border-top: 1px solid var(--linea);
+  font-size: .92rem;
+  color: var(--tenue);
+}
+
+/* ───────── Bottoni ───────── */
+button.pulsante {
+  font: inherit;
+  font-weight: 600;
+  padding: .65rem 1.3rem;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--bottone-testo);
+  background: var(--bottone);
+  transition: transform .2s ease, box-shadow .25s ease, filter .2s ease;
+}
+button.pulsante:hover { transform: translateY(-1px); box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--bottone) 80%, black); }
+button.pulsante:active { transform: translateY(0); }
+button.pulsante:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+button.pulsante.secondario { color: var(--inchiostro); background: var(--bottone-sec); }
+button.pulsante.piccolo { padding: .45rem 1rem; font-size: .9rem; }
+
+/* Il messaggio di stato ("Salvato", errori): un avviso in basso, sopra a tutto. È un popover: il browser lo
+   mette nello strato più alto della pagina, così si vede anche quando il menu è aperto. */
+.stato {
+  position: fixed;
+  inset: auto auto calc(1.1rem + env(safe-area-inset-bottom)) 50%;
+  translate: -50% 0;
+  width: max-content;
+  max-width: min(92vw, 30rem);
+  margin: 0;
+  padding: .55rem 1.1rem;
+  font-size: .9rem;
+  text-align: center;
+  color: var(--inchiostro);
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 999px;
+  box-shadow: var(--ombra);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s ease;
+}
+.stato.visibile { opacity: 1; }
+.stato.errore { color: light-dark(#a24f3f, #e59a8a); border-color: currentColor; }
+
+/* ───────── Pannelli del menu (libreria, sincronizzazione) ───────── */
+.dati { color: var(--tenue); }
+.dati summary {
+  width: fit-content;
+  padding: .3rem .1rem;
+  border-radius: .4rem;
+  cursor: pointer;
+}
+.dati summary:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+.dati p { max-width: 38rem; margin: .5rem 0 .8rem; font-size: .92rem; }
+.dati .azioni-dati { display: flex; flex-wrap: wrap; gap: .6rem; }
+.dati .copie { margin: 0 0 .9rem; padding: 0; list-style: none; font-size: .92rem; }
+.dati .copie li { margin: .1rem 0; }
+
+.solo-lettori {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ───────── Finestra di conferma ───────── */
+dialog {
+  width: min(92vw, 25rem);
+  padding: 0;
+  color: var(--inchiostro);
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: var(--raggio);
+  box-shadow: 0 30px 60px -20px rgb(20 30 25 / .45);
+}
+dialog::backdrop { background: rgb(25 35 30 / .38); backdrop-filter: blur(3px); }
+dialog form { padding: 1.5rem 1.5rem 1.2rem; }
+dialog p { margin: 0 0 1.2rem; }
+dialog menu { display: flex; justify-content: flex-end; gap: .6rem; margin: 0; padding: 0; }
+
+/* ───────── Intestazione e pulsante del menu ───────── */
+.testata {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.apri-menu {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  min-height: 2.75rem;
+  margin-top: .35rem;
+  padding: 0 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--inchiostro);
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgb(60 70 55 / .06);
+  cursor: pointer;
+}
+.apri-menu:hover { border-color: var(--accento); }
+.apri-menu:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+.apri-menu svg { width: 1.15rem; height: 1.15rem; }
+
+/* ───────── Il menu: un pannello (al centro su computer, dal basso su telefono) ───────── */
+dialog.foglio {
+  width: min(100vw - 2rem, 34rem);
+  max-width: none;
+  max-height: min(86dvh, 46rem);
+  overflow: auto;
+  padding: 0 1.4rem 1.4rem;
+  overscroll-behavior: contain;
+}
+.foglio-testa {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0 .5rem;
+  background: var(--scheda);
+}
+.foglio-testa h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-weight: 500;
+  font-size: 1.5rem;
+}
+.chiudi {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--tenue);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.chiudi:hover { background: var(--bottone-sec); }
+.chiudi:focus-visible { outline: 3px solid var(--fuoco); }
+.sezione { padding: 1rem 0 1.1rem; border-top: 1px solid var(--linea); }
+.sezione h3 { margin: 0 0 .35rem; font-size: 1rem; }
+.sezione > p { margin: 0 0 .8rem; font-size: .9rem; color: var(--tenue); }
+.sezione .copie { margin: 0 0 .9rem; padding: 0; list-style: none; font-size: .9rem; color: var(--tenue); }
+.sezione .azioni-dati { display: flex; flex-wrap: wrap; gap: .6rem; }
+.sezione.dati summary { font-weight: 600; color: var(--inchiostro); }
+.versione { margin: .6rem 0 0; font-size: .8rem; color: var(--tenue); text-align: center; }
+
+/* ───────── Vista a un giorno (telefono) ─────────
+   Sotto i 40rem la tabella si nasconde e compare questa vista: i sette giorni in alto, la giornata scelta,
+   la riga per aggiungere, le attività come schede. Quale delle due mostrare lo decide il codice (disegna). */
+.vista-giorno { display: grid; gap: .9rem; }
+
+/* la striscia dei giorni: sette pulsanti, con una barra che si riempie con le attività segnate */
+.striscia { display: grid; grid-template-columns: repeat(7, 1fr); gap: .3rem; }
+.giorno {
+  --pieno: 0;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: .1rem;
+  min-height: 4.1rem;
+  padding: .45rem 0 .55rem;
+  font: inherit;
+  color: var(--inchiostro);
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: .95rem;
+  cursor: pointer;
+  transition: background-color .25s ease, border-color .25s ease;
+}
+.giorno-nome { font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+.giorno-num { font-size: 1.1rem; font-weight: 600; line-height: 1.2; }
+.giorno-barra {
+  width: 62%;
+  height: .28rem;
+  margin-top: .15rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accento) calc(var(--pieno) * 100%), var(--linea) 0);
+}
+/* un puntino sull'angolo, come un badge: l'energia di quel giorno, se l'hai indicata */
+.giorno[data-energia]::after {
+  content: "";
+  position: absolute;
+  top: -.2rem;
+  right: -.2rem;
+  width: .7rem;
+  height: .7rem;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 2px var(--sfondo-1);
+}
+.giorno[data-energia="pesa"] { --c: var(--en-pesa); }
+.giorno[data-energia="ok"] { --c: var(--en-ok); }
+.giorno[data-energia="leggero"] { --c: var(--en-leggero); }
+.giorno[data-riposo] { background: var(--riposo); }
+.giorno[data-oggi] .giorno-num { color: var(--fuoco); }
+.giorno[data-oggi] { border-color: var(--accento); }
+.giorno[aria-pressed="true"] { background: var(--bottone); border-color: var(--bottone); color: var(--bottone-testo); }
+.giorno[aria-pressed="true"] .giorno-nome,
+.giorno[aria-pressed="true"] .giorno-num { color: var(--bottone-testo); }
+.giorno[aria-pressed="true"] .giorno-barra {
+  background: linear-gradient(90deg, var(--bottone-testo) calc(var(--pieno) * 100%), color-mix(in srgb, var(--bottone-testo) 30%, transparent) 0);
+}
+.giorno:disabled { opacity: .4; cursor: default; }
+.giorno:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+
+/* la giornata: titolo, energia a tre segmenti, riposo */
+.giornata {
+  display: grid;
+  gap: .7rem;
+  padding: .9rem 1rem 1rem;
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: var(--raggio);
+  box-shadow: var(--ombra);
+}
+.titolo-giorno {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-weight: 500;
+  font-size: 1.3rem;
+}
+.titolo-giorno small { font-family: ui-rounded, system-ui, sans-serif; font-size: .8rem; font-weight: 600; color: var(--fuoco); margin-left: .4rem; }
+.etichetta-giornata { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }
+.segmenti { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin-top: -.3rem; }
+.segmento {
+  --c: var(--accento);
+  min-height: 2.9rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--inchiostro);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--c) 60%, var(--linea-forte));
+  border-radius: .85rem;
+  cursor: pointer;
+  transition: background-color .25s ease, border-color .25s ease;
+}
+.segmento[data-livello="pesa"] { --c: var(--en-pesa); }
+.segmento[data-livello="ok"] { --c: var(--en-ok); }
+.segmento[data-livello="leggero"] { --c: var(--en-leggero); }
+.segmento[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #1d2521; }
+.segmento:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+.interruttore-riposo {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  min-height: 2.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* le attività come schede: testi a sinistra, interruttore grande a destra */
+.carte { display: grid; gap: .55rem; margin: 0; padding: 0; list-style: none; }
+.carta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: .5rem;
+  padding: .7rem .55rem .7rem 1rem;
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 1.1rem;
+  transition: background-color .3s ease;
+}
+.carta[data-fatto] { background: var(--fatto); }
+.carta-testi { min-width: 0; display: grid; gap: .1rem; }
+.carta .nome-voce { padding: 0; font-size: 1.02rem; }
+.carta .dettaglio { padding: .2rem 0; font-size: .86rem; }
+.carta .dettaglio::placeholder { font-style: normal; opacity: .7; }
+.carta-piede { display: flex; align-items: center; gap: .8rem; margin-top: .2rem; }
+/* sette puntini: la settimana di questa attività; quello cerchiato è il giorno scelto */
+.puntini { display: flex; gap: .3rem; }
+.puntino { width: .5rem; height: .5rem; border-radius: 50%; border: 1.5px solid var(--linea-forte); }
+.puntino[data-fatto] { background: var(--accento); border-color: var(--accento); }
+.puntino[data-scelto] { outline: 2px solid var(--fuoco); outline-offset: 1.5px; }
+.togli {
+  margin-left: auto;
+  padding: .35rem .2rem;
+  font: inherit;
+  font-size: .82rem;
+  color: var(--tenue);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.togli:focus-visible { outline: 3px solid var(--fuoco); border-radius: .3rem; }
+.carta-spunta { display: grid; place-items: center; width: 3.4rem; height: 3.4rem; cursor: pointer; }
+.carta-spunta input[type="checkbox"] { width: 2.4rem; height: 2.4rem; }
+.carta-spunta input[type="checkbox"]::after { width: 1.35rem; height: 1.35rem; }
+.carta-vuota { padding: 1.2rem 1rem; color: var(--tenue); text-align: center; }
+
+/* ───────── Schermi stretti: telefono ───────── */
+@media (max-width: 40rem) {
+  main { padding-block: calc(1rem + env(safe-area-inset-top)) calc(5rem + env(safe-area-inset-bottom)); }
+  h1 { font-size: 1.75rem; }
+  .sottotitolo, .apri-menu .lungo { display: none; }
+  .apri-menu { margin-top: 0; padding: 0 .85rem; }
+  .intestazione { margin-bottom: .8rem; }
+  .settimane { margin-bottom: .8rem; }
+  .periodo { min-width: 0; flex: 1; }
+
+  /* la riga per aggiungere, in cima alla vista a un giorno: compatta, senza la cornice della tabella */
+  .blocco-aggiungi .aggiungi { padding: 0; border: 0; gap: .55rem; }
+  .blocco-aggiungi .riga-aggiungi { flex-wrap: nowrap; }
+  .blocco-aggiungi .riga-aggiungi input[type="text"] { flex: 1; background: var(--scheda); border-color: var(--scheda-bordo); }
+  .blocco-aggiungi .riga-aggiungi .pulsante { flex: none; min-width: 2.9rem; padding: 0 1rem; font-size: 1.5rem; line-height: 1; }
+  .blocco-aggiungi .riprendi { margin-bottom: .6rem; border: 1px solid var(--scheda-bordo); border-radius: 1.1rem; padding: .8rem 1rem; }
+  .blocco-aggiungi .nota { padding: 0; border: 0; }
+
+  dialog.foglio {
+    width: 100%;
+    max-height: 88dvh;
+    margin: auto 0 0;
+    border-bottom: 0;
+    border-radius: var(--raggio) var(--raggio) 0 0;
+    padding-bottom: calc(1.4rem + env(safe-area-inset-bottom));
+  }
+}
+/* il pulsante "Aggiungi" mostra la parola su computer e solo "+" su telefono */
+.corto-telefono { display: none; }
+@media (max-width: 40rem) {
+  .lungo-computer { display: none; }
+  .corto-telefono { display: inline; }
+}
+
+/* ───────── Chi preferisce meno movimento ───────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

@@ -124,6 +124,14 @@ test('togliendo un’attività, la conferma dice in quali giorni risulta svolta'
   await expect(p.locator('#conferma-testo')).toContainText('Non ha spunte in questa settimana');
   await conferma(p);
   expect(await nomiCarte(p)).toEqual(['Sviluppo']);
+
+  // togliendola davvero, le spunte non si perdono: restano nello storico e ricompaiono rimettendola
+  await carta(p, 'Sviluppo').locator('.togli').click();
+  await expect(p.locator('#conferma-testo')).toContainText('le spunte restano nello storico');
+  await conferma(p);
+  expect(await nomiCarte(p)).toEqual([]);
+  await aggiungi(p, 'Sviluppo');
+  await expect(carta(p, 'Sviluppo').locator('.puntino[data-fatto]')).toHaveCount(2);   // lunedì e mercoledì
 });
 
 test('settimane passate: si consultano e correggono, senza aggiungere né togliere', async ({ browser }) => {
