@@ -18,8 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- ?v=10: vedi la nota sugli script in fondo -->
-  <link rel="stylesheet" href="stile.css?v=10">
+  <!-- ?v=11: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=11">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -79,8 +79,8 @@
     </nav>
 
     <!-- Promemoria: le faccende con un giro aperto o in arrivo che non sono ancora nella settimana (js/settimana.js) -->
-    <!-- Si chiude toccando il titolo; aperto o chiuso, lo ricorda questo dispositivo. -->
-    <details class="promemoria" id="promemoria" open hidden>
+    <!-- All'avvio è chiuso: si vede solo il titolo con il numero dei giri. Si apre toccando il titolo. -->
+    <details class="promemoria" id="promemoria" hidden>
       <summary class="titolo-promemoria"><span id="titolo-promemoria">Giri aperti e in arrivo</span> <span class="conta-promemoria" id="conta-promemoria"></span></summary>
       <ul class="lista-promemoria" id="lista-promemoria" aria-labelledby="titolo-promemoria"></ul>
     </details>
@@ -307,16 +307,16 @@
 
   <!-- Il codice: prima il nucleo (registro dei dati, unione tra dispositivi, regole: core.js), poi la pagina,
        divisa per argomento in js/. L’ordine conta: guscio.js, l’ultimo, avvia l’app quando tutto è definito.
-       Il «?v=10» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       Il «?v=11» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
        può mescolare la pagina nuova con gli script vecchi che ha in memoria. Si aggiorna insieme a VERSIONE
        (un test controlla che coincidano). -->
-  <script src="core.js?v=10"></script>
-  <script src="js/base.js?v=10"></script>
-  <script src="js/settimana.js?v=10"></script>
-  <script src="js/libreria.js?v=10"></script>
-  <script src="js/azioni.js?v=10"></script>
-  <script src="js/file.js?v=10"></script>
-  <script src="js/casa.js?v=10"></script>
-  <script src="js/guscio.js?v=10"></script>
+  <script src="core.js?v=11"></script>
+  <script src="js/base.js?v=11"></script>
+  <script src="js/settimana.js?v=11"></script>
+  <script src="js/libreria.js?v=11"></script>
+  <script src="js/azioni.js?v=11"></script>
+  <script src="js/file.js?v=11"></script>
+  <script src="js/casa.js?v=11"></script>
+  <script src="js/guscio.js?v=11"></script>
 </body>
 </html>

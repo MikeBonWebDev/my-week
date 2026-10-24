@@ -125,15 +125,6 @@ function faccendeDaProporre() {
       || (a.scade ?? '').localeCompare(b.scade ?? '') || a.nome.localeCompare(b.nome, 'it'));
 }
 
-// Aperto o chiuso: lo sceglie chi lo usa, e resta su questo dispositivo (come la sezione e il tema)
-const CHIAVE_PROMEMORIA = 'settimana:promemoria-chiuso';
-try { boxPromemoria.open = localStorage.getItem(CHIAVE_PROMEMORIA) !== '1'; } catch { /* resta aperto */ }
-// Si scrive appena cambia l'attributo «open» (un MutationObserver risponde subito, a fine tocco). L'evento «toggle»
-// arriva invece un po' dopo: chiudendo e riaprendo l'app di corsa si poteva perdere la scelta.
-new MutationObserver(() => {
-  try { localStorage.setItem(CHIAVE_PROMEMORIA, boxPromemoria.open ? '0' : '1'); } catch { /* pazienza */ }
-}).observe(boxPromemoria, { attributes: true, attributeFilter: ['open'] });
-
 function aggiornaPromemoria() {
   const elenco = faccendeDaProporre();
   boxPromemoria.hidden = elenco.length === 0;

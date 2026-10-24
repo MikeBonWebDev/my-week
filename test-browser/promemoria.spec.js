@@ -39,10 +39,16 @@ const promemoria = (p) => p.locator('#promemoria');
 const righe = (p) => p.locator('.promemoria-riga');
 const riga = (p, nome) => p.locator('.promemoria-riga', { has: p.locator('.nome-voce', { hasText: new RegExp(`^${nome}$`) }) });
 const nomi = (p) => righe(p).locator('.nome-voce').allTextContents();
+// All'avvio il promemoria è chiuso: lo si apre toccando il titolo, come farebbe una persona
+async function apriPromemoria(p) {
+  await p.locator('#promemoria > summary').click();
+  await expect(promemoria(p)).toHaveAttribute('open', '');
+}
 
 test('il promemoria: giri aperti, in arrivo entro domenica e mai segnate; non le faccende già nella settimana', async ({ browser }) => {
   const p = await apri(await browser.newContext());
   await caricaDati(p, datiFaccende());
+  await apriPromemoria(p);
   await expect(promemoria(p)).toBeVisible();
   await expect(p.locator('#titolo-promemoria')).toHaveText('Giri aperti e in arrivo');
   expect(await nomi(p)).toEqual(['Lenzuola', 'Bagno', 'Piante', 'Frigo']);
@@ -62,6 +68,7 @@ test('il promemoria: giri aperti, in arrivo entro domenica e mai segnate; non le
 test('«Aggiungi»: la faccenda entra nella settimana ed esce dal promemoria; il fuoco resta nel promemoria', async ({ browser }) => {
   const p = await apri(await browser.newContext());
   await caricaDati(p, datiFaccende());
+  await apriPromemoria(p);
   await riga(p, 'Bagno').getByRole('button', { name: /^Aggiungi/ }).click();
   await expect(p.locator('#stato')).toContainText('«Bagno» è in questa settimana.');
   expect(await nomi(p)).toEqual(['Lenzuola', 'Piante', 'Frigo']);
@@ -77,6 +84,7 @@ test('«Aggiungi»: la faccenda entra nella settimana ed esce dal promemoria; il
 test('«Salto questo giro»: la riga resta con «Annulla»; annullando torna com’era; cambiando sezione esce', async ({ browser }) => {
   const p = await apri(await browser.newContext());
   await caricaDati(p, datiFaccende());
+  await apriPromemoria(p);
   await riga(p, 'Lenzuola').getByRole('button', { name: 'Salto questo giro di Lenzuola' }).click();
   await expect(p.locator('#stato')).toContainText('«Lenzuola»: giro saltato.');
   await expect(riga(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Giro saltato oggi: il conteggio riparte da qui.');
@@ -113,6 +121,7 @@ test('solo nella settimana corrente; senza faccende da proporre non c’è', asy
 test('sul telefono: il promemoria sta sopra il giorno scelto, e le scelte funzionano allo stesso modo', async ({ browser }) => {
   const p = await apri(await browser.newContext(TELEFONO));
   await caricaDati(p, datiFaccende());
+  await apriPromemoria(p);
   await expect(promemoria(p)).toBeVisible();
   const sopra = await p.evaluate(() => document.querySelector('#promemoria').getBoundingClientRect().bottom
     <= document.querySelector('#striscia').getBoundingClientRect().top);
@@ -139,6 +148,7 @@ test('le date: «l’8», «dall’11», il 1° del mese, e l’anno quando non 
   fatta('2025-11-17', 'Soffitta', 3, 30);    // fatta giovedì 20 novembre 2025
   const p = await apri(await browser.newContext());
   await caricaDati(p, Core.perFile(db.registro, db.dispositivo, new Date(adesso).toISOString()));
+  await apriPromemoria(p);
   await expect(riga(p, 'Tende').locator('.riga-cadenza')).toHaveText('Fatta l’8 ottobre · ogni 3 giorni · giro aperto dall’11 ottobre');
   await expect(riga(p, 'Garage').locator('.riga-cadenza')).toHaveText('Fatta il 1° gennaio · ogni 180 giorni · giro aperto dal 30 giugno');
   await expect(riga(p, 'Soffitta').locator('.riga-cadenza')).toHaveText('Fatta il 20 novembre 2025 · ogni 30 giorni · giro aperto dal 20 dicembre 2025');
@@ -150,20 +160,17 @@ test('le date: «l’8», «dall’11», il 1° del mese, e l’anno quando non 
     .toContainText('Prossimo giro: lunedì 30 novembre');
 });
 
-test('si chiude toccando il titolo, con il numero dei giri; chiuso resta chiuso anche riaprendo l’app', async ({ browser }) => {
-  const contesto = await browser.newContext();
-  const p = await apri(contesto);
+test('all’avvio è chiuso, con il numero dei giri; si apre toccando il titolo; riaprendo l’app torna chiuso', async ({ browser }) => {
+  const p = await apri(await browser.newContext());
   await caricaDati(p, datiFaccende());
-  await expect(p.locator('#conta-promemoria')).toHaveText('4');
-  await expect(promemoria(p)).toHaveAttribute('open', '');
-  await p.locator('#promemoria > summary').click();
-  await expect(promemoria(p)).not.toHaveAttribute('open', '');
-  await expect(righe(p).first()).toBeHidden();
-  // la scelta è già scritta nella memoria del dispositivo, prima di riaprire
-  expect(await p.evaluate(() => localStorage.getItem('settimana:promemoria-chiuso'))).toBe('1');
-  await p.reload();
   await expect(promemoria(p)).toBeVisible();
   await expect(promemoria(p)).not.toHaveAttribute('open', '');
+  await expect(p.locator('#promemoria > summary')).toHaveText('Giri aperti e in arrivo 4');
+  await expect(righe(p).first()).toBeHidden();
+  // si apre anche da tastiera
   await p.locator('#promemoria > summary').press('Enter');
   await expect(righe(p).first()).toBeVisible();
+  await p.reload();
+  await expect(promemoria(p)).not.toHaveAttribute('open', '');
+  await expect(righe(p).first()).toBeHidden();
 });
