@@ -66,7 +66,7 @@ test('una faccenda da una voce che usi già: l’ultima volta viene dalle spunte
   await scelta(p, 'Ogni settimana · 7 giorni').click();
   await salva(p).click();
 
-  await expect(faccenda(p, 'Cucinare')).toContainText('Fatta 9 giorni fa (lunedì 5 ottobre)');
+  await expect(faccenda(p, 'Cucinare')).toContainText('Fatta il 5 ottobre');
   await expect(faccenda(p, 'Cucinare')).toContainText('Ogni 7 giorni');
   await expect(p.locator('#stato')).toContainText('«Cucinare»: ogni 7 giorni.');
 

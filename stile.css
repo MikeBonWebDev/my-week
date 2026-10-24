@@ -909,6 +909,56 @@ dialog.foglio {
 .vuoto-casa { margin: 1.4rem 0 0; color: var(--tenue); }
 .saltato { display: flex; flex-wrap: wrap; align-items: center; gap: 0 .5rem; margin: 0; font-size: .92rem; color: var(--tenue); }
 
+/* ───────── Il promemoria delle faccende, in cima alla settimana ───────── */
+.promemoria {
+  display: grid;
+  gap: .6rem;
+  margin: 0 0 1rem;
+  padding: .9rem 1rem 1rem;
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 1.25rem;
+  box-shadow: var(--ombra);
+}
+.titolo-promemoria {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.75rem;
+  margin: -.5rem 0 -.3rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--tenue);
+  cursor: pointer;
+  list-style: none;
+}
+.titolo-promemoria::-webkit-details-marker { display: none; }
+/* la freccia: verso il basso se aperto, verso destra se chiuso */
+.titolo-promemoria::before { content: ""; width: .45rem; height: .45rem; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .2s ease; }
+.promemoria[open] > .titolo-promemoria::before { transform: rotate(45deg); }
+.titolo-promemoria:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; border-radius: .4rem; }
+.conta-promemoria { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .4rem; border-radius: 999px; background: var(--fascia); border: 1px solid var(--scheda-bordo); color: var(--inchiostro); letter-spacing: 0; }
+.promemoria:not([open]) { padding-bottom: .4rem; }
+.lista-promemoria { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.promemoria-riga {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem 1rem;
+  padding: .7rem .8rem .7rem 1rem;
+  background: var(--fascia);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 1rem;
+  transition: background-color .4s ease, border-color .4s ease;
+}
+.promemoria-riga[data-riposo] { background: var(--riposo); border-color: color-mix(in srgb, var(--riposo-accento) 25%, var(--riposo)); }
+.promemoria-testi { flex: 1 1 16rem; min-width: 0; display: grid; gap: .15rem; }
+.promemoria-testi .nome-voce { padding: 0; font-weight: 600; overflow-wrap: anywhere; }
+.promemoria-azioni { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.faccenda-dati .giro-testo { color: var(--tenue); }
+
 /* ───────── Il foglio della faccenda ───────── */
 .gruppo { display: grid; gap: .5rem; margin-top: 1rem; }
 .etichetta-foglio { font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--tenue); }

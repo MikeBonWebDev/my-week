@@ -39,6 +39,7 @@ function mostraSezione(nome) {
   $('#titolo-sezione').textContent = SEZIONI[nome].titolo;
   $('#sottotitolo').textContent = SEZIONI[nome].sottotitolo;
   document.title = nome === 'settimana' ? 'La mia settimana' : `${SEZIONI[nome].titolo} · La mia settimana`;
+  if (cambia) saltatiDalPromemoria.clear();   // il promemoria della settimana riparte pulito (settimana.js)
   // L'ordine di Casa si decide quando la apri, e poi non si muove mentre la guardi
   if (nome === 'casa') ordineCasa = Core.faccende(db.registro, oggiK).map((f) => f.id);
   disegna();
@@ -56,13 +57,6 @@ navSezioni.addEventListener('click', (e) => {
 const listaFaccende = $('#faccende');
 const casaVuota = $('#casa-vuota');
 let ordineCasa = [];
-
-// "Fatta 16 giorni fa (martedì 6 ottobre)", "Fatta oggi", "Mai segnata" (fmtGiorno e daQuando: settimana.js)
-function testoUltima(ultima) {
-  if (!ultima) return 'Mai segnata';
-  if (Core.giorniTra(ultima, oggiK) <= 0) return 'Fatta oggi';
-  return `Fatta ${daQuando(ultima)} (${fmtGiorno.format(dataDaChiave(ultima))})`;
-}
 
 const inQuestaSettimana = (id) => Boolean(state.weeks[lunediCorrente()]?.activities.some((a) => a.id === id));
 
@@ -92,12 +86,19 @@ function cartaFaccenda(f, riposoOggi) {
 
   const dati = document.createElement('p');
   dati.className = 'faccenda-dati';
+  // "Fatta il 6 ottobre", "Ogni 14 giorni", "Giro aperto dal 20 ottobre" (testoFatta e testoGiro: settimana.js)
   const ultima = document.createElement('span');
-  ultima.textContent = testoUltima(f.ultima);
+  ultima.textContent = testoFatta(f);
   const ogni = document.createElement('span');
   ogni.className = 'ogni';
   ogni.textContent = ogniGiorni(f.cadenza);
   dati.append(ultima, ogni);
+  if (f.scade) {
+    const giro = document.createElement('span');
+    giro.className = 'giro-testo';
+    giro.textContent = conMaiuscola(testoGiro(f));
+    dati.append(giro);
+  }
 
   // Il salto: resta scritto finché non la segni di nuovo, e si può annullare
   let saltato = null;

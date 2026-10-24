@@ -42,11 +42,46 @@ function daQuando(k) {
 // "oggi", "ieri", "giovedì 22 ottobre": quando hai saltato il giro
 const quandoSalto = (k) => (Core.giorniTra(k, oggiK) <= 1 ? daQuando(k) : fmtGiorno.format(dataDaChiave(k)));
 
-// "16 giorni fa · ogni 14 giorni", "Mai segnata · ogni 30 giorni", "11 giorni fa · giro saltato ieri · ogni 7 giorni"
+/* Le date delle faccende si scrivono come date, non come conti da fare: «Fatta il 23 settembre», e il giro che ne
+   segue, «giro aperto dal 7 ottobre» oppure «prossimo giro: venerdì 30 ottobre». Le parole sono quelle di un
+   calendario: niente «scaduta», niente ordini. */
+const fmtGiornoMese = fmt({ day: 'numeric', month: 'long' });
+const fmtGiornoMeseAnno = fmt({ day: 'numeric', month: 'long', year: 'numeric' });
+// "23 settembre", "1° ottobre"; con l'anno, se non è quello di oggi
+function giornoMese(k) {
+  const d = dataDaChiave(k);
+  const testoData = (d.getFullYear() === dataDaChiave(oggiK).getFullYear() ? fmtGiornoMese : fmtGiornoMeseAnno).format(d);
+  return d.getDate() === 1 ? testoData.replace(/^1 /, '1° ') : testoData;
+}
+// Davanti a 8 e 11 l'articolo si elide: «l’8 ottobre», «dall’11 ottobre»
+const elide = (k) => [8, 11].includes(dataDaChiave(k).getDate());
+
+// "Fatta oggi", "Fatta ieri", "Fatta il 23 settembre", "Fatta l’8 ottobre", "Mai segnata"
+function testoFatta(f) {
+  if (!f.ultima) return 'Mai segnata';
+  const giorni = Core.giorniTra(f.ultima, oggiK);
+  if (giorni <= 0) return 'Fatta oggi';
+  if (giorni === 1) return 'Fatta ieri';
+  return `Fatta ${elide(f.ultima) ? 'l’' : 'il '}${giornoMese(f.ultima)}`;
+}
+
+// "prossimo giro: domani", "prossimo giro: venerdì 30 ottobre", "giro aperto dal 7 ottobre", "" se mai segnata
+function testoGiro(f) {
+  if (!f.scade) return '';
+  const giorni = Core.giorniTra(oggiK, f.scade);   // positivo: il giro deve ancora arrivare
+  if (giorni === 0) return 'prossimo giro: oggi';
+  if (giorni === 1) return 'prossimo giro: domani';
+  if (giorni > 1) return `prossimo giro: ${fmtGiorno.format(dataDaChiave(f.scade))}`;
+  if (giorni === -1) return 'giro aperto da ieri';
+  return `giro aperto ${elide(f.scade) ? 'dall’' : 'dal '}${giornoMese(f.scade)}`;
+}
+const conMaiuscola = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+// "Fatta il 6 ottobre · ogni 14 giorni · giro aperto dal 20 ottobre", "Mai segnata · ogni 30 giorni",
+// "Fatta il 21 settembre · giro saltato ieri · ogni 7 giorni · prossimo giro: mercoledì 28 ottobre"
 function testoCadenza(f) {
-  return (f.ultima ? daQuando(f.ultima) : 'Mai segnata')
-    + (f.salto ? ` · giro saltato ${quandoSalto(f.salto)}` : '')
-    + ` · ${ogniGiorni(f.cadenza).toLowerCase()}`;
+  return [testoFatta(f), f.salto ? `giro saltato ${quandoSalto(f.salto)}` : '', ogniGiorni(f.cadenza).toLowerCase(), testoGiro(f)]
+    .filter(Boolean).join(' · ');
 }
 
 // Mette (o toglie) il calore su un elemento. Con il riposo, al posto del calore la tinta quieta del riposo.
@@ -61,6 +96,94 @@ function segnaCalore(el, f, { riposo = false } = {}) {
 function settimanaDaRiprendere() {
   const corrente = lunediCorrente();
   return Object.keys(state.weeks).filter((k) => k < corrente && attivitaDi(k).length > 0).sort().pop() ?? null;
+}
+
+/* ───────── Promemoria delle faccende ─────────
+   In cima alla settimana corrente: le faccende che non sono nella settimana e hanno un giro aperto o in arrivo
+   entro domenica, più quelle mai segnate (sono proprio quelle che si rischia di dimenticare). Per ognuna, due
+   scelte: «Aggiungi» (entra nella settimana) e «Salto questo giro» (il conteggio riparte da oggi). Senza scelta
+   la riga resta lì: è un'informazione, non una richiesta. Il promemoria non scrive niente da solo. */
+const boxPromemoria = $('#promemoria');
+const listaPromemoria = $('#lista-promemoria');
+// le faccende saltate da qui restano nel promemoria con «Annulla», finché non cambi sezione o ricarichi
+const saltatiDalPromemoria = new Set();
+
+function faccendeDaProporre() {
+  if (!inSettimanaCorrente()) return [];
+  const domenica = chiaveData(aggiungiGiorni(dataDaChiave(visualizzata), 6));
+  const presenti = new Set((state.weeks[visualizzata]?.activities ?? []).map((a) => a.id));
+  const tutte = Core.faccende(db.registro, oggiK);
+  // un salto annullato altrove (in Casa), o una faccenda entrata nella settimana: niente più «Annulla» qui
+  for (const id of saltatiDalPromemoria) {
+    const f = tutte.find((x) => x.id === id);
+    if (!f || f.salto !== oggiK || presenti.has(id)) saltatiDalPromemoria.delete(id);
+  }
+  return tutte
+    .filter((f) => !presenti.has(f.id) && (saltatiDalPromemoria.has(f.id) || f.scade === null || f.scade <= domenica))
+    // prima il giro aperto da più tempo, poi quelli in arrivo; le mai segnate in fondo
+    .sort((a, b) => (a.scade === null) - (b.scade === null)
+      || (a.scade ?? '').localeCompare(b.scade ?? '') || a.nome.localeCompare(b.nome, 'it'));
+}
+
+// Aperto o chiuso: lo sceglie chi lo usa, e resta su questo dispositivo (come la sezione e il tema)
+const CHIAVE_PROMEMORIA = 'settimana:promemoria-chiuso';
+try { boxPromemoria.open = localStorage.getItem(CHIAVE_PROMEMORIA) !== '1'; } catch { /* resta aperto */ }
+// Si scrive appena cambia l'attributo «open» (un MutationObserver risponde subito, a fine tocco). L'evento «toggle»
+// arriva invece un po' dopo: chiudendo e riaprendo l'app di corsa si poteva perdere la scelta.
+new MutationObserver(() => {
+  try { localStorage.setItem(CHIAVE_PROMEMORIA, boxPromemoria.open ? '0' : '1'); } catch { /* pazienza */ }
+}).observe(boxPromemoria, { attributes: true, attributeFilter: ['open'] });
+
+function aggiornaPromemoria() {
+  const elenco = faccendeDaProporre();
+  boxPromemoria.hidden = elenco.length === 0;
+  $('#conta-promemoria').textContent = String(elenco.length);
+  const iOggi = (dataDaChiave(oggiK).getDay() + 6) % 7;
+  const riposoOggi = state.weeks[lunediCorrente()]?.rest[iOggi] === true;
+  listaPromemoria.replaceChildren(...elenco.map((f) => rigaPromemoria(f, riposoOggi)));
+}
+
+function rigaPromemoria(f, riposoOggi) {
+  const li = document.createElement('li');
+  li.className = 'promemoria-riga';
+  li.dataset.id = f.id;
+  const saltato = saltatiDalPromemoria.has(f.id);
+  if (!saltato) {
+    li.toggleAttribute('data-riposo', riposoOggi);
+    segnaCalore(li, f, { riposo: riposoOggi });
+  }
+  const testi = document.createElement('div');
+  testi.className = 'promemoria-testi';
+  const nome = document.createElement('span');
+  nome.className = 'nome-voce';
+  nome.textContent = f.nome;
+  const riga = document.createElement('span');
+  riga.className = 'riga-cadenza';
+  riga.textContent = saltato ? 'Giro saltato oggi: il conteggio riparte da qui.' : testoCadenza(f);
+  testi.append(nome, riga);
+
+  const azioni = document.createElement('div');
+  azioni.className = 'promemoria-azioni';
+  const bottone = (testo, classe, azione, etichetta) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = classe;
+    b.textContent = testo;
+    b.dataset.azione = azione;
+    b.dataset.id = f.id;
+    b.setAttribute('aria-label', etichetta);
+    return b;
+  };
+  if (saltato) {
+    azioni.append(bottone('Annulla', 'link-azione', 'annulla-salto', `Annulla il salto di ${f.nome}`));
+  } else {
+    azioni.append(
+      bottone('Aggiungi', 'pulsante piccolo', 'aggiungi', `Aggiungi «${f.nome}» a questa settimana`),
+      bottone('Salto questo giro', 'pulsante secondario piccolo', 'salta', `Salto questo giro di ${f.nome}`),
+    );
+  }
+  li.append(testi, azioni);
+  return li;
 }
 
 /* ───────── Disegno della tabella ─────────
@@ -575,6 +698,7 @@ function disegna() {
   if (bloccoAggiungi.parentElement !== posto) posto.append(bloccoAggiungi);
   if (suTelefono) disegnaGiorno(); else disegnaTabella();
   aggiornaNavigatore();
+  aggiornaPromemoria();
   aggiornaSuggerimenti();
   aggiornaRiprendi();
   aggiornaLibreria();

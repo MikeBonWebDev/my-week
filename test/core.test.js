@@ -365,7 +365,20 @@ test('l’ultima volta viene dalle spunte di tutte le settimane; mai segnata = n
   assert.equal(bagno.ultima, '2026-10-06');
   assert.equal(bagno.giorni, 16);
   assert.equal(bagno.calore, 2 / 14);
-  assert.deepEqual([frigo.ultima, frigo.giorni, frigo.calore], [null, null, 0]);
+  assert.equal(bagno.scade, '2026-10-20');   // 6 ottobre + 14 giorni: il giro è aperto da martedì 20
+  assert.deepEqual([frigo.ultima, frigo.giorni, frigo.scade, frigo.calore], [null, null, null, 0]);
+});
+
+test('il giro: dall’ultima spunta, oppure dal salto se è più recente', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-10-19', 'Lenzuola');
+  tel.cadenza('lenzuola', 7);
+  tel.spunta('2026-10-19', 'lenzuola', 0, true);   // lunedì 19 ottobre
+  assert.equal(Core.faccende(tel.registro, OGGI)[0].scade, '2026-10-26');
+  tel.salta('lenzuola', OGGI);                      // giro saltato giovedì 22: si conta da lì
+  assert.equal(Core.faccende(tel.registro, OGGI)[0].scade, '2026-10-29');
+  tel.salta('lenzuola', null);
+  assert.equal(Core.faccende(tel.registro, OGGI)[0].scade, '2026-10-26');
 });
 
 test('calore: zero entro la cadenza, poi cresce, e si ferma a 1 dopo un’altra cadenza', () => {

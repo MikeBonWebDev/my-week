@@ -188,3 +188,28 @@ function controllaGiorno() {
 document.addEventListener('visibilitychange', () => { if (!document.hidden) controllaGiorno(); });
 window.addEventListener('focus', controllaGiorno);
 setInterval(controllaGiorno, 60_000);
+
+/* ───────── Azioni: il promemoria delle faccende ───────── */
+listaPromemoria.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-azione]');
+  if (!b) return;
+  const f = Core.faccende(db.registro, oggiK).find((x) => x.id === b.dataset.id);
+  if (!f) return;
+  const fuoco = (selettore) => listaPromemoria.querySelector(selettore)?.focus();
+  if (b.dataset.azione === 'aggiungi' && esito(db.aggiungi(lunediCorrente(), f.nome))) {
+    mostraStato(`«${f.nome}» è in questa settimana.`);
+    // la riga è sparita: il fuoco va sulla prima scelta rimasta, se ce n'è una
+    fuoco('button');
+  }
+  if (b.dataset.azione === 'salta') {
+    saltatiDalPromemoria.add(f.id);
+    if (esito(db.salta(f.id, oggiK))) {
+      mostraStato(`«${f.nome}»: giro saltato.`);
+      fuoco(`li[data-id="${f.id}"] [data-azione="annulla-salto"]`);
+    } else saltatiDalPromemoria.delete(f.id);
+  }
+  if (b.dataset.azione === 'annulla-salto') {
+    saltatiDalPromemoria.delete(f.id);
+    if (esito(db.salta(f.id, null))) fuoco(`li[data-id="${f.id}"] [data-azione="salta"]`);
+  }
+});

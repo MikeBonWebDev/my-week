@@ -219,6 +219,8 @@
        salto       il giorno dell'ultimo «salto questo giro», solo se è dopo l'ultima spunta — o null
        riferimento da qui si conta: il più recente tra ultima e salto — o null se non c'è nessuno dei due
        giorni      giorni passati dal riferimento (null se non c'è)
+       scade       il giorno del giro: riferimento + cadenza (null se non c'è un riferimento). Se è passato,
+                   il giro è aperto da quel giorno; l'app non conta i giri mancati, ce n'è sempre uno solo
        calore      0 finché la cadenza non è superata; poi cresce fino a 1 dopo un'altra cadenza intera
      L'elenco è in ordine: prima chi ha superato di più la propria cadenza (in proporzione),
      a parità il nome; le faccende mai segnate in fondo. */
@@ -244,7 +246,8 @@
       const riferimento = salto ?? ultima;
       const giorni = riferimento ? giorniTra(riferimento, oggi) : null;
       const calore = giorni === null ? 0 : Math.max(0, Math.min(1, (giorni - cadenza) / cadenza));
-      elenco.push({ id, nome: name, cadenza, ultima, salto, riferimento, giorni, calore });
+      const scade = riferimento ? piuGiorni(riferimento, cadenza) : null;
+      elenco.push({ id, nome: name, cadenza, ultima, salto, riferimento, giorni, scade, calore });
     }
     const peso = (f) => (f.giorni === null ? -1 : f.giorni / f.cadenza);
     return elenco.sort((a, b) => peso(b) - peso(a) || a.nome.localeCompare(b.nome, 'it'));

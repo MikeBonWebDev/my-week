@@ -37,9 +37,9 @@ const calore = (l) => l.evaluate((e) => (e.hasAttribute('data-calore') ? Number(
 test('telefono: le schede delle faccende dicono da quanto e, oltre la cadenza, si scaldano', async ({ browser }) => {
   const p = await apri(await browser.newContext(TELEFONO));
   await caricaDati(p, datiFaccende());
-  await expect(carta(p, 'Bagno').locator('.riga-cadenza')).toHaveText('15 giorni fa · ogni 14 giorni');
-  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('23 giorni fa · ogni 7 giorni');
-  await expect(carta(p, 'Lavatrice').locator('.riga-cadenza')).toHaveText('2 giorni fa · ogni 7 giorni');
+  await expect(carta(p, 'Bagno').locator('.riga-cadenza')).toHaveText('Fatta il 29 settembre · ogni 14 giorni · giro aperto da ieri');
+  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta il 21 settembre · ogni 7 giorni · giro aperto dal 28 settembre');
+  await expect(carta(p, 'Lavatrice').locator('.riga-cadenza')).toHaveText('Fatta il 12 ottobre · ogni 7 giorni · prossimo giro: lunedì 19 ottobre');
   await expect(carta(p, 'Sviluppo').locator('.riga-cadenza')).toHaveCount(0);       // non è una faccenda
   expect(await calore(carta(p, 'Bagno'))).toBeCloseTo(1 / 14, 3);
   expect(await calore(carta(p, 'Lenzuola'))).toBe(1);
@@ -51,19 +51,19 @@ test('telefono: le schede delle faccende dicono da quanto e, oltre la cadenza, s
   await carta(p, 'Lenzuola').locator('input[type=checkbox]').check();
   await expect(carta(p, 'Lenzuola')).toHaveAttribute('data-fatto', '');
   await expect(carta(p, 'Lenzuola')).not.toHaveAttribute('data-calore');
-  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('oggi · ogni 7 giorni');
+  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta oggi · ogni 7 giorni · prossimo giro: mercoledì 21 ottobre');
   expect(p.errori).toEqual([]);
 });
 
 test('computer: la cella del nome si scalda, e una spunta la aggiorna senza ridisegnare la tabella', async ({ browser }) => {
   const p = await apri(await browser.newContext());
   await caricaDati(p, datiFaccende());
-  await expect(nomeInTabella(p, 'Bagno').locator('.riga-cadenza')).toHaveText('15 giorni fa · ogni 14 giorni');
+  await expect(nomeInTabella(p, 'Bagno').locator('.riga-cadenza')).toHaveText('Fatta il 29 settembre · ogni 14 giorni · giro aperto da ieri');
   expect(await calore(nomeInTabella(p, 'Lenzuola'))).toBe(1);
   const casella = p.locator('#corpo-tabella input[type=checkbox][data-id="lenzuola"][data-giorno="2"]');
   await casella.focus();
   await p.keyboard.press('Space');
-  await expect(nomeInTabella(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('oggi · ogni 7 giorni');
+  await expect(nomeInTabella(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta oggi · ogni 7 giorni · prossimo giro: mercoledì 21 ottobre');
   expect(await calore(nomeInTabella(p, 'Lenzuola'))).toBe(0);
   await expect(casella).toBeFocused();                                              // la casella è ancora quella
 });
@@ -90,7 +90,7 @@ test('intensità: Morbido predefinito, Nessuno toglie il colore, Deciso; vale an
   await expect(p.locator('.opzione[data-intensita="nessuna"]')).toHaveAttribute('aria-pressed', 'true');
   await chiudiMenu(p);
   await expect.poll(() => sfondo(carta(p, 'Lenzuola'))).toBe(neutra);             // solo il testo
-  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('23 giorni fa · ogni 7 giorni');
+  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta il 21 settembre · ogni 7 giorni · giro aperto dal 28 settembre');
 
   await apriMenu(p);
   await p.click('.opzione[data-intensita="decisa"]');
@@ -113,7 +113,7 @@ test('riposo oggi: le schede si ammorbidiscono, il conteggio non cambia, e una s
   await expect(carta(p, 'Lenzuola')).toHaveAttribute('data-riposo', '');
   await expect(carta(p, 'Lenzuola')).not.toHaveAttribute('data-calore');
   await expect(carta(p, 'Sviluppo')).toHaveAttribute('data-riposo', '');             // tutte, non solo le faccende
-  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('23 giorni fa · ogni 7 giorni');
+  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta il 21 settembre · ogni 7 giorni · giro aperto dal 28 settembre');
   await expect(carta(p, 'Lavatrice')).toHaveAttribute('data-fatto', '');
   await expect(carta(p, 'Lavatrice')).not.toHaveAttribute('data-riposo');
   // anche in Casa
@@ -169,12 +169,12 @@ test('salto: il conteggio riparte, l’ultima volta resta vera, si può annullar
   expect(await calore(faccenda(p, 'Lenzuola'))).toBe(1);
   await faccenda(p, 'Lenzuola').getByRole('button', { name: 'Salto questo giro di Lenzuola' }).click();
   await expect(faccenda(p, 'Lenzuola')).toContainText('Giro saltato oggi.');
-  await expect(faccenda(p, 'Lenzuola')).toContainText('Fatta 23 giorni fa (lunedì 21 settembre)');
+  await expect(faccenda(p, 'Lenzuola')).toContainText('Fatta il 21 settembre');
   await expect(faccenda(p, 'Lenzuola').getByRole('button', { name: /Salto questo giro/ })).toHaveCount(0);
   await expect(faccenda(p, 'Lenzuola').getByRole('button', { name: 'Annulla il salto di Lenzuola' })).toBeFocused();
   expect(await calore(faccenda(p, 'Lenzuola'))).toBe(0);
   await vaiA(p, 'settimana');
-  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('23 giorni fa · giro saltato oggi · ogni 7 giorni');
+  await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta il 21 settembre · giro saltato oggi · ogni 7 giorni · prossimo giro: mercoledì 21 ottobre');
 
   // annullare: torna com'era
   await vaiA(p, 'casa');
@@ -187,7 +187,7 @@ test('salto: il conteggio riparte, l’ultima volta resta vera, si può annullar
   const domani = await apri(contesto, new Date(2026, 9, 15, 10, 0));
   await vaiA(domani, 'casa');
   await expect(faccenda(domani, 'Lenzuola')).toContainText('Giro saltato ieri.');
-  await expect(faccenda(domani, 'Lenzuola')).toContainText('Fatta 24 giorni fa');
+  await expect(faccenda(domani, 'Lenzuola')).toContainText('Fatta il 21 settembre');
   const dopo = await apri(contesto, new Date(2026, 9, 16, 10, 0));
   await vaiA(dopo, 'casa');
   await expect(faccenda(dopo, 'Lenzuola')).toContainText('Giro saltato mercoledì 14 ottobre.');
