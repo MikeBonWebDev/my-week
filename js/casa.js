@@ -82,7 +82,7 @@ function cartaFaccenda(f, riposoOggi) {
   segnaCalore(li, f, { riposo: riposoOggi });
 
   const titolo = document.createElement('h2');
-  titolo.textContent = f.nome;
+  titolo.append(nomeRinominabile(f.id, f.nome, 'nome-faccenda'));
 
   const dati = document.createElement('p');
   dati.className = 'faccenda-dati';

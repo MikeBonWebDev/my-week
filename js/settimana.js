@@ -177,6 +177,32 @@ function rigaPromemoria(f, riposoOggi) {
   return li;
 }
 
+/* ───────── Il nome che si tocca per rinominare ─────────
+   Il nome di una voce è un pulsante: toccandolo si apre il foglio «Rinomina» (js/libreria.js). La matita accanto
+   dice che si può toccare anche a chi non ci prova. */
+function nomeRinominabile(id, nome, classe = 'nome-voce') {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = `${classe} rinomina-voce`;
+  b.dataset.rinomina = id;
+  b.setAttribute('aria-label', `Rinomina «${nome}»`);
+  const testo = document.createElement('span');
+  testo.textContent = nome;
+  b.append(testo, matita());
+  return b;
+}
+function matita() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'matita');
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', 'M4 20l1-4L16 5l3 3L8 19zM14 7l3 3');
+  svg.append(p);
+  return svg;
+}
+
 /* ───────── Disegno della tabella ─────────
    Le funzioni crea… costruiscono gli elementi della tabella con document.createElement e li riempiono
    con textContent, mai con innerHTML: un nome come "<b>Ciao</b>" viene mostrato così com'è, non interpretato
@@ -223,9 +249,12 @@ function creaRiga(attivita) {
 
   const testi = document.createElement('div');
   testi.className = 'testi';
-  const nome = document.createElement('span');
-  nome.className = 'nome-voce';
-  nome.textContent = attivita.name;
+  // nelle settimane passate il nome resta testo: si rinomina dalla settimana corrente
+  const nome = inSettimanaCorrente() ? nomeRinominabile(attivita.id, attivita.name) : document.createElement('span');
+  if (!inSettimanaCorrente()) {
+    nome.className = 'nome-voce';
+    nome.textContent = attivita.name;
+  }
 
   const dettaglio = document.createElement('input');
   dettaglio.type = 'text';
@@ -612,9 +641,11 @@ function creaCarta(attivita, g, f) {
 
   const testi = document.createElement('div');
   testi.className = 'carta-testi';
-  const nome = document.createElement('span');
-  nome.className = 'nome-voce';
-  nome.textContent = attivita.name;
+  const nome = inSettimanaCorrente() ? nomeRinominabile(attivita.id, attivita.name) : document.createElement('span');
+  if (!inSettimanaCorrente()) {
+    nome.className = 'nome-voce';
+    nome.textContent = attivita.name;
+  }
   const dettaglio = document.createElement('input');
   dettaglio.type = 'text';
   dettaglio.className = 'dettaglio';

@@ -909,6 +909,28 @@ dialog.foglio {
 .vuoto-casa { margin: 1.4rem 0 0; color: var(--tenue); }
 .saltato { display: flex; flex-wrap: wrap; align-items: center; gap: 0 .5rem; margin: 0; font-size: .92rem; color: var(--tenue); }
 
+/* ───────── Il nome che si tocca per rinominare ───────── */
+.rinomina-voce {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  max-width: 100%;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.rinomina-voce span { overflow-wrap: anywhere; }
+/* il titolo della scheda in Casa: il pulsante prende peso e righe dal titolo */
+.nome-faccenda { padding: 0; font-weight: inherit; line-height: inherit; }
+.rinomina-voce .matita { flex: none; width: .9em; height: .9em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
+.rinomina-voce:hover .matita { opacity: .9; }
+.rinomina-voce:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; border-radius: .3rem; }
+
 /* ───────── Il promemoria delle faccende, in cima alla settimana ───────── */
 .promemoria {
   display: grid;
