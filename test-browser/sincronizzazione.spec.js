@@ -3,12 +3,17 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const {
-  apri, nomi, aggiungi, dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
+  MERCOLEDI, apri, nomi, aggiungi, dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
 } = require('./aiuti');
 
 test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali', async ({ browser }, info) => {
+  // Il PC parte un minuto avanti rispetto al telefono, così il nome scritto dal PC («sviluppo») è il più recente e vince.
+  // Ogni pagina ha il suo orologio finto: se partissero alla stessa ora e il PC ci mettesse più del telefono ad aprirsi,
+  // il suo orologio resterebbe indietro, vincerebbe «Sviluppo» e il test fallirebbe più avanti.
+  // (Prima qui c'era clock.fastForward a metà test: in WebKit su Linux, nella CI, la spunta subito dopo restava
+  // ferma ad aspettare che la casella fosse «stabile» fino allo scadere dei 30 secondi.)
   const tel = await apri(await browser.newContext());
-  const pc = await apri(await browser.newContext());
+  const pc = await apri(await browser.newContext(), new Date(MERCOLEDI.getTime() + 60_000));
 
   // Ognuno lavora per conto suo. La stessa voce, scritta in modo diverso, nasce su entrambi.
   await aggiungi(tel, 'Sviluppo');
@@ -18,10 +23,7 @@ test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali'
   await dettaglio(tel, 'Sviluppo', 'Programma A');
   await tel.click('.en[data-giorno="1"][data-livello="pesa"]');
 
-  // Il PC lavora un minuto dopo il telefono, così il nome scritto dal PC («sviluppo») è il più recente e vince.
-  // Senza, ogni pagina ha il suo orologio finto che parte da zero quando si apre: se il PC ci metteva più del
-  // telefono ad aprirsi, il suo orologio restava indietro, vinceva «Sviluppo» e il test falliva più avanti.
-  await pc.clock.fastForward('01:00');
+  // Il PC lavora per conto suo
   await aggiungi(pc, '  sviluppo ');
   await aggiungi(pc, 'Chitarra');
   await spunta(pc, 'sviluppo', 2);

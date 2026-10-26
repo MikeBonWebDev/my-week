@@ -22,6 +22,9 @@ module.exports = defineConfig({
     // tranne nei test della PWA, che lo riattivano (vedi pwa.spec.js).
     serviceWorkers: 'block',
     locale: 'it-IT',
+    // in CI, per un test fallito, la registrazione passo per passo (schermate, DOM, rete) finisce nel rapporto:
+    // si apre da «Artifacts › rapporto-playwright» e dice cosa stava facendo la pagina quando si è fermata
+    trace: CI ? 'retain-on-failure' : 'off',
   },
   // Tre motori: Chromium (Chrome, Edge, Android), Firefox, WebKit (il motore di Safari, anche su iPhone).
   // In più «iphone»: WebKit con il profilo di un iPhone 15 (schermo, densità, tocco, Safari mobile), solo per i test

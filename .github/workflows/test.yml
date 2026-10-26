@@ -14,25 +14,46 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
 
       - name: Dipendenze
+        timeout-minutes: 5
         run: npm ci
 
       - name: Test del nucleo
+        timeout-minutes: 5
         run: npm test
 
+      # I browser si scaricano una volta e restano in cache, finché non cambia la versione di Playwright
+      # (cioè package-lock.json). Le librerie di sistema invece si installano a ogni esecuzione.
+      - name: Cache dei browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # Il primo tentativo si è bloccato per 25 minuti scaricando le librerie dal mirror di Ubuntu. Qui ogni tentativo
+      # ha 8 minuti; se non basta, si riprova (fino a tre volte), rimettendo in ordine apt prima di ripartire.
       - name: Browser per i test
-        run: npx playwright install --with-deps chromium firefox webkit
+        timeout-minutes: 26
+        run: |
+          for tentativo in 1 2 3; do
+            if timeout 8m npx playwright install --with-deps chromium firefox webkit; then exit 0; fi
+            echo "::warning::Installazione dei browser non riuscita (tentativo $tentativo), riprovo"
+            sudo dpkg --configure -a || true
+            sleep 15
+          done
+          exit 1
 
       - name: Test nel browser
+        timeout-minutes: 15
         run: npm run test:browser
 
       - name: Rapporto, se qualcosa è andato storto
