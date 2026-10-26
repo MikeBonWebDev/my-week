@@ -16,10 +16,13 @@ Per i test nel browser, una volta sola:
 
 ```sh
 npm install
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 ```
 
-poi `npm run test:browser`.
+poi `npm run test:browser`: ogni test gira in Chromium, Firefox e WebKit (il motore di Safari); i test del telefono
+anche nel progetto `iphone` (WebKit con il profilo di un iPhone 15). Uno solo, per fare prima:
+`npx playwright test --project=chromium`. Gli stessi test girano da soli su GitHub a ogni push (scheda
+*Actions*).
 
 ## 2. Pubblicarla (GitHub Pages)
 
@@ -61,3 +64,23 @@ a schermo intero, un file scaricato si apre in anteprima invece di essere salvat
 3. Al primo avvio con la rete l’app prende la versione nuova; a volte serve chiuderla e riaprirla.
 
 Gli aggiornamenti non toccano i dati.
+
+## 6. Provarla su un iPhone vero
+
+I test automatici usano il motore di Safari, non iOS. Questa lista copre ciò che solo un iPhone può dire: bastano
+una decina di minuti, anche con il telefono di qualcun altro (i dati restano su quel telefono: alla fine si possono
+cancellare togliendo l’app e i dati del sito).
+
+1. Apri l’indirizzo in **Safari**: la pagina si vede intera, senza scorrimento di lato; la barra delle sezioni in basso
+   non finisce sotto la barra di sistema.
+2. **Aggiungi alla schermata Home** e apri l’app dall’icona: si apre a schermo intero, con il nome e l’icona giusti.
+3. Aggiungi due attività e segna qualcosa; chiudi l’app (anche dal multitasking) e riaprila: i dati ci sono.
+4. Tocca il campo del **dettaglio** e quello per **aggiungere**: la pagina **non** si ingrandisce.
+5. Sezione **Dati** → *Salva il file*: dove va a finire? (Di solito nell’app File, in *Download*.)
+   Poi *Invia a…*: si apre il menu Condividi, con il file allegato.
+6. **Modalità aereo**, poi riapri l’app: funziona lo stesso.
+7. Riapri l’indirizzo in **Safari** (non dall’icona): i dati di prima ci sono o no? Su iPhone l’app installata e
+   Safari possono avere memorie separate. Non è un errore, ma è bene saperlo: si usa sempre la stessa delle due.
+
+Se qualcosa non va, una foto dello schermo e il punto della lista bastano per capire da dove partire.
+

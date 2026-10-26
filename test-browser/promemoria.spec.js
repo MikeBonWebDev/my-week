@@ -3,9 +3,8 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const Core = require('../core.js');
-const { apri, caricaDati, vaiA } = require('./aiuti');
+const { apri, caricaDati, vaiA, telefono } = require('./aiuti');
 
-const TELEFONO = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 
 // Sei faccende; nella settimana del 12 ottobre ci sono solo Lavatrice e Sviluppo (che non è una faccenda).
 //   Lenzuola   ogni 7 giorni,  fatta lunedì 21 settembre  → giro aperto dal 28 settembre      (nel promemoria)
@@ -119,7 +118,7 @@ test('solo nella settimana corrente; senza faccende da proporre non c’è', asy
 });
 
 test('sul telefono: il promemoria sta sopra il giorno scelto, e le scelte funzionano allo stesso modo', async ({ browser }) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, datiFaccende());
   await apriPromemoria(p);
   await expect(promemoria(p)).toBeVisible();

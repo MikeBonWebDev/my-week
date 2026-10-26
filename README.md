@@ -20,6 +20,7 @@ Per pubblicarla, installarla e usarla c’è [LEGGIMI.md](LEGGIMI.md).
 12. [Limiti e scelte consapevoli](#12-limiti-e-scelte-consapevoli)
 13. [Da C# a JavaScript: un piccolo dizionario](#13-da-c-a-javascript-un-piccolo-dizionario)
 14. [Un percorso per studiarla](#14-un-percorso-per-studiarla)
+15. [Come è stata costruita](#15-come-è-stata-costruita)
 
 ---
 
@@ -632,9 +633,24 @@ Altri esperimenti: togliere `ultimo + 1` da `scrivi`; in `togli`, cancellare la 
 
 ### Test nel browser (`npm run test:browser`)
 
-`test-browser/`, con [Playwright](https://playwright.dev): apre un Chromium vero, carica l’app da `strumenti/server.js`
+`test-browser/`, con [Playwright](https://playwright.dev): apre un browser vero, carica l’app da `strumenti/server.js`
 e la usa come una persona (scrive, tocca, conferma, scarica). Le azioni ricorrenti stanno in `aiuti.js`, così i test
 si leggono come una storia.
+
+- **Tre motori.** Ogni test gira tre volte: **Chromium** (Chrome, Edge, Android), **Firefox** e **WebKit**, il
+  motore di Safari. Uno solo: `npx playwright test --project=firefox`. WebKit *non è* Safari su iPhone: è lo stesso
+  motore, ma senza il sistema intorno (installazione sulla schermata Home, limiti di memoria di iOS). Quello si prova
+  a mano, su un iPhone vero.
+- **Telefono, secondo il motore.** `telefono()` in `aiuti.js` dà uno schermo largo 390 pixel con il tocco; dove il
+  motore lo permette, anche l’emulazione di un dispositivo mobile (Firefox non la offre). All’app basta la larghezza:
+  sceglie la vista con una media query. Nel quarto progetto, `iphone`, `telefono()` dà il profilo completo di un
+  iPhone 15 (393 pixel, densità 3, Safari mobile) e girano solo i test del telefono e quelli di `ios.spec.js`.
+- **Le regole di iOS, sulla nostra app.** iOS non si può far girare qui, ma le sue regole per i siti sono
+  documentate: `ios.spec.js` mette l’app nelle stesse condizioni. Memoria cancellata da Safari (l’app riparte pulita e
+  il file salvato rimette tutto), niente «Salva con nome» ma il menu Condividi («Invia a…»), campi con il testo di
+  almeno 16 pixel (sotto, toccandoli, Safari ingrandisce la pagina), zone sicure attorno a tacca e barra di sistema.
+  Il test dei 16 pixel ha trovato un difetto vero: il dettaglio sulle schede del telefono era a 13,8 pixel.
+  Ciò che resta (installazione, memoria separata tra Safari e app) si prova a mano: LEGGIMI, §6.
 
 - **Due dispositivi = due contesti.** Un *contesto* di Playwright è come un profilo separato del browser, con la sua
   memoria. Nel test di sincronizzazione telefono e PC lavorano separati, si scambiano il file salvato e alla fine
@@ -651,8 +667,23 @@ si leggono come una storia.
   sia scorrimento di lato a 320, 360, 390 e 700 pixel, in tema chiaro e scuro.
 - **Orologio fermo.** `page.clock.install({ time })` fissa la data: i test girano "mercoledì 14 ottobre 2026" in
   qualunque giorno li lanci.
-- **Service worker bloccato**, tranne in `pwa.spec.js`, che verifica installabilità (lo chiede a Chrome stesso) e
-  funzionamento senza rete (`context.setOffline(true)`).
+- **Service worker bloccato**, tranne in `pwa.spec.js`, che verifica installabilità (lo chiede a Chrome stesso: solo
+  in Chromium, l’unico che lo sa dire) e funzionamento senza rete (`context.setOffline(true)`).
+- **Promemoria e rinomina.** `promemoria.spec.js` controlla quali faccende propone la settimana, le date scritte come
+  date («giro aperto dall’8 ottobre»), «Aggiungi», «Salto questo giro» con «Annulla». `rinomina.spec.js` apre il foglio
+  dal nome, prova i nomi che non si possono salvare e controlla che il fuoco torni dove eri.
+- **Accessibilità.** `accessibilita.spec.js` fa passare [axe-core](https://github.com/dequelabs/axe-core) su ogni
+  sezione e ogni foglio, su computer e telefono, in chiaro e in scuro, con il colore delle faccende Morbido e Deciso:
+  nessuna violazione delle regole WCAG 2.1 di livello A e AA, contrasto dei colori compreso. Gira con il *movimento
+  ridotto*: altrimenti axe misurerebbe un colore a metà di una transizione e segnalerebbe un contrasto che non c’è.
+  Prova a schiarire `--tenue` in `stile.css`: il test se ne accorge.
+
+### I test su GitHub (CI)
+
+`.github/workflows/test.yml` fa girare tutti i test a **ogni push e ogni pull request**, su una macchina Linux pulita
+di GitHub: nucleo e browser, nei tre motori. Il risultato compare accanto al commit (✓ o ✗) e nella scheda *Actions*.
+Se un test nel browser fallisce, il rapporto di Playwright, con le schermate, si scarica da lì («Artifacts»).
+È la stessa regola che si usa a mano, «test verdi prima di pubblicare», fatta da una macchina che non se ne dimentica.
 
 Una lezione vera da questi test: un test falliva **una volta su venti**. La finestra di conferma spariva subito, ma
 la pagina proseguiva solo all’evento `close`, che il browser consegna un attimo dopo; il test a volte leggeva la tabella
@@ -693,7 +724,9 @@ prima di lavorare: l’ordine degli eventi è scritto nel test, non lasciato al 
 - **Lo spazio.** Ogni informazione porta con sé momento e dispositivo. Stima, non misurata: qualche kilobyte a
   settimana, quindi alcuni MB in molti anni. `localStorage` di solito ne concede circa 5. Se servirà: compattare il
   registro o passare a IndexedDB.
-- **Provata solo in Chromium.** Firefox e Safari non sono coperti dai test automatici.
+- **Tre motori sì, un iPhone no.** I test automatici girano in Chromium, Firefox, WebKit e WebKit con il profilo di
+  un iPhone. Un iPhone vero (installazione, memoria separata tra Safari e app installata) si prova solo a mano, con la
+  lista di LEGGIMI §6, e finora non è stato provato.
 
 ## 13. Da C# a JavaScript: un piccolo dizionario
 
@@ -744,3 +777,23 @@ Così lo stesso file funziona in entrambi.
    registro (`s/…/u/<giorno>`), schema in `valida`, lettura in `vista`, operazione in `crea`, riga in pagina, test.
 5. Progetta le **fasce orarie** (mattina, pomeriggio, sera): quali chiavi useresti? Cosa succede a un dispositivo con
    la versione vecchia dell’app quando riceve quelle chiavi? (Indizio: §7, "Le chiavi sconosciute si conservano".)
+
+## 15. Come è stata costruita
+
+**Idea, principi e decisioni** sono di Michele: cosa fa l’app, cosa non deve fare (niente rosso, niente parole di
+colpa, niente punteggi, niente notifiche), le parole da usare e quelle da evitare, cosa tenere e cosa scartare.
+Michele la usa ogni giorno, e molte correzioni vengono da lì: una data che si leggeva in due modi, un nome che non si
+trovava come cambiare, il telefono che dopo un aggiornamento mescolava file vecchi e nuovi.
+
+**Il codice, i test e questa documentazione** sono stati scritti con **Claude** (Anthropic), un assistente di
+intelligenza artificiale, in sessioni di lavoro guidate da Michele. Il metodo, per ogni passo:
+
+1. un **documento funzionale** breve: cosa cambia, perché, cosa si vede;
+2. un’**anteprima navigabile** con dati finti, da provare e correggere prima di scrivere codice;
+3. il **codice con i suoi test**, consegnato come pacchetto dei soli file cambiati e provato su una copia pulita del
+   repository;
+4. la **revisione**: Michele estrae i file, lancia i test, li prova sul telefono, e decide se pubblicare.
+
+Questo vuol dire che il codice non è stato scritto a mano riga per riga, ed è giusto dirlo. Il percorso del §14 serve
+anche a questo: farlo proprio, un pezzo alla volta.
+

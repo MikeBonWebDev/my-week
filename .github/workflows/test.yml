@@ -1,0 +1,44 @@
+# I test, a ogni push e a ogni pull request: nucleo (Node) e browser (Chromium, Firefox, WebKit).
+# Gira su una macchina Linux pulita di GitHub; per un repository pubblico i minuti sono gratuiti.
+# Se un test nel browser fallisce, il rapporto di Playwright (con le schermate) si scarica dalla pagina della
+# esecuzione, in fondo: «Artifacts» › rapporto-playwright.
+name: Test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Dipendenze
+        run: npm ci
+
+      - name: Test del nucleo
+        run: npm test
+
+      - name: Browser per i test
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Test nel browser
+        run: npm run test:browser
+
+      - name: Rapporto, se qualcosa è andato storto
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapporto-playwright
+          path: playwright-report/
+          retention-days: 7

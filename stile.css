@@ -776,7 +776,8 @@ dialog.foglio {
 .testi .riga-cadenza { padding: 0 .4rem; }
 .carta-testi { min-width: 0; display: grid; gap: .1rem; }
 .carta .nome-voce { padding: 0; font-size: 1.02rem; }
-.carta .dettaglio { padding: .2rem 0; font-size: .86rem; }
+/* 1rem (16 pixel) e non meno: su iPhone, toccando un campo con il testo più piccolo, Safari ingrandisce la pagina */
+.carta .dettaglio { padding: .2rem 0; font-size: 1rem; }
 .carta .dettaglio::placeholder { font-style: normal; opacity: .7; }
 .carta-piede { display: flex; align-items: center; gap: .8rem; margin-top: .2rem; }
 /* sette puntini: la settimana di questa attività; quello cerchiato è il giorno scelto */

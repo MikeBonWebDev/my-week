@@ -4,14 +4,12 @@
 const { test, expect } = require('@playwright/test');
 const { creaSeme } = require('../strumenti/seme.js');
 const {
-  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, conferma, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto,
+  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, conferma, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto, telefono,
 } = require('./aiuti');
-
-const TELEFONO = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 
 /** Apre l'app in un contesto "telefono". */
 async function apriTelefono(browser, quando = MERCOLEDI, opzioni = {}) {
-  return apri(await browser.newContext({ ...TELEFONO, ...opzioni }), quando);
+  return apri(await browser.newContext({ ...telefono(), ...opzioni }), quando);
 }
 
 // Piccoli aiuti per leggere la vista a un giorno
@@ -107,6 +105,21 @@ test('dettaglio e «Togli» sulle schede', async ({ browser }) => {
   expect(await nomiCarte(p)).toEqual(['Sviluppo']);
 });
 
+test('un tocco lento subito dopo aver aggiunto arriva comunque alla casella: i suggerimenti si chiudono dopo il tocco', async ({ browser }) => {
+  // Aggiunta un'attività, il campo resta attivo e sotto ci sono i suggerimenti. Toccando altrove, il campo perde il
+  // fuoco già alla pressione del dito e i suggerimenti si chiudevano subito: la pagina si spostava sotto il dito, e
+  // il rilascio cadeva altrove. Il clic andava perso. Qui il tocco è lento (pressione e rilascio a 200 ms).
+  const p = await apriTelefono(browser);
+  await aggiungi(p, 'Sviluppo');
+  await expect(p.locator('#suggerimenti')).toBeVisible();
+  await carta(p, 'Sviluppo').locator('input[type=checkbox]').click({ delay: 200 });
+  await expect(carta(p, 'Sviluppo').locator('input[type=checkbox]')).toBeChecked();
+  await expect(p.locator('#suggerimenti')).toBeHidden();             // e dopo il tocco si chiudono
+  await aggiungi(p, 'Leggere');
+  await carta(p, 'Leggere').getByRole('button', { name: 'Rinomina «Leggere»' }).click({ delay: 200 });
+  await expect(p.locator('#foglio-rinomina')).toBeVisible();
+});
+
 test('togliendo un’attività, la conferma dice in quali giorni risulta svolta', async ({ browser }) => {
   const p = await apriTelefono(browser);                        // mercoledì 14 ottobre
   await aggiungi(p, 'Sviluppo');
@@ -156,7 +169,7 @@ test('il menu si apre dal basso, con tema, colore e libreria; il CSV sta nella s
   expect(scaricato.suggestedFilename()).toBe('settimana-2026-10-12.csv');
   await apriMenu(p);
   const menu = await p.locator('#menu').boundingBox();
-  expect(Math.round(menu.y + menu.height)).toBe(844);                             // appoggiato al fondo dello schermo
+  expect(Math.round(menu.y + menu.height)).toBe(p.viewportSize().height);         // appoggiato al fondo dello schermo
   expect(await p.locator('#menu h3').allTextContents()).toEqual(['Tema', 'Colore delle faccende']);
   await p.locator('#pannello-libreria summary').click();
   await expect(p.locator('.lib-nome[data-id="sviluppo"]')).toBeVisible();
@@ -164,6 +177,7 @@ test('il menu si apre dal basso, con tema, colore e libreria; il CSV sta nella s
 });
 
 test('dal telefono al computer: ciò che segni sul telefono arriva nella tabella', async ({ browser }, info) => {
+  test.skip(info.project.name === 'iphone', 'serve anche un computer: gira negli altri progetti');
   const tel = await apriTelefono(browser);
   await aggiungi(tel, 'Sviluppo');
   await carta(tel, 'Sviluppo').locator('input[type=checkbox]').check();
@@ -177,7 +191,8 @@ test('dal telefono al computer: ciò che segni sul telefono arriva nella tabella
   expect(tabella.energia[2]).toBe('pesa');
 });
 
-test('stringendo la finestra si passa dalla tabella alla vista a un giorno, e ritorno', async ({ browser }) => {
+test('stringendo la finestra si passa dalla tabella alla vista a un giorno, e ritorno', async ({ browser }, info) => {
+  test.skip(info.project.name === 'iphone', 'parte da un computer: gira negli altri progetti');
   const p = await apri(await browser.newContext());   // computer
   await aggiungi(p, 'Sviluppo');
   await expect(p.locator('.scheda')).toBeVisible();

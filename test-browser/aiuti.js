@@ -3,11 +3,26 @@
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
-const { expect } = require('@playwright/test');
+const { test, expect, devices } = require('@playwright/test');
 
 // Le date di riferimento dei test: un mercoledì e il lunedì successivo (ora locale)
 const MERCOLEDI = new Date(2026, 9, 14, 10, 0);
 const LUNEDI_DOPO = new Date(2026, 9, 19, 9, 0);
+
+/**
+ * Le impostazioni di un contesto «telefono»: schermo stretto e tocco. Firefox non emula un dispositivo mobile
+ * (isMobile), quindi lì solo schermo e tocco: all'app basta, perché sceglie la vista dalla larghezza.
+ * Nel progetto «iphone» (playwright.config.js): il profilo completo di un iPhone 15, come Safari lo presenta.
+ */
+function telefono() {
+  const progetto = test.info().project.name;
+  if (progetto === 'iphone') {
+    const { defaultBrowserType, ...iphone } = devices['iPhone 15'];   // il motore lo sceglie il progetto
+    return iphone;
+  }
+  const base = { viewport: { width: 390, height: 844 }, hasTouch: true };
+  return progetto === 'firefox' ? base : { ...base, isMobile: true };
+}
 
 /**
  * Apre l'app in un contesto (= un "dispositivo" con la sua memoria) con l'orologio fermato a `quando`.
@@ -150,6 +165,7 @@ function foto(p) {
 }
 
 module.exports = {
+  telefono,
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
   dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
 };

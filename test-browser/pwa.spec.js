@@ -6,16 +6,18 @@ const { aggiungi, nomi } = require('./aiuti');
 // Qui il service worker serve: lo riattivo (nel resto dei test è bloccato, vedi playwright.config.js)
 test.use({ serviceWorkers: 'allow' });
 
-test('installabile, e senza rete si apre con i dati', async ({ page, context }) => {
+test('installabile, e senza rete si apre con i dati', async ({ page, context, browserName }) => {
   await page.goto('/');
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();   // dopo l'attivazione, la pagina passa sotto il controllo del service worker
   expect(await page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
 
-  // Chrome stesso dice se la pagina è installabile (protocollo dei DevTools)
-  const devtools = await context.newCDPSession(page);
-  expect((await devtools.send('Page.getAppManifest')).errors).toEqual([]);
-  expect((await devtools.send('Page.getInstallabilityErrors')).installabilityErrors).toEqual([]);
+  // Chrome stesso dice se la pagina è installabile (protocollo dei DevTools, che c'è solo in Chromium)
+  if (browserName === 'chromium') {
+    const devtools = await context.newCDPSession(page);
+    expect((await devtools.send('Page.getAppManifest')).errors).toEqual([]);
+    expect((await devtools.send('Page.getInstallabilityErrors')).installabilityErrors).toEqual([]);
+  }
 
   // Tutti i file dell'elenco di sw.js sono in cache: li conto direttamente da sw.js, così il test non va
   // aggiornato a ogni file nuovo

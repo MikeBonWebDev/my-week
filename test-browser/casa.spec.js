@@ -4,9 +4,8 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const { creaSeme } = require('../strumenti/seme.js');
-const { apri, caricaDati, nomi, apriMenu, salvaFile, unisciFile } = require('./aiuti');
+const { apri, caricaDati, nomi, apriMenu, salvaFile, unisciFile, telefono } = require('./aiuti');
 
-const TELEFONO = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 
 // Piccoli aiuti per la sezione Casa
 const vai = (p, nome) => p.click(`.sezione-voce[data-sezione="${nome}"]`);
@@ -182,7 +181,7 @@ test('tastiera: il foglio prende il fuoco, Esc lo chiude, il fuoco torna al puls
 });
 
 test('una faccenda creata sul telefono arriva sul computer con il file', async ({ browser }, info) => {
-  const tel = await apri(await browser.newContext(TELEFONO));
+  const tel = await apri(await browser.newContext(telefono()));
   await vai(tel, 'casa');
   await nuovaFaccenda(tel, { nome: 'Lenzuola', giorni: 15 });
   const file = await salvaFile(tel, info.outputPath('tel.json'));
@@ -204,7 +203,7 @@ test('finestra media (700 px): colonna e contenuto restano affiancati, la tabell
 
 test.describe('telefono', () => {
   test('la barra in basso: sempre visibile, l’avviso le sta sopra, il menu le passa davanti', async ({ browser }) => {
-    const p = await apri(await browser.newContext(TELEFONO));
+    const p = await apri(await browser.newContext(telefono()));
     const barra = await p.locator('#sezioni').boundingBox();
     expect(Math.round(barra.y + barra.height)).toBe(844);                        // appoggiata al fondo
     await expect(p.locator('.marchio')).toBeHidden();
@@ -219,7 +218,7 @@ test.describe('telefono', () => {
 
   for (const [larghezza, schema] of [[320, 'light'], [360, 'dark'], [390, 'light']]) {
     test(`${larghezza} px, tema ${schema}: niente scorrimento di lato, in nessuna delle due sezioni`, async ({ browser }) => {
-      const p = await apri(await browser.newContext({ ...TELEFONO, viewport: { width: larghezza, height: 740 }, colorScheme: schema }));
+      const p = await apri(await browser.newContext({ ...telefono(), viewport: { width: larghezza, height: 740 }, colorScheme: schema }));
       await caricaDati(p, creaSeme());
       const largo = () => p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(await largo()).toBe(0);

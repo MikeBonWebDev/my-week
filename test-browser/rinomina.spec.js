@@ -3,9 +3,8 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const Core = require('../core.js');
-const { apri, caricaDati, aggiungi, vaiA } = require('./aiuti');
+const { apri, caricaDati, aggiungi, vaiA, telefono } = require('./aiuti');
 
-const TELEFONO = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 
 // Sviluppo in tre settimane (anche questa), Leggere solo in questa; Bagno è una faccenda
 function dati() {
@@ -22,7 +21,7 @@ const campo = (p) => p.locator('#nome-rinomina');
 const salva = (p) => p.locator('#salva-rinomina');
 
 test('telefono: toccando il nome si apre il foglio; Invio salva, e il nome cambia sulla scheda', async ({ browser }) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await aggiungi(p, 'Ascoltato musca');
   await p.getByRole('button', { name: 'Rinomina «Ascoltato musca»' }).click();
   await expect(foglio(p)).toBeVisible();

@@ -3,9 +3,8 @@
 'use strict';
 const { test, expect } = require('@playwright/test');
 const Core = require('../core.js');
-const { apri, caricaDati, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile } = require('./aiuti');
+const { apri, caricaDati, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, telefono } = require('./aiuti');
 
-const TELEFONO = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 
 // Tre faccende nella settimana del 12 ottobre, con un orologio finto (ogni operazione un minuto dopo):
 //   Bagno      ogni 14 giorni, fatta martedì 29 settembre  → 15 giorni: appena oltre (calore 1/14)
@@ -35,7 +34,7 @@ const sfondo = (l) => l.evaluate((e) => getComputedStyle(e).backgroundColor);
 const calore = (l) => l.evaluate((e) => (e.hasAttribute('data-calore') ? Number(e.style.getPropertyValue('--calore')) : 0));
 
 test('telefono: le schede delle faccende dicono da quanto e, oltre la cadenza, si scaldano', async ({ browser }) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, datiFaccende());
   await expect(carta(p, 'Bagno').locator('.riga-cadenza')).toHaveText('Fatta il 29 settembre · ogni 14 giorni · giro aperto da ieri');
   await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta il 21 settembre · ogni 7 giorni · giro aperto dal 28 settembre');
@@ -69,7 +68,7 @@ test('computer: la cella del nome si scalda, e una spunta la aggiorna senza ridi
 });
 
 test('le settimane passate non si scaldano: il calore parla di oggi', async ({ browser }) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, datiFaccende());
   await p.click('#sett-prec');
   await expect(p.locator('.carta[data-calore]')).toHaveCount(0);
@@ -77,7 +76,7 @@ test('le settimane passate non si scaldano: il calore parla di oggi', async ({ b
 });
 
 test('intensità: Morbido predefinito, Nessuno toglie il colore, Deciso; vale anche sull’altro dispositivo', async ({ browser }, info) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, datiFaccende());
   const neutra = await sfondo(carta(p, 'Sviluppo'));
   await expect(p.locator('html')).toHaveAttribute('data-intensita', 'morbida');
@@ -105,7 +104,7 @@ test('intensità: Morbido predefinito, Nessuno toglie il colore, Deciso; vale an
 });
 
 test('riposo oggi: le schede si ammorbidiscono, il conteggio non cambia, e una scheda fatta resta verde', async ({ browser }) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, datiFaccende());
   await carta(p, 'Lavatrice').locator('input[type=checkbox]').check();
   await p.check('#riposo-giorno');
@@ -162,7 +161,7 @@ test('tema: Scuro e Chiaro valgono su questo dispositivo e restano; Automatico s
 });
 
 test('salto: il conteggio riparte, l’ultima volta resta vera, si può annullare; nei giorni dopo resta scritto', async ({ browser }) => {
-  const contesto = await browser.newContext(TELEFONO);
+  const contesto = await browser.newContext(telefono());
   const p = await apri(contesto);
   await caricaDati(p, datiFaccende());
   await vaiA(p, 'casa');
@@ -194,7 +193,7 @@ test('salto: il conteggio riparte, l’ultima volta resta vera, si può annullar
 });
 
 test('fatta oggi: niente «Salto questo giro»', async ({ browser }) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, datiFaccende());
   await carta(p, 'Bagno').locator('input[type=checkbox]').check();
   await vaiA(p, 'casa');
@@ -206,7 +205,7 @@ test('fatta oggi: niente «Salto questo giro»', async ({ browser }) => {
 test.describe('le parole', () => {
   // Le regole del documento funzionale: niente rosso, niente parole di colpa, nessuna frase che rassicura
   test('nessuna parola di colpa in nessuna sezione', async ({ browser }) => {
-    const p = await apri(await browser.newContext(TELEFONO));
+    const p = await apri(await browser.newContext(telefono()));
     await caricaDati(p, datiFaccende());
     const testi = [];
     for (const s of ['settimana', 'casa', 'dati']) { await vaiA(p, s); testi.push(await p.locator('body').innerText()); }

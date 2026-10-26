@@ -4,9 +4,8 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('node:fs');
 const { creaSeme } = require('../strumenti/seme.js');
-const { apri, caricaDati, aggiungi, apriMenu, vaiA, salvaFile, unisciFile } = require('./aiuti');
+const { apri, caricaDati, aggiungi, apriMenu, vaiA, salvaFile, unisciFile, telefono } = require('./aiuti');
 
-const TELEFONO = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 
 // Una data di ultimo salvataggio già scritta nella memoria del dispositivo, prima che la pagina si apra
 const conUltimoSalvataggio = (contesto, data) => contesto.addInitScript((d) => {
@@ -35,7 +34,7 @@ test('la sezione Dati: dove sono, le azioni con la loro frase, la spiegazione ch
 });
 
 test('sul telefono: la riga dice della cartella Download', async ({ browser }) => {
-  const p = await apri(await browser.newContext(TELEFONO));
+  const p = await apri(await browser.newContext(telefono()));
   await vaiA(p, 'dati');
   await expect(p.locator('#dove-file')).toContainText('Il file va nella cartella Download del telefono.');
 });

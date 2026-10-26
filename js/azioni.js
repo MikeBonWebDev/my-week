@@ -28,13 +28,23 @@ campoNuova.addEventListener('input', aggiornaSuggerimenti);
 
 // "attivo" = stai usando il campo: su telefono è il momento di mostrare i suggerimenti.
 formNuova.addEventListener('focusin', () => { formNuova.classList.add('attivo'); aggiornaSuggerimenti(); });
+// Un dito (o il mouse) premuto in questo momento? Lo segue la pagina intera, prima di chiunque altro (capture).
+let premuto = false;
+document.addEventListener('pointerdown', () => { premuto = true; }, true);
+for (const tipo of ['pointerup', 'pointercancel']) document.addEventListener(tipo, () => { premuto = false; }, true);
+
 formNuova.addEventListener('focusout', () => {
-  // aspetto un attimo: se il fuoco è solo passato a un altro elemento del modulo, non chiudo niente
-  setTimeout(() => {
+  const chiudi = () => {
+    // se il fuoco è solo passato a un altro elemento del modulo, non chiudo niente
     if (formNuova.contains(document.activeElement)) return;
     formNuova.classList.remove('attivo');
     aggiornaSuggerimenti();
-  }, 0);
+  };
+  // Il campo perde il fuoco già quando il dito si appoggia altrove. Se chiudessi subito i suggerimenti, la pagina si
+  // sposterebbe sotto il dito e il rilascio cadrebbe su un'altra cosa: il tocco andrebbe perso. Quindi, a dito
+  // premuto, aspetto il rilascio (e il clic che lo segue); altrimenti, solo un attimo.
+  if (premuto) document.addEventListener('pointerup', () => setTimeout(chiudi, 0), { once: true, capture: true });
+  else setTimeout(chiudi, 0);
 });
 // Premendo un suggerimento il campo non perde il fuoco (preventDefault su pointerdown): la tastiera resta aperta
 // e il clic arriva comunque al suggerimento.
