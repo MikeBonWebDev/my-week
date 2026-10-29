@@ -2,7 +2,7 @@
 import * as Core from '../core.js';
 import { $, db, esito, lunediCorrente, mostraStato, oggiK, riposoOggi, state } from './base.js';
 import { conMaiuscola, ogniGiorni, quandoSalto, testoFatta, testoGiro } from './testi.js';
-import { nomeRinominabile, segnaCalore } from './pezzi.js';
+import { el, nomeRinominabile, segnaCalore } from './pezzi.js';
 
 /* ───────── La sezione Casa ─────────
    Le faccende sono le voci della libreria con una cadenza (v/<id>/cad nel registro). Tutto quello che si vede
@@ -38,77 +38,31 @@ function disegnaCasa() {
 }
 
 function cartaFaccenda(f, riposo) {
-  const li = document.createElement('li');
-  li.className = 'faccenda';
-  li.dataset.id = f.id;
-  li.toggleAttribute('data-riposo', riposo);
+  const li = el('li', { class: 'faccenda', dataset: { id: f.id, riposo } },
+    el('h2', {}, nomeRinominabile(f.id, f.nome, 'nome-faccenda')),
+    // "Fatta il 6 ottobre", "Ogni 14 giorni", "Giro aperto dal 20 ottobre" (testoFatta e testoGiro: testi.js)
+    el('p', { class: 'faccenda-dati' },
+      el('span', { testo: testoFatta(f) }),
+      el('span', { class: 'ogni', testo: ogniGiorni(f.cadenza) }),
+      f.scade && el('span', { class: 'giro-testo', testo: conMaiuscola(testoGiro(f)) })),
+    // Il salto: resta scritto finché non la segni di nuovo, e si può annullare
+    f.salto && el('p', { class: 'saltato' },
+      el('span', { testo: `Giro saltato ${quandoSalto(f.salto)}.` }),
+      bottoneAzione('Annulla', 'link-azione', 'annulla-salto', f, `Annulla il salto di ${f.nome}`)),
+    el('div', { class: 'faccenda-azioni' },
+      inQuestaSettimana(f.id)
+        ? el('span', { class: 'gia', testo: 'Già in questa settimana' })
+        : bottoneAzione('+ Aggiungi a questa settimana', 'pulsante piccolo', 'aggiungi', f),
+      // «Salto questo giro» solo se il conteggio non parte già da oggi (fatta oggi, o saltata oggi)
+      (f.giorni === null || f.giorni > 0)
+        && bottoneAzione('Salto questo giro', 'pulsante secondario piccolo', 'salta', f, `Salto questo giro di ${f.nome}`),
+      bottoneAzione('Cadenza', 'link-azione', 'cadenza', f, `Cadenza di ${f.nome}`)));
   segnaCalore(li, f, { riposo });
-
-  const titolo = document.createElement('h2');
-  titolo.append(nomeRinominabile(f.id, f.nome, 'nome-faccenda'));
-
-  const dati = document.createElement('p');
-  dati.className = 'faccenda-dati';
-  // "Fatta il 6 ottobre", "Ogni 14 giorni", "Giro aperto dal 20 ottobre" (testoFatta e testoGiro: testi.js)
-  const ultima = document.createElement('span');
-  ultima.textContent = testoFatta(f);
-  const ogni = document.createElement('span');
-  ogni.className = 'ogni';
-  ogni.textContent = ogniGiorni(f.cadenza);
-  dati.append(ultima, ogni);
-  if (f.scade) {
-    const giro = document.createElement('span');
-    giro.className = 'giro-testo';
-    giro.textContent = conMaiuscola(testoGiro(f));
-    dati.append(giro);
-  }
-
-  // Il salto: resta scritto finché non la segni di nuovo, e si può annullare
-  let saltato = null;
-  if (f.salto) {
-    saltato = document.createElement('p');
-    saltato.className = 'saltato';
-    const t = document.createElement('span');
-    t.textContent = `Giro saltato ${quandoSalto(f.salto)}.`;
-    const annulla = bottoneAzione('Annulla', 'link-azione', 'annulla-salto', f);
-    annulla.setAttribute('aria-label', `Annulla il salto di ${f.nome}`);
-    saltato.append(t, annulla);
-  }
-
-  const azioni = document.createElement('div');
-  azioni.className = 'faccenda-azioni';
-  if (inQuestaSettimana(f.id)) {
-    const gia = document.createElement('span');
-    gia.className = 'gia';
-    gia.textContent = 'Già in questa settimana';
-    azioni.append(gia);
-  } else {
-    azioni.append(bottoneAzione('+ Aggiungi a questa settimana', 'pulsante piccolo', 'aggiungi', f));
-  }
-  // «Salto questo giro» solo se il conteggio non parte già da oggi (fatta oggi, o saltata oggi)
-  if (f.giorni === null || f.giorni > 0) {
-    const salta = bottoneAzione('Salto questo giro', 'pulsante secondario piccolo', 'salta', f);
-    salta.setAttribute('aria-label', `Salto questo giro di ${f.nome}`);
-    azioni.append(salta);
-  }
-  const cadenza = bottoneAzione('Cadenza', 'link-azione', 'cadenza', f);
-  cadenza.setAttribute('aria-label', `Cadenza di ${f.nome}`);
-  azioni.append(cadenza);
-
-  li.append(titolo, dati);
-  if (saltato) li.append(saltato);
-  li.append(azioni);
   return li;
 }
 
-function bottoneAzione(testo, classe, azione, f) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = classe;
-  b.textContent = testo;
-  b.dataset.azione = azione;
-  b.dataset.id = f.id;
-  return b;
+function bottoneAzione(testo, classe, azione, f, etichetta) {
+  return el('button', { type: 'button', class: classe, testo, dataset: { azione, id: f.id }, aria: { label: etichetta } });
 }
 
 listaFaccende.addEventListener('click', (e) => {
@@ -206,13 +160,7 @@ function aggiornaFoglio() {
 }
 
 function scelta(testo, premuta, dati) {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = 'scelta';
-  b.textContent = testo;
-  b.setAttribute('aria-pressed', String(premuta));
-  Object.assign(b.dataset, dati);
-  return b;
+  return el('button', { type: 'button', class: 'scelta', testo, aria: { pressed: premuta }, dataset: dati });
 }
 
 // Le scelte si ridisegnano a ogni tocco: il fuoco torna sulla scelta equivalente, così da tastiera non si perde

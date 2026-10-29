@@ -4,7 +4,7 @@ import {
   $, aggiungiGiorni, chiaveData, dataDaChiave, db, esito, lunediCorrente, mostraStato, oggiK, riposoOggi, state
 } from './base.js';
 import { testoCadenza } from './testi.js';
-import { segnaCalore } from './pezzi.js';
+import { el, segnaCalore } from './pezzi.js';
 import { quandoCambiaSezione } from './sezioni.js';
 
 /* ───────── Promemoria delle faccende ─────────
@@ -46,45 +46,21 @@ export function aggiornaPromemoria(k) {
 }
 
 function rigaPromemoria(f, riposo) {
-  const li = document.createElement('li');
-  li.className = 'promemoria-riga';
-  li.dataset.id = f.id;
   const saltato = saltatiDalPromemoria.has(f.id);
-  if (!saltato) {
-    li.toggleAttribute('data-riposo', riposo);
-    segnaCalore(li, f, { riposo });
-  }
-  const testi = document.createElement('div');
-  testi.className = 'promemoria-testi';
-  const nome = document.createElement('span');
-  nome.className = 'nome-voce';
-  nome.textContent = f.nome;
-  const riga = document.createElement('span');
-  riga.className = 'riga-cadenza';
-  riga.textContent = saltato ? 'Giro saltato oggi: il conteggio riparte da qui.' : testoCadenza(f);
-  testi.append(nome, riga);
-
-  const azioni = document.createElement('div');
-  azioni.className = 'promemoria-azioni';
-  const bottone = (testo, classe, azione, etichetta) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = classe;
-    b.textContent = testo;
-    b.dataset.azione = azione;
-    b.dataset.id = f.id;
-    b.setAttribute('aria-label', etichetta);
-    return b;
-  };
-  if (saltato) {
-    azioni.append(bottone('Annulla', 'link-azione', 'annulla-salto', `Annulla il salto di ${f.nome}`));
-  } else {
-    azioni.append(
-      bottone('Aggiungi', 'pulsante piccolo', 'aggiungi', `Aggiungi «${f.nome}» a questa settimana`),
-      bottone('Salto questo giro', 'pulsante secondario piccolo', 'salta', `Salto questo giro di ${f.nome}`),
-    );
-  }
-  li.append(testi, azioni);
+  const bottone = (testo, classe, azione, etichetta) => el('button', {
+    type: 'button', class: classe, testo, dataset: { azione, id: f.id }, aria: { label: etichetta },
+  });
+  const li = el('li', { class: 'promemoria-riga', dataset: { id: f.id, riposo: !saltato && riposo } },
+    el('div', { class: 'promemoria-testi' },
+      el('span', { class: 'nome-voce', testo: f.nome }),
+      el('span', { class: 'riga-cadenza', testo: saltato ? 'Giro saltato oggi: il conteggio riparte da qui.' : testoCadenza(f) })),
+    el('div', { class: 'promemoria-azioni' }, saltato
+      ? bottone('Annulla', 'link-azione', 'annulla-salto', `Annulla il salto di ${f.nome}`)
+      : [
+        bottone('Aggiungi', 'pulsante piccolo', 'aggiungi', `Aggiungi «${f.nome}» a questa settimana`),
+        bottone('Salto questo giro', 'pulsante secondario piccolo', 'salta', `Salto questo giro di ${f.nome}`),
+      ]));
+  if (!saltato) segnaCalore(li, f, { riposo });
   return li;
 }
 

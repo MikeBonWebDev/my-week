@@ -19,7 +19,7 @@ import * as Core from '../core.js';
      comuni        base.js       impostazioni, elementi, date e oggi, dati e loro letture, salvare, esito, conferma,
                                  disegna
                    testi.js      le parole e le date: «Fatta il 23 settembre», «giro aperto dall'8 ottobre», formati
-                   pezzi.js      pezzi di interfaccia comuni: il nome da rinominare, il calore di una faccenda
+                   pezzi.js      pezzi di interfaccia comuni: el() per costruire elementi, il nome da rinominare, il calore
                    sezioni.js    il registro delle sezioni e la navigazione
      Settimana     promemoria.js il promemoria delle faccende in cima alla settimana, con le sue scelte
                    settimana.js  la settimana mostrata: tabella e vista a un giorno

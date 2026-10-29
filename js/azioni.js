@@ -75,20 +75,20 @@ $('#riprendi-settimana').addEventListener('click', () => {
 // Lo stesso gestore serve la tabella (corpo) e le schede del telefono (carte).
 // Su telefono, dopo una spunta, ridisegno: cambiano anche la striscia, il colore della scheda, i puntini.
 function suCambio(e) {
-  const el = e.target;
+  const campo = e.target;
 
-  if (el.matches('input[type="checkbox"]')) {
-    const { id, giorno } = el.dataset;
+  if (campo.matches('input[type="checkbox"]')) {
+    const { id, giorno } = campo.dataset;
     // su computer la casella è già spuntata: aggiorno solo testo e calore della faccenda, se lo è
-    if (esito(db.spunta(visualizzata, id, Number(giorno), el.checked), { ridisegna: telefono.matches }) && !telefono.matches) {
+    if (esito(db.spunta(visualizzata, id, Number(giorno), campo.checked), { ridisegna: telefono.matches }) && !telefono.matches) {
       aggiornaFaccendeTabella();
     }
     return;
   }
 
-  if (el.matches('.dettaglio')) {
-    const r = db.dettaglio(visualizzata, el.dataset.id, el.value);
-    if (esito(r, { ridisegna: false })) { el.value = r.valore; el.title = r.valore; }
+  if (campo.matches('.dettaglio')) {
+    const r = db.dettaglio(visualizzata, campo.dataset.id, campo.value);
+    if (esito(r, { ridisegna: false })) { campo.value = r.valore; campo.title = r.valore; }
   }
 }
 
@@ -137,9 +137,9 @@ for (const contenitore of [corpo, carte]) {
 /* ───────── Azioni: energia e riposo ───────── */
 // Una casella di riposo (tabella).
 piede.addEventListener('change', (e) => {
-  const el = e.target;
-  if (!el.matches('input.riposo')) return;
-  if (esito(db.riposo(visualizzata, Number(el.dataset.giorno), el.checked), { ridisegna: false })) {
+  const campo = e.target;
+  if (!campo.matches('input.riposo')) return;
+  if (esito(db.riposo(visualizzata, Number(campo.dataset.giorno), campo.checked), { ridisegna: false })) {
     aggiornaColonne();
     aggiornaFaccendeTabella();   // con il riposo oggi, le faccende perdono il calore
   }

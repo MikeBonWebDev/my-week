@@ -5,6 +5,7 @@ import {
   settimaneConVoce, state, voce
 } from './base.js';
 import { fmtBreve } from './testi.js';
+import { el } from './pezzi.js';
 
 /* ───────── Libreria ───────── */
 // Il pannello «Libreria delle attività»: ogni voce con nome modificabile, in quante settimane compare,
@@ -13,60 +14,45 @@ export function aggiornaLibreria() {
   const voci = [...state.libreria].sort((a, b) => a.name.localeCompare(b.name, 'it'));
   $('#conta-libreria').textContent = `(${voci.length})`;
   if (!voci.length) {
-    const li = document.createElement('li');
-    li.className = 'lib-vuota';
-    li.textContent = 'La libreria è vuota: si riempie da sola quando aggiungi un’attività alla settimana.';
-    listaLibreria.replaceChildren(li);
+    listaLibreria.replaceChildren(el('li', {
+      class: 'lib-vuota', testo: 'La libreria è vuota: si riempie da sola quando aggiungi un’attività alla settimana.',
+    }));
     return;
   }
   listaLibreria.replaceChildren(...voci.map((v) => {
     const usate = settimaneConVoce(v.id);
     const ultima = Object.keys(state.weeks).filter((k) => state.weeks[k].activities.some((a) => a.id === v.id)).sort().pop();
-    const li = document.createElement('li');
-    li.className = 'lib-voce';
-
-    const nome = document.createElement('input');
-    nome.type = 'text';
-    nome.className = 'lib-nome';
-    nome.value = v.name;
-    nome.maxLength = MAX_NOME;
-    nome.dataset.id = v.id;
-    nome.setAttribute('aria-label', `Nome della voce «${v.name}»`);
-
-    const info = document.createElement('span');
-    info.className = 'lib-info';
-    info.textContent = usate
-      ? `in ${usate} ${usate === 1 ? 'settimana' : 'settimane'} · ultima: ${fmtBreve.format(dataDaChiave(ultima))}`
-      : 'mai usata';
-
-    let azione = null;
-    if (!usate) {
-      azione = document.createElement('button');
-      azione.type = 'button';
-      azione.className = 'pulsante secondario piccolo';
-      azione.dataset.id = v.id;
-      azione.dataset.azione = 'cancella';
-      azione.textContent = 'Cancella';
-      azione.setAttribute('aria-label', `Cancella «${v.name}» dalla libreria`);
-    }
-
-    li.append(nome, info, ...(azione ? [azione] : []));
-    return li;
+    return el('li', { class: 'lib-voce' },
+      el('input', {
+        type: 'text', class: 'lib-nome', value: v.name, maxLength: MAX_NOME, dataset: { id: v.id },
+        aria: { label: `Nome della voce «${v.name}»` },
+      }),
+      el('span', {
+        class: 'lib-info',
+        testo: usate
+          ? `in ${usate} ${usate === 1 ? 'settimana' : 'settimane'} · ultima: ${fmtBreve.format(dataDaChiave(ultima))}`
+          : 'mai usata',
+      }),
+      // solo una voce mai usata si può cancellare
+      !usate && el('button', {
+        type: 'button', class: 'pulsante secondario piccolo', dataset: { id: v.id, azione: 'cancella' }, testo: 'Cancella',
+        aria: { label: `Cancella «${v.name}» dalla libreria` },
+      }));
   }));
 }
 
 // Rinominare una voce. I controlli (vuoto, riservato, doppione) li rifà anche il nucleo; qui li anticipo
 // per non chiedere conferma di una cosa che poi verrebbe rifiutata.
 listaLibreria.addEventListener('change', async (e) => {
-  const el = e.target;
-  if (!el.matches('.lib-nome')) return;
-  const v = voce(el.dataset.id);
+  const campo = e.target;
+  if (!campo.matches('.lib-nome')) return;
+  const v = voce(campo.dataset.id);
   if (!v) return;
-  const nuovo = Core.pulisci(el.value, MAX_NOME);
-  if (!nuovo || nuovo === v.name) { el.value = v.name; return; }
+  const nuovo = Core.pulisci(campo.value, MAX_NOME);
+  if (!nuovo || nuovo === v.name) { campo.value = v.name; return; }
   const doppione = state.libreria.find((x) => x.id !== v.id && chiaveNome(x.name) === chiaveNome(nuovo));
   if (doppione || Core.eRiservato(nuovo)) {
-    el.value = v.name;
+    campo.value = v.name;
     mostraStato(doppione ? MESSAGGI.esiste(doppione.name) : MSG_RISERVATO, true);
     return;
   }
@@ -76,7 +62,7 @@ listaLibreria.addEventListener('change', async (e) => {
       `Il nuovo nome «${nuovo}» varrà in tutte le ${usate === 1 ? 'settimane: 1' : `${usate} settimane`} in cui compare «${v.name}», anche nel passato. `
       + 'Se invece vuoi una voce diversa da qui in avanti, aggiungi una voce nuova e lascia questa com’è.',
       'Rinomina');
-    if (!ok) { el.value = v.name; return; }
+    if (!ok) { campo.value = v.name; return; }
   }
   esito(db.rinomina(v.id, nuovo));
 });
@@ -145,7 +131,7 @@ function salvaRinomina() {
   if (esito(db.rinomina(id, nuovo))) {
     mostraStato(`Ora si chiama «${nuovo}».`);
     // il pulsante è stato ridisegnato: il fuoco va su quello nuovo della stessa voce, nella sezione aperta
-    [...document.querySelectorAll(`[data-rinomina="${id}"]`)].find((el) => el.offsetParent !== null)?.focus();
+    [...document.querySelectorAll(`[data-rinomina="${id}"]`)].find((b) => b.offsetParent !== null)?.focus();
   }
 }
 

@@ -24,6 +24,8 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
   Casa: `casa.js` 5. Dati: `file.js` 5. Menu: `libreria.js` 5. Avvio: `guscio.js` 6.
   Un file importa solo livelli più bassi (niente giri), e **una sezione non importa niente da un'altra sezione**:
   solo dai comuni e dai suoi file. Ciò che serve a due sezioni scende nei comuni.
+- **Gli elementi si costruiscono con `el()`** (`js/pezzi.js`), mai con `innerHTML` né con stringhe di HTML: il
+  testo passa da `testo` (textContent). Non chiamare `el` una variabile: nasconderebbe la funzione.
 - **Dove va cosa.** Parole e date («Fatta il…», «giro aperto dal…», formati) in `testi.js`; pezzi di interfaccia
   usati da più sezioni in `pezzi.js`; «oggi», la settimana mostrata e le letture dei dati (`lunediCorrente`,
   `riposoOggi`, `visualizzata`, `voce`, `attivitaDi`…) in `base.js`.
@@ -137,7 +139,10 @@ Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push 
    `test/struttura.test.js` (`settimana-16`).
 3. ~~La navigazione tra sezioni sta in `js/casa.js`.~~ Fatto: `sezioni.js` (registro, navigazione, avviso di cambio
    sezione), sezioni che non si importano a vicenda, controllo dei nomi importati (`settimana-17`).
-4. Costruzione del DOM prolissa (`createElement` ripetuti): un piccolo aiuto comune.
+4. ~~Costruzione del DOM prolissa.~~ Fatto: `el()` e `svg()` in `pezzi.js`; DOM prodotto identico, verificato
+   confrontando la pagina prima e dopo in 25 situazioni (`settimana-18`).
+
+Debiti della 2.0 chiusi. Prossimo passo: il documento funzionale della Fase 2.
 
 ## Comunicazione con il proprietario
 

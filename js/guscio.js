@@ -2,6 +2,7 @@
 import {
   $, avvisoIniziale, db, disegna, disegnaAnche, esito, menu, mostraStato, rigaIntestazione, state, telefono
 } from './base.js';
+import { el } from './pezzi.js';
 import { disegnaSezioneAperta, mostraSezione, registraSezioni, sezioneIniziale } from './sezioni.js';
 import { sezioneSettimana } from './settimana.js';
 import { aggiornaLibreria } from './libreria.js';
@@ -63,46 +64,21 @@ const SCELTE_INTENSITA = [
 
 function disegnaScelteMenu() {
   const tema = leggiTema();
-  $('#scelte-tema').replaceChildren(...TEMI.map(([valore, nome]) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'scelta';
-    b.dataset.tema = valore;
-    b.textContent = nome;
-    b.setAttribute('aria-pressed', String(tema === valore));
-    return b;
-  }));
+  $('#scelte-tema').replaceChildren(...TEMI.map(([valore, nome]) => el('button', {
+    type: 'button', class: 'scelta', dataset: { tema: valore }, testo: nome, aria: { pressed: tema === valore },
+  })));
 
-  $('#scelte-intensita').replaceChildren(...SCELTE_INTENSITA.map(([valore, nome, descrizione]) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'opzione';
-    b.dataset.intensita = valore;
-    b.setAttribute('aria-pressed', String(state.intensita === valore));
-    const radio = document.createElement('span');
-    radio.className = 'radio';
-    radio.setAttribute('aria-hidden', 'true');
-    const testi = document.createElement('span');
-    const t = document.createElement('strong');
-    t.textContent = nome;
-    const d = document.createElement('small');
-    d.textContent = descrizione;
-    testi.append(t, d);
-    // tre campioni: appena oltre la cadenza, a metà, al massimo. Sono piccole schede con il loro data-calore,
-    // dentro un contenitore con la sua data-intensita: lo stesso CSS delle schede vere
-    const campioni = document.createElement('span');
-    campioni.className = 'campioni';
-    campioni.dataset.intensitaCampione = valore;
-    campioni.setAttribute('aria-hidden', 'true');
-    for (const calore of [0.05, 0.5, 1]) {
-      const c = document.createElement('span');
-      c.className = 'campione';
-      if (valore !== 'nessuna') { c.dataset.calore = ''; c.style.setProperty('--calore', String(calore)); }
-      campioni.append(c);
-    }
-    b.append(radio, testi, campioni);
-    return b;
-  }));
+  $('#scelte-intensita').replaceChildren(...SCELTE_INTENSITA.map(([valore, nome, descrizione]) => el('button', {
+    type: 'button', class: 'opzione', dataset: { intensita: valore }, aria: { pressed: state.intensita === valore },
+  },
+  el('span', { class: 'radio', aria: { hidden: 'true' } }),
+  el('span', {}, el('strong', { testo: nome }), el('small', { testo: descrizione })),
+  // tre campioni: appena oltre la cadenza, a metà, al massimo. Sono piccole schede con il loro data-calore,
+  // dentro un contenitore con la sua data-intensita: lo stesso CSS delle schede vere
+  el('span', { class: 'campioni', dataset: { intensitaCampione: valore }, aria: { hidden: 'true' } },
+    [0.05, 0.5, 1].map((calore) => (valore === 'nessuna'
+      ? el('span', { class: 'campione' })
+      : el('span', { class: 'campione', dataset: { calore: true }, stile: { '--calore': calore } })))))));
 }
 
 $('#scelte-tema').addEventListener('click', (e) => {
@@ -129,16 +105,16 @@ applicaTema(leggiTema());
 // che è proprio VERSIONE di sw.js ("settimana-4"): così il numero si aggiorna in un posto solo.
 // Senza service worker (pagina aperta come file) non c'è nessuna copia salvata.
 async function mostraVersione() {
-  const el = $('#versione-app');
+  const riga = $('#versione-app');
   try {
     const numero = (nome) => Number(nome.split('-')[1]);
     // ordino per numero, non come testo: come testo "settimana-10" verrebbe prima di "settimana-9"
     const nomi = ('caches' in window ? await caches.keys() : [])
       .filter((n) => /^settimana-\d+$/.test(n))
       .sort((a, b) => numero(a) - numero(b));
-    el.textContent = nomi.length ? `Versione: ${nomi.at(-1)}` : 'Versione: non installata (senza uso offline)';
+    riga.textContent = nomi.length ? `Versione: ${nomi.at(-1)}` : 'Versione: non installata (senza uso offline)';
   } catch {
-    el.textContent = 'Versione: non disponibile';
+    riga.textContent = 'Versione: non disponibile';
   }
 }
 

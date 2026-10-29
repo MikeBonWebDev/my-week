@@ -54,7 +54,7 @@ settimana-pwa/
 ├── js/                   il comportamento della pagina (JavaScript), un modulo per argomento
 │   ├── base.js           impostazioni, elementi, date e oggi, dati (caricare, salvare, esito), conferma, disegno
 │   ├── testi.js          le parole e le date: «Fatta il 23 settembre», «giro aperto dall’8 ottobre», formati
-│   ├── pezzi.js          pezzi di interfaccia comuni: il nome da rinominare, il calore di una faccenda
+│   ├── pezzi.js          pezzi di interfaccia comuni: el() per costruire elementi, il nome da rinominare, il calore
 │   ├── sezioni.js        il registro delle sezioni e la navigazione tra loro
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
 │   ├── promemoria.js     il promemoria delle faccende in cima alla settimana, con le sue scelte
@@ -535,10 +535,19 @@ Raccoglie quello che prima stava nel menu: copie, sincronizzazione, CSV. Ogni az
 Qui sotto, con dove trovarli:
 
 **DOM e disegno.** Il DOM è l’albero degli elementi della pagina, che JavaScript può leggere e modificare. Le funzioni
-`creaRiga`, `creaRigaEnergia`… costruiscono elementi con `document.createElement` e li mettono nella tabella con
-`replaceChildren`. Il testo si inserisce con `textContent`, mai con `innerHTML`: un nome come `<b>ciao</b>` viene
-mostrato così com’è invece di essere interpretato come HTML. È la difesa più semplice contro l’inserimento di
-codice (XSS).
+`creaRiga`, `creaRigaEnergia`… costruiscono elementi e li mettono nella tabella con `replaceChildren`. Per costruirli
+c’è `el()` in `js/pezzi.js`: un elemento con le sue proprietà, i suoi `data-…` e `aria-…` e i suoi figli in una
+riga sola, invece di una riga per ogni attributo (`document.createElement`, poi `className`, poi
+`setAttribute`…). La struttura si legge come quella dell’HTML che produce:
+
+```js
+el('label', { class: 'cella' },
+  el('input', { type: 'checkbox', dataset: { id, giorno: i }, checked: fatto, aria: { label: `${nome} – ${giorno}` } }))
+```
+
+Il testo si inserisce con `textContent` (l’opzione `testo` di `el()`), mai con `innerHTML`: un nome come
+`<b>ciao</b>` viene mostrato così com’è invece di essere interpretato come HTML. È la difesa più semplice contro
+l’inserimento di codice (XSS).
 
 **Ridisegnare tutto.** `disegna()` rifà l’intera tabella dalla vista. Con poche decine di righe costa pochissimo, e
 garantisce che ciò che vedi venga solo dai dati. È lo stesso principio dei framework come React o Blazor

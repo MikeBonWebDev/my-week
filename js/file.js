@@ -6,6 +6,7 @@ import {
   telefono, visualizzata
 } from './base.js';
 import { daQuando, fmt, fmtLungo, fmtNumerica } from './testi.js';
+import { el } from './pezzi.js';
 
 /* ───────── Quando hai salvato e unito l'ultima volta ─────────
    È un'informazione di questo dispositivo (localStorage, settimana:sync), non un dato da sincronizzare.
@@ -129,9 +130,7 @@ function csvStorico() {
 function scarica(nomeFile, contenuto, tipo) {
   const blob = new Blob([contenuto], { type: tipo });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = nomeFile;
+  const link = el('a', { href: url, download: nomeFile });
   document.body.append(link);
   link.click();
   link.remove();
