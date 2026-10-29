@@ -52,8 +52,11 @@ settimana-pwa/
 ├── stile.css             l’aspetto (CSS)
 ├── core.js               il nucleo: dati, regola di unione, faccende, operazioni. Nessun browser: gira anche in Node
 ├── js/                   il comportamento della pagina (JavaScript), un modulo per argomento
-│   ├── base.js           impostazioni, elementi, date, dati (caricare, salvare, esito), conferma, elenco del disegno
+│   ├── base.js           impostazioni, elementi, date e oggi, dati (caricare, salvare, esito), conferma, disegno
+│   ├── testi.js          le parole e le date: «Fatta il 23 settembre», «giro aperto dall’8 ottobre», formati
+│   ├── pezzi.js          pezzi di interfaccia comuni: il nome da rinominare, il calore di una faccenda
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
+│   ├── promemoria.js     il promemoria delle faccende in cima alla settimana, con le sue scelte
 │   ├── libreria.js       il pannello «Libreria delle attività»
 │   ├── azioni.js         aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
 │   ├── file.js           la sezione Dati: ultimo salvataggio, invito alla copia, CSV, sincronizzazione
@@ -63,7 +66,8 @@ settimana-pwa/
 ├── manifest.webmanifest  nome, colori e icone dell'app installata
 ├── icone/                icone per Android, iPhone, scheda del browser
 ├── test/
-│   └── core.test.js      test del nucleo (Node, senza dipendenze)
+│   ├── core.test.js      test del nucleo (Node, senza dipendenze)
+│   └── struttura.test.js chi può importare chi (Node, legge gli import)
 ├── test-browser/         test nel browser vero (Playwright)
 │   ├── aiuti.js          azioni comuni: aggiungi, spunta, salva file, unisci…
 │   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
@@ -134,16 +138,20 @@ ciò che gli serve (`import`). Le frecce vanno in un verso solo, dall’alto ver
 chi sta sopra.
 
 ```
-   guscio.js            il punto di partenza: carica tutto, mette in elenco le parti da disegnare, avvia
-       │
-   casa.js  file.js  azioni.js  libreria.js       le sezioni e le azioni
-       │       │        │          │
-       └───────┴── settimana.js ───┘               la settimana visualizzata e il suo disegno
-                         │
-                      base.js                      elementi, date, dati, salvare, esito, conferma, disegna()
-                         │
-                      core.js                      il nucleo: nessun browser
+ livello
+    6    guscio.js                               il punto di partenza: carica tutto, elenca le parti da disegnare
+    5    casa.js  file.js  azioni.js             le sezioni e le loro azioni
+    4    promemoria.js  libreria.js              parti della settimana costruite sopra la settimana
+    3    settimana.js                            la settimana visualizzata e il suo disegno
+    2    testi.js  pezzi.js                      parole e date, pezzi di interfaccia: per tutte le sezioni
+    1    base.js                                 elementi, date e oggi, dati, salvare, esito, conferma, disegna()
+    0    core.js                                 il nucleo: nessun browser
 ```
+
+Un file importa solo file di livello più basso. Così non nascono giri (A che importa B che importa A), e un pezzo
+comune non finisce per dipendere da una sezione: Casa prende le parole da `testi.js`, non dalla settimana.
+`test/struttura.test.js` legge gli import di ogni file e controlla la regola; un file nuovo va messo lì, al suo
+livello.
 
 Due regole tengono le frecce in un verso solo. **Il disegno è un elenco**: `base.js` ha `disegna()`, che chiama
 in ordine le funzioni di disegno che `guscio.js` gli consegna all’avvio (`disegnaAnche`); così `base.js` non deve
@@ -401,7 +409,7 @@ quando quel codice gira. Lo trova prima `npm run lint` (§11), che legge il codi
 
 `index.html` carica solo `js/guscio.js`; gli altri file arrivano con gli `import`. Gli `import` scrivono
 `'./base.js'`, senza numero di versione: la *import map* in fondo a `index.html` dice al browser che `./js/base.js`
-è `./js/base.js?v=15`. Così il numero sta in un posto solo e la pagina nuova non si mescola con file vecchi rimasti
+è `./js/base.js?v=16` (il numero di adesso). Così il numero sta in un posto solo e la pagina nuova non si mescola con file vecchi rimasti
 nella cache del browser (§10). Un test controlla che ogni file di codice sia nella import map, con il numero giusto,
 e nell’elenco di `sw.js`.
 
@@ -650,7 +658,9 @@ importarlo, un import inutile, un nome dichiarato due volte, una chiave ripetuta
 Serve soprattutto con i moduli (§8): se un file usa un nome che non ha importato, il browser se ne accorge solo
 quando quel pezzo di codice gira, ESLint subito. In VS Code l'estensione ESLint lo sottolinea mentre scrivi.
 
-### Test del nucleo (`npm test`)
+### Test del nucleo e della struttura (`npm test`)
+
+`test/struttura.test.js` controlla chi può importare chi (§4): legge gli `import` di ogni file, senza eseguirli.
 
 `test/core.test.js`, con il test runner incluso in Node (`node:test`), senza dipendenze. Il nucleo non ha bisogno di
 un browser, quindi questi test sono veloci (qualche secondo, quasi tutto per i test di proprietà) e possono provare

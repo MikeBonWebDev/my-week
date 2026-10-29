@@ -18,8 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- ?v=15: vedi la nota sugli script in fondo -->
-  <link rel="stylesheet" href="stile.css?v=15">
+  <!-- ?v=16: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=16">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -327,25 +327,28 @@
        divisa per argomento in js/. Si carica solo guscio.js, che avvia l'app: i file che gli servono li chiede lui,
        con import, e così via a cascata (vedi la nota MODULI in js/base.js).
 
-       Il «?v=15» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       Il «?v=16» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
        può mescolare la pagina nuova con file vecchi che ha in memoria. Un import dentro un modulo scrive solo
        './base.js', senza numero: l'elenco qui sotto (import map) dice al browser che './base.js' è
-       'js/base.js?v=15'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
+       'js/base.js?v=16'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
        Ogni file di codice deve comparire qui: un test controlla che ci siano tutti, con il numero giusto. -->
   <script type="importmap">
     {
       "imports": {
-        "./core.js": "./core.js?v=15",
-        "./js/base.js": "./js/base.js?v=15",
-        "./js/settimana.js": "./js/settimana.js?v=15",
-        "./js/libreria.js": "./js/libreria.js?v=15",
-        "./js/azioni.js": "./js/azioni.js?v=15",
-        "./js/file.js": "./js/file.js?v=15",
-        "./js/casa.js": "./js/casa.js?v=15",
-        "./js/guscio.js": "./js/guscio.js?v=15"
+        "./core.js": "./core.js?v=16",
+        "./js/base.js": "./js/base.js?v=16",
+        "./js/testi.js": "./js/testi.js?v=16",
+        "./js/pezzi.js": "./js/pezzi.js?v=16",
+        "./js/settimana.js": "./js/settimana.js?v=16",
+        "./js/promemoria.js": "./js/promemoria.js?v=16",
+        "./js/libreria.js": "./js/libreria.js?v=16",
+        "./js/azioni.js": "./js/azioni.js?v=16",
+        "./js/file.js": "./js/file.js?v=16",
+        "./js/casa.js": "./js/casa.js?v=16",
+        "./js/guscio.js": "./js/guscio.js?v=16"
       }
     }
   </script>
-  <script type="module" src="js/guscio.js?v=15"></script>
+  <script type="module" src="js/guscio.js?v=16"></script>
 </body>
 </html>

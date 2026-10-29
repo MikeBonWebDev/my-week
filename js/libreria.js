@@ -1,9 +1,10 @@
 // js/libreria.js — il pannello «Libreria delle attività» del menu.
 import * as Core from '../core.js';
 import {
-  $, chiaveNome, conferma, dataDaChiave, db, esito, fmtBreve, listaLibreria, MAX_NOME, MESSAGGI, mostraStato,
-  MSG_RISERVATO, state
+  $, chiaveNome, conferma, dataDaChiave, db, esito, listaLibreria, MAX_NOME, MESSAGGI, mostraStato, MSG_RISERVATO,
+  state
 } from './base.js';
+import { fmtBreve } from './testi.js';
 import { settimaneConVoce, voce } from './settimana.js';
 
 /* ───────── Libreria ───────── */

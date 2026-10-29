@@ -1,10 +1,11 @@
 // js/file.js — la sezione Dati: quando hai salvato e unito l’ultima volta, invito alla copia, CSV, sincronizzazione.
 import * as Core from '../core.js';
 import {
-  $, aggiungiGiorni, CHIAVE_SYNC, conferma, dataDaChiave, db, disegna, fmt, fmtLungo, fmtNumerica, GIORNI, isObj,
-  mostraStato, NOME_LIVELLO, oggiK, RE_CHIAVE, rileggi, salva, SEPARATORE, state, telefono
+  $, aggiungiGiorni, CHIAVE_SYNC, conferma, dataDaChiave, db, disegna, GIORNI, isObj, lunediCorrente, mostraStato,
+  NOME_LIVELLO, oggiK, RE_CHIAVE, rileggi, salva, SEPARATORE, state, telefono
 } from './base.js';
-import { attivitaDi, haContenuto, lunediCorrente, mostraSettimana, visualizzata } from './settimana.js';
+import { daQuando, fmt, fmtLungo, fmtNumerica } from './testi.js';
+import { attivitaDi, haContenuto, mostraSettimana, visualizzata } from './settimana.js';
 
 /* ───────── Quando hai salvato e unito l'ultima volta ─────────
    È un'informazione di questo dispositivo (localStorage, settimana:sync), non un dato da sincronizzare.
@@ -21,9 +22,7 @@ function leggiSync() {
 // "14 ottobre 2026 (ieri)", oppure "mai, finora".
 function descriviData(k) {
   if (typeof k !== 'string' || !RE_CHIAVE.test(k)) return 'mai, finora';
-  const giorni = Math.round((dataDaChiave(oggiK) - dataDaChiave(k)) / 86_400_000);
-  const quando = giorni <= 0 ? 'oggi' : giorni === 1 ? 'ieri' : `${giorni} giorni fa`;
-  return `${fmtLungo.format(dataDaChiave(k))} (${quando})`;
+  return `${fmtLungo.format(dataDaChiave(k))} (${daQuando(k)})`;
 }
 
 // Da quanti giorni non c'è una copia: dall'ultimo file salvato; se non ce n'è mai stato uno, dal primo giorno

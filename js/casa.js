@@ -1,10 +1,9 @@
 // js/casa.js — le sezioni dell'app (Settimana, Casa, Dati) e la sezione Casa: le faccende, e da quanto tempo non le fai.
 import * as Core from '../core.js';
-import { $, dataDaChiave, db, disegna, esito, mostraStato, oggiK, state } from './base.js';
-import {
-  conMaiuscola, lunediCorrente, nomeRinominabile, ogniGiorni, quandoSalto, saltatiDalPromemoria, segnaCalore,
-  testoFatta, testoGiro
-} from './settimana.js';
+import { $, db, disegna, esito, lunediCorrente, mostraStato, oggiK, riposoOggi, state } from './base.js';
+import { conMaiuscola, ogniGiorni, quandoSalto, testoFatta, testoGiro } from './testi.js';
+import { nomeRinominabile, segnaCalore } from './pezzi.js';
+import { dimenticaSalti } from './promemoria.js';
 
 /* ───────── Le sezioni ─────────
    Una sola pagina, tre sezioni: se ne mostra una. La scelta resta su questo dispositivo
@@ -42,7 +41,7 @@ export function mostraSezione(nome) {
   $('#titolo-sezione').textContent = SEZIONI[nome].titolo;
   $('#sottotitolo').textContent = SEZIONI[nome].sottotitolo;
   document.title = nome === 'settimana' ? 'La mia settimana' : `${SEZIONI[nome].titolo} · La mia settimana`;
-  if (cambia) saltatiDalPromemoria.clear();   // il promemoria della settimana riparte pulito (settimana.js)
+  if (cambia) dimenticaSalti();   // il promemoria della settimana riparte pulito (promemoria.js)
   // L'ordine di Casa si decide quando la apri, e poi non si muove mentre la guardi
   if (nome === 'casa') ordineCasa = Core.faccende(db.registro, oggiK).map((f) => f.id);
   disegna();
@@ -71,25 +70,24 @@ export function disegnaCasa() {
   for (const id of perId.keys()) if (!ordineCasa.includes(id)) ordineCasa.push(id);
 
   // oggi è un giorno di riposo? Allora le schede si ammorbidiscono, senza calore (il conteggio non cambia)
-  const iOggi = (dataDaChiave(oggiK).getDay() + 6) % 7;
-  const riposoOggi = state.weeks[lunediCorrente()]?.rest[iOggi] === true;
-  listaFaccende.replaceChildren(...ordineCasa.map((id) => cartaFaccenda(perId.get(id), riposoOggi)));
+  const riposo = riposoOggi();
+  listaFaccende.replaceChildren(...ordineCasa.map((id) => cartaFaccenda(perId.get(id), riposo)));
   casaVuota.hidden = perId.size > 0;
 }
 
-function cartaFaccenda(f, riposoOggi) {
+function cartaFaccenda(f, riposo) {
   const li = document.createElement('li');
   li.className = 'faccenda';
   li.dataset.id = f.id;
-  li.toggleAttribute('data-riposo', riposoOggi);
-  segnaCalore(li, f, { riposo: riposoOggi });
+  li.toggleAttribute('data-riposo', riposo);
+  segnaCalore(li, f, { riposo });
 
   const titolo = document.createElement('h2');
   titolo.append(nomeRinominabile(f.id, f.nome, 'nome-faccenda'));
 
   const dati = document.createElement('p');
   dati.className = 'faccenda-dati';
-  // "Fatta il 6 ottobre", "Ogni 14 giorni", "Giro aperto dal 20 ottobre" (testoFatta e testoGiro: settimana.js)
+  // "Fatta il 6 ottobre", "Ogni 14 giorni", "Giro aperto dal 20 ottobre" (testoFatta e testoGiro: testi.js)
   const ultima = document.createElement('span');
   ultima.textContent = testoFatta(f);
   const ogni = document.createElement('span');

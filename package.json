@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
-    "test": "node --test test/core.test.js",
+    "test": "node --test test/core.test.js test/struttura.test.js",
     "test:browser": "playwright test",
     "start": "node strumenti/server.js",
     "seme": "node strumenti/seme.js"

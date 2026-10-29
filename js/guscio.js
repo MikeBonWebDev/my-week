@@ -3,6 +3,7 @@ import {
   $, avvisoIniziale, db, disegna, disegnaAnche, esito, menu, mostraStato, rigaIntestazione, state, telefono
 } from './base.js';
 import { disegnaSettimana } from './settimana.js';
+import { aggiornaPromemoria } from './promemoria.js';
 import { aggiornaLibreria } from './libreria.js';
 import './azioni.js';   // i gestori delle azioni sulla settimana: non esporta niente, basta caricarlo
 import { aggiornaSync } from './file.js';
@@ -11,7 +12,7 @@ import { disegnaCasa, mostraSezione, sezione } from './casa.js';
 /* ───────── Il disegno ─────────
    Le parti della pagina, nell'ordine in cui si ridisegnano (vedi disegnaAnche in base.js). Una sezione nuova
    si aggiunge qui. */
-disegnaAnche(disegnaSettimana, aggiornaLibreria, aggiornaSync, disegnaCasa);
+disegnaAnche(disegnaSettimana, aggiornaPromemoria, aggiornaLibreria, aggiornaSync, disegnaCasa);
 
 /* ───────── Il menu ─────────
    Un <dialog> aperto con showModal(): sta sopra alla pagina, che intanto non risponde ai tocchi.

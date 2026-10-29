@@ -16,8 +16,11 @@ import * as Core from '../core.js';
    la "vista a un giorno". disegnaSettimana() sceglie quale, in base a una media query letta da JavaScript (telefono).
 
    I FILE (dal basso verso l'alto: ognuno importa solo quelli sopra di lui in questo elenco)
-     base.js       impostazioni, elementi della pagina, date, dati (caricare, salvare, esito), conferma, disegna
+     base.js       impostazioni, elementi della pagina, date e oggi, dati (caricare, salvare, esito), conferma, disegna
+     testi.js      le parole e le date: «Fatta il 23 settembre», «giro aperto dall'8 ottobre», i formati delle date
+     pezzi.js      pezzi di interfaccia comuni a più sezioni: il nome da rinominare, il calore di una faccenda
      settimana.js  la settimana visualizzata e il disegno: tabella e vista a un giorno
+     promemoria.js il promemoria delle faccende in cima alla settimana, con le sue scelte
      libreria.js   il pannello «Libreria delle attività»
      azioni.js     aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
      file.js       ultimo salvataggio e unione, CSV, sincronizzazione
@@ -106,25 +109,8 @@ export const chiaveLunedi = (d) => chiaveData(lunediDi(d));
 // azioni.js se ne accorge e lo sposta.
 export let oggiK = chiaveData(soloData());
 export function cambiaOggi(k) { oggiK = k; }
-
-export const fmtNumerica = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
-export const fmtBreve = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short' });
-export const fmtLungo = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
-export const fmt = (opzioni) => new Intl.DateTimeFormat('it-IT', opzioni);
-
-// Il titolo della settimana: "12 – 18 ottobre 2026", oppure con mese o anno ripetuti se la settimana li scavalca.
-export function etichettaPeriodo(lun) {
-  const dom = aggiungiGiorni(lun, 6);
-  const lungo = { day: 'numeric', month: 'long' };
-  if (lun.getFullYear() !== dom.getFullYear()) {
-    const conAnno = { ...lungo, year: 'numeric' };
-    return `${fmt(conAnno).format(lun)} – ${fmt(conAnno).format(dom)}`;
-  }
-  if (lun.getMonth() !== dom.getMonth()) {
-    return `${fmt(lungo).format(lun)} – ${fmt(lungo).format(dom)} ${dom.getFullYear()}`;
-  }
-  return `${lun.getDate()} – ${fmt(lungo).format(dom)} ${dom.getFullYear()}`;
-}
+// Il lunedì della settimana di oggi
+export const lunediCorrente = () => chiaveLunedi(dataDaChiave(oggiK));
 
 /* ───────── Dati ─────────
    I dati veri stanno nel registro del nucleo (core.js). La pagina non li modifica mai direttamente:
@@ -180,6 +166,8 @@ export const db = Core.crea({ dispositivo: idDispositivo(), registro: caricaRegi
 export let state = db.vista();
 // Ricostruisce la vista dal registro, dopo ogni modifica. È l'unico modo di cambiare state.
 export function rileggi() { state = db.vista(); }
+// Oggi è un giorno di riposo? (lo usano Casa e il promemoria: le schede si ammorbidiscono, senza calore)
+export const riposoOggi = () => state.weeks[lunediCorrente()]?.rest[(dataDaChiave(oggiK).getDay() + 6) % 7] === true;
 
 /* ───────── Il disegno ─────────
    disegna() rifà tutto ciò che si vede, dalla vista. Ogni parte della pagina (la settimana, la libreria, la

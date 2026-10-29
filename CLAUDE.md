@@ -19,17 +19,21 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
 
 ## Regole dei moduli
 
-- **Le dipendenze vanno in un verso solo** (disegno in README §4): `core.js` ← `base.js` ← `settimana.js` ← le
-  sezioni (`libreria.js`, `azioni.js`, `file.js`, `casa.js`) ← `guscio.js`. Nessun file importa `guscio.js`;
-  `base.js` non importa nessun file della pagina. Niente import circolari.
+- **Le dipendenze vanno in un verso solo**, per livelli (README §4, controllati da `test/struttura.test.js`):
+  `core.js` 0 · `base.js` 1 · `testi.js` e `pezzi.js` 2 · `settimana.js` 3 · `promemoria.js` e `libreria.js` 4 ·
+  `azioni.js`, `file.js`, `casa.js` 5 · `guscio.js` 6. Un file importa solo livelli più bassi: niente giri,
+  nessuno importa `guscio.js`, `base.js` non importa nessun file della pagina.
+- **Dove va cosa.** Parole e date (come si scrive un giorno, «Fatta il…», «giro aperto dal…») in `testi.js`;
+  pezzi di interfaccia usati da più sezioni in `pezzi.js`; «oggi» e ciò che ne deriva (`lunediCorrente`,
+  `riposoOggi`) in `base.js`. Una sezione non prende niente da un'altra sezione: se serve a due, scende di livello.
 - **Il disegno è un elenco.** Chi cambia qualcosa chiama `disegna()` di `base.js`; le parti da disegnare le mette
   in elenco `guscio.js` con `disegnaAnche(...)`. Una sezione nuova esporta la sua funzione di disegno e si aggiunge
   a quell'elenco, senza toccare gli altri file.
 - **Un valore che cambia lo cambia solo il suo file**, con una funzione: `rileggi()` e `cambiaOggi()` in `base.js`,
   `mostraSettimana()` e `scegliGiorno()` in `settimana.js`. Gli altri leggono il valore importato (è un collegamento,
   vede sempre il valore attuale), ma non lo assegnano: un `import` non si può riassegnare.
-- **Un file di codice nuovo** va aggiunto alla *import map* di `index.html` (con `?v=N`) e all'elenco `FILE` di
-  `sw.js`. `pwa.spec.js` controlla che ci siano tutti.
+- **Un file di codice nuovo** va aggiunto alla *import map* di `index.html` (con `?v=N`), all'elenco `FILE` di
+  `sw.js` e a `LIVELLI` in `test/struttura.test.js`. `pwa.spec.js` e `struttura.test.js` controllano che ci sia.
 - Si esporta solo ciò che un altro file usa davvero.
 - Un nome usato **senza importarlo** il browser lo scopre solo quando quel codice gira: lo trova prima
   `npm run lint` (ESLint, regola `no-undef`), che legge il codice senza eseguirlo. Anche gli import inutili.
@@ -123,8 +127,9 @@ debiti di struttura, poi il documento funzionale della Fase 2.
 Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push tra l'uno e l'altro):
 1. ~~Un solo ambito globale condiviso dagli script classici.~~ Fatto: moduli ES, dipendenze in un verso solo,
    import map versionata (`settimana-15`).
-2. `js/settimana.js` fa tre mestieri: parole e date (da spostare in un file proprio, le usano anche altre sezioni),
-   promemoria (file proprio), disegno della settimana.
+2. ~~`js/settimana.js` fa tre mestieri.~~ Fatto: `testi.js`, `pezzi.js`, `promemoria.js`, livelli controllati da
+   `test/struttura.test.js` (`settimana-16`). Resta da sistemare nel 3: Casa importa `promemoria.js` solo per
+   `dimenticaSalti()` al cambio di sezione; con il registro delle sezioni diventa un avviso «sezione cambiata».
 3. La navigazione tra sezioni sta in `js/casa.js`: diventa un registro di sezioni in un file proprio.
 4. Costruzione del DOM prolissa (`createElement` ripetuti): un piccolo aiuto comune.
 

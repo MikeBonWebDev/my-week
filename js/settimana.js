@@ -2,17 +2,18 @@
 import * as Core from '../core.js';
 import {
   $, aggiungiGiorni, ATTIVITA_INIZIALI, bloccoAggiungi, boxRiprendi, boxSuggerimenti, campoNuova, carte, chiaveData,
-  chiaveLunedi, chiaveNome, corpo, dataDaChiave, db, etichettaPeriodo, FINESTRA, fmt, fmtBreve, fmtNumerica,
-  formNuova, GIORNI, LIVELLI, MAX_DETTAGLIO, MAX_FREQUENTI, MAX_RICERCA, NOME_LIVELLO, notaPassata, oggiK, piede,
-  rigaIntestazione, riposoGiorno, scheda, segmenti, soloData, state, striscia, telefono, vistaGiorno, vociSuggerite
+  chiaveLunedi, chiaveNome, corpo, dataDaChiave, db, FINESTRA, formNuova, GIORNI, LIVELLI, lunediCorrente,
+  MAX_DETTAGLIO, MAX_FREQUENTI, MAX_RICERCA, NOME_LIVELLO, notaPassata, oggiK, piede, rigaIntestazione, riposoGiorno,
+  riposoOggi, scheda, segmenti, soloData, state, striscia, telefono, vistaGiorno, vociSuggerite
 } from './base.js';
+import { etichettaPeriodo, fmt, fmtBreve, fmtNumerica, testoCadenza } from './testi.js';
+import { nomeRinominabile, segnaCalore } from './pezzi.js';
 
 /* ───────── Settimana visualizzata ───────── */
 // Il lunedì della settimana che stai guardando. Cambia solo da qui: mostraSettimana.
 export let visualizzata = chiaveLunedi(soloData());
 export function mostraSettimana(k) { visualizzata = k; }
 
-export const lunediCorrente = () => chiaveLunedi(dataDaChiave(oggiK));
 export const inSettimanaCorrente = () => visualizzata === lunediCorrente();
 
 export const voce = (id) => state.libreria.find((v) => v.id === id);
@@ -36,176 +37,10 @@ export const settimaneConVoce = (id) => Object.values(state.weeks).filter((w) =>
    --calore, che stile.css trasforma in colore secondo l'intensità scelta nel menu. Nelle settimane passate no:
    il calore parla di oggi. */
 const faccendeDiOggi = () => new Map(Core.faccende(db.registro, oggiK).map((f) => [f.id, f]));
-const fmtGiorno = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
-export const ogniGiorni = (n) => (n === 1 ? 'Ogni giorno' : `Ogni ${n} giorni`);
-
-// "oggi", "ieri", "16 giorni fa"
-function daQuando(k) {
-  const giorni = Core.giorniTra(k, oggiK);
-  return giorni <= 0 ? 'oggi' : giorni === 1 ? 'ieri' : `${giorni} giorni fa`;
-}
-// "oggi", "ieri", "giovedì 22 ottobre": quando hai saltato il giro
-export const quandoSalto = (k) => (Core.giorniTra(k, oggiK) <= 1 ? daQuando(k) : fmtGiorno.format(dataDaChiave(k)));
-
-/* Le date delle faccende si scrivono come date, non come conti da fare: «Fatta il 23 settembre», e il giro che ne
-   segue, «giro aperto dal 7 ottobre» oppure «prossimo giro: venerdì 30 ottobre». Le parole sono quelle di un
-   calendario: niente «scaduta», niente ordini. */
-const fmtGiornoMese = fmt({ day: 'numeric', month: 'long' });
-const fmtGiornoMeseAnno = fmt({ day: 'numeric', month: 'long', year: 'numeric' });
-// "23 settembre", "1° ottobre"; con l'anno, se non è quello di oggi
-function giornoMese(k) {
-  const d = dataDaChiave(k);
-  const testoData = (d.getFullYear() === dataDaChiave(oggiK).getFullYear() ? fmtGiornoMese : fmtGiornoMeseAnno).format(d);
-  return d.getDate() === 1 ? testoData.replace(/^1 /, '1° ') : testoData;
-}
-// Davanti a 8 e 11 l'articolo si elide: «l’8 ottobre», «dall’11 ottobre»
-const elide = (k) => [8, 11].includes(dataDaChiave(k).getDate());
-
-// "Fatta oggi", "Fatta ieri", "Fatta il 23 settembre", "Fatta l’8 ottobre", "Mai segnata"
-export function testoFatta(f) {
-  if (!f.ultima) return 'Mai segnata';
-  const giorni = Core.giorniTra(f.ultima, oggiK);
-  if (giorni <= 0) return 'Fatta oggi';
-  if (giorni === 1) return 'Fatta ieri';
-  return `Fatta ${elide(f.ultima) ? 'l’' : 'il '}${giornoMese(f.ultima)}`;
-}
-
-// "prossimo giro: domani", "prossimo giro: venerdì 30 ottobre", "giro aperto dal 7 ottobre", "" se mai segnata
-export function testoGiro(f) {
-  if (!f.scade) return '';
-  const giorni = Core.giorniTra(oggiK, f.scade);   // positivo: il giro deve ancora arrivare
-  if (giorni === 0) return 'prossimo giro: oggi';
-  if (giorni === 1) return 'prossimo giro: domani';
-  if (giorni > 1) return `prossimo giro: ${fmtGiorno.format(dataDaChiave(f.scade))}`;
-  if (giorni === -1) return 'giro aperto da ieri';
-  return `giro aperto ${elide(f.scade) ? 'dall’' : 'dal '}${giornoMese(f.scade)}`;
-}
-export const conMaiuscola = (t) => t.charAt(0).toUpperCase() + t.slice(1);
-
-// "Fatta il 6 ottobre · ogni 14 giorni · giro aperto dal 20 ottobre", "Mai segnata · ogni 30 giorni",
-// "Fatta il 21 settembre · giro saltato ieri · ogni 7 giorni · prossimo giro: mercoledì 28 ottobre"
-function testoCadenza(f) {
-  return [testoFatta(f), f.salto ? `giro saltato ${quandoSalto(f.salto)}` : '', ogniGiorni(f.cadenza).toLowerCase(), testoGiro(f)]
-    .filter(Boolean).join(' · ');
-}
-
-// Mette (o toglie) il calore su un elemento. Con il riposo, al posto del calore la tinta quieta del riposo.
-export function segnaCalore(el, f, { riposo = false } = {}) {
-  const caldo = Boolean(f && f.calore > 0 && !riposo);
-  el.toggleAttribute('data-calore', caldo);
-  if (caldo) el.style.setProperty('--calore', f.calore.toFixed(3));
-  else el.style.removeProperty('--calore');
-}
-
 // L'ultima settimana prima di quella corrente che aveva delle attività: da lì si può riprendere la lista
 export function settimanaDaRiprendere() {
   const corrente = lunediCorrente();
   return Object.keys(state.weeks).filter((k) => k < corrente && attivitaDi(k).length > 0).sort().pop() ?? null;
-}
-
-/* ───────── Promemoria delle faccende ─────────
-   In cima alla settimana corrente: le faccende che non sono nella settimana e hanno un giro aperto o in arrivo
-   entro domenica, più quelle mai segnate (sono proprio quelle che si rischia di dimenticare). Per ognuna, due
-   scelte: «Aggiungi» (entra nella settimana) e «Salto questo giro» (il conteggio riparte da oggi). Senza scelta
-   la riga resta lì: è un'informazione, non una richiesta. Il promemoria non scrive niente da solo. */
-const boxPromemoria = $('#promemoria');
-export const listaPromemoria = $('#lista-promemoria');
-// le faccende saltate da qui restano nel promemoria con «Annulla», finché non cambi sezione o ricarichi
-export const saltatiDalPromemoria = new Set();
-
-function faccendeDaProporre() {
-  if (!inSettimanaCorrente()) return [];
-  const domenica = chiaveData(aggiungiGiorni(dataDaChiave(visualizzata), 6));
-  const presenti = new Set((state.weeks[visualizzata]?.activities ?? []).map((a) => a.id));
-  const tutte = Core.faccende(db.registro, oggiK);
-  // un salto annullato altrove (in Casa), o una faccenda entrata nella settimana: niente più «Annulla» qui
-  for (const id of saltatiDalPromemoria) {
-    const f = tutte.find((x) => x.id === id);
-    if (!f || f.salto !== oggiK || presenti.has(id)) saltatiDalPromemoria.delete(id);
-  }
-  return tutte
-    .filter((f) => !presenti.has(f.id) && (saltatiDalPromemoria.has(f.id) || f.scade === null || f.scade <= domenica))
-    // prima il giro aperto da più tempo, poi quelli in arrivo; le mai segnate in fondo
-    .sort((a, b) => (a.scade === null) - (b.scade === null)
-      || (a.scade ?? '').localeCompare(b.scade ?? '') || a.nome.localeCompare(b.nome, 'it'));
-}
-
-function aggiornaPromemoria() {
-  const elenco = faccendeDaProporre();
-  boxPromemoria.hidden = elenco.length === 0;
-  $('#conta-promemoria').textContent = String(elenco.length);
-  const iOggi = (dataDaChiave(oggiK).getDay() + 6) % 7;
-  const riposoOggi = state.weeks[lunediCorrente()]?.rest[iOggi] === true;
-  listaPromemoria.replaceChildren(...elenco.map((f) => rigaPromemoria(f, riposoOggi)));
-}
-
-function rigaPromemoria(f, riposoOggi) {
-  const li = document.createElement('li');
-  li.className = 'promemoria-riga';
-  li.dataset.id = f.id;
-  const saltato = saltatiDalPromemoria.has(f.id);
-  if (!saltato) {
-    li.toggleAttribute('data-riposo', riposoOggi);
-    segnaCalore(li, f, { riposo: riposoOggi });
-  }
-  const testi = document.createElement('div');
-  testi.className = 'promemoria-testi';
-  const nome = document.createElement('span');
-  nome.className = 'nome-voce';
-  nome.textContent = f.nome;
-  const riga = document.createElement('span');
-  riga.className = 'riga-cadenza';
-  riga.textContent = saltato ? 'Giro saltato oggi: il conteggio riparte da qui.' : testoCadenza(f);
-  testi.append(nome, riga);
-
-  const azioni = document.createElement('div');
-  azioni.className = 'promemoria-azioni';
-  const bottone = (testo, classe, azione, etichetta) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = classe;
-    b.textContent = testo;
-    b.dataset.azione = azione;
-    b.dataset.id = f.id;
-    b.setAttribute('aria-label', etichetta);
-    return b;
-  };
-  if (saltato) {
-    azioni.append(bottone('Annulla', 'link-azione', 'annulla-salto', `Annulla il salto di ${f.nome}`));
-  } else {
-    azioni.append(
-      bottone('Aggiungi', 'pulsante piccolo', 'aggiungi', `Aggiungi «${f.nome}» a questa settimana`),
-      bottone('Salto questo giro', 'pulsante secondario piccolo', 'salta', `Salto questo giro di ${f.nome}`),
-    );
-  }
-  li.append(testi, azioni);
-  return li;
-}
-
-/* ───────── Il nome che si tocca per rinominare ─────────
-   Il nome di una voce è un pulsante: toccandolo si apre il foglio «Rinomina» (js/libreria.js). La matita accanto
-   dice che si può toccare anche a chi non ci prova. */
-export function nomeRinominabile(id, nome, classe = 'nome-voce') {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.className = `${classe} rinomina-voce`;
-  b.dataset.rinomina = id;
-  b.setAttribute('aria-label', `Rinomina «${nome}»`);
-  const testo = document.createElement('span');
-  testo.textContent = nome;
-  b.append(testo, matita());
-  return b;
-}
-function matita() {
-  const NS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('class', 'matita');
-  const p = document.createElementNS(NS, 'path');
-  p.setAttribute('d', 'M4 20l1-4L16 5l3 3L8 19zM14 7l3 3');
-  svg.append(p);
-  return svg;
 }
 
 /* ───────── Disegno della tabella ─────────
@@ -526,12 +361,11 @@ function aggiornaRiprendi() {
 let faccendeTabella = new Map();
 export function aggiornaFaccendeTabella() {
   faccendeTabella = faccendeDiOggi();
-  const iOggi = (dataDaChiave(oggiK).getDay() + 6) % 7;
-  const riposoOggi = inSettimanaCorrente() && state.weeks[visualizzata]?.rest[iOggi] === true;
+  const riposo = inSettimanaCorrente() && riposoOggi();
   corpo.querySelectorAll('th[data-faccenda]').forEach((th) => {
     const f = faccendeTabella.get(th.dataset.faccenda);
     th.querySelector('.riga-cadenza').textContent = f ? testoCadenza(f) : '';
-    segnaCalore(th, f, { riposo: riposoOggi });
+    segnaCalore(th, f, { riposo });
   });
 }
 
@@ -715,7 +549,7 @@ function creaCartaVuota(testo) {
 
 // Ridisegna la settimana dalla vista (state). Rifare la tabella intera costa pochissimo (poche decine di righe)
 // e ha un grande vantaggio: ciò che vedi viene sempre e solo dai dati, non può restare indietro.
-// È una delle parti di disegna() (base.js): le altre (libreria, Dati, Casa) le aggiunge guscio.js.
+// È una delle parti di disegna() (base.js): le altre (promemoria, libreria, Dati, Casa) le aggiunge guscio.js.
 export function disegnaSettimana() {
   // l'intensità del colore delle faccende (menu): vale su tutti i dispositivi, quindi sta nei dati
   document.documentElement.dataset.intensita = state.intensita;
@@ -727,7 +561,6 @@ export function disegnaSettimana() {
   if (bloccoAggiungi.parentElement !== posto) posto.append(bloccoAggiungi);
   if (suTelefono) disegnaGiorno(); else disegnaTabella();
   aggiornaNavigatore();
-  aggiornaPromemoria();
   aggiornaSuggerimenti();
   aggiornaRiprendi();
 }
