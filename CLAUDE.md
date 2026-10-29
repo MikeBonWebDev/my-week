@@ -39,6 +39,11 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
   (invertire una condizione, togliere una riga) e controllare che fallisca, poi rimettere com'era (README §11).
 - Se cambia il comportamento o la struttura, aggiornare anche `README.md` (e `LEGGIMI.md` se tocca l'uso).
 - `file-claude/` è una cartella locale di lavoro (zip, bozze): è ignorata da git, non va toccata né committata.
+- **Questo file si tiene allineato.** Quando nella conversazione si decide una regola, una convenzione o un passo del
+  piano, si aggiorna qui nella stessa modifica. I file in `.github/` Claude non li può scrivere: si indicano al
+  proprietario le righe da cambiare a mano.
+- **Niente debiti trascinati.** Prima di aggiungere funzioni si sistema la struttura che le dovrà accogliere:
+  il progetto deve essere pronto a ricevere un modulo nuovo senza dover cambiare altro in giro.
 
 ## Regole che un test controlla (e che si rompono facilmente)
 
@@ -83,6 +88,23 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 
 `.github/workflows/test.yml`: a ogni push, nucleo e browser nei tre motori su Ubuntu. L'installazione dei browser
 ha tentativi ripetuti e cache, perché i mirror apt a volte si bloccano. GitHub Pages ha un suo workflow separato.
+Limiti: 45 minuti il job, 30 lo step dei test nel browser (ottobre 2026: circa 6 minuti in tutto, WebKit il più
+lento). Quando arrivano i moduli della Fase 2: un job per motore (in parallelo) e il test di accessibilità diviso
+per sezione, perché oggi visita tutte le viste in un solo test e con altre sezioni supererebbe i 30 secondi.
+
+## Piano in corso
+
+Fase 1 chiusa (tre motori più iphone, axe, CI verde). Fase 2: Impostazioni e navigazione, poi Alimenti e Scorte
+(prodotti condivisi, quantità come eventi di movimento), Spese, Cucina, colori. Prima, la **Fase 2.0**: togliere i
+debiti di struttura, poi il documento funzionale della Fase 2.
+
+Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push tra l'uno e l'altro):
+1. Un solo ambito globale condiviso dagli script classici: dipendenze implicite nell'ordine dei `<script>`, nomi
+   che possono scontrarsi. In discussione il passaggio ai moduli ES.
+2. `js/settimana.js` fa tre mestieri: parole e date (da spostare in un file proprio, le usano anche altre sezioni),
+   promemoria (file proprio), disegno della settimana.
+3. La navigazione tra sezioni sta in `js/casa.js`: diventa un registro di sezioni in un file proprio.
+4. Costruzione del DOM prolissa (`createElement` ripetuti): un piccolo aiuto comune.
 
 ## Comunicazione con il proprietario
 
