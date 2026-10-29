@@ -37,13 +37,17 @@ test('telefono: le schede delle faccende dicono da quanto e, oltre la cadenza, s
   await caricaDati(p, datiFaccende());
   await expect(carta(p, 'Bagno').locator('.riga-cadenza')).toHaveText('Fatta il 29 settembre · ogni 14 giorni · giro aperto da ieri');
   await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta il 21 settembre · ogni 7 giorni · giro aperto dal 28 settembre');
-  await expect(carta(p, 'Lavatrice').locator('.riga-cadenza')).toHaveText('Fatta il 12 ottobre · ogni 7 giorni · prossimo giro: lunedì 19 ottobre');
   await expect(carta(p, 'Sviluppo').locator('.riga-cadenza')).toHaveCount(0);       // non è una faccenda
   expect(await calore(carta(p, 'Bagno'))).toBeCloseTo(1 / 14, 3);
   expect(await calore(carta(p, 'Lenzuola'))).toBe(1);
-  expect(await calore(carta(p, 'Lavatrice'))).toBe(0);
   expect(await sfondo(carta(p, 'Lenzuola'))).not.toBe(await sfondo(carta(p, 'Sviluppo')));
-  expect(await sfondo(carta(p, 'Lavatrice'))).toBe(await sfondo(carta(p, 'Sviluppo')));
+  // Lavatrice, ogni 7 giorni, fatta lunedì: oggi (mercoledì) la spunta la copre, e la scheda non c'è.
+  // Si vede lunedì, il giorno in cui è stata fatta, ancora senza calore
+  await expect(carta(p, 'Lavatrice')).toHaveCount(0);
+  await p.click('.giorno[data-giorno="0"]');
+  await expect(carta(p, 'Lavatrice').locator('.riga-cadenza')).toHaveText('Fatta il 12 ottobre · ogni 7 giorni · prossimo giro: lunedì 19 ottobre');
+  expect(await calore(carta(p, 'Lavatrice'))).toBe(0);
+  await p.click('.giorno[data-giorno="2"]');
 
   // segnata oggi: torna neutra, verde come ogni attività fatta, e dice «oggi»
   await carta(p, 'Lenzuola').locator('input[type=checkbox]').check();
@@ -105,15 +109,15 @@ test('intensità: Morbido predefinito, Nessuno toglie il colore, Deciso; vale an
 test('riposo oggi: le schede si ammorbidiscono, il conteggio non cambia, e una scheda fatta resta verde', async ({ browser }) => {
   const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, datiFaccende());
-  await carta(p, 'Lavatrice').locator('input[type=checkbox]').check();
+  await carta(p, 'Bagno').locator('input[type=checkbox]').check();
   await p.check('#riposo-giorno');
   await expect(p.locator('.giornata')).toHaveAttribute('data-riposo', '');
   await expect(carta(p, 'Lenzuola')).toHaveAttribute('data-riposo', '');
   await expect(carta(p, 'Lenzuola')).not.toHaveAttribute('data-calore');
   await expect(carta(p, 'Sviluppo')).toHaveAttribute('data-riposo', '');             // tutte, non solo le faccende
   await expect(carta(p, 'Lenzuola').locator('.riga-cadenza')).toHaveText('Fatta il 21 settembre · ogni 7 giorni · giro aperto dal 28 settembre');
-  await expect(carta(p, 'Lavatrice')).toHaveAttribute('data-fatto', '');
-  await expect(carta(p, 'Lavatrice')).not.toHaveAttribute('data-riposo');
+  await expect(carta(p, 'Bagno')).toHaveAttribute('data-fatto', '');
+  await expect(carta(p, 'Bagno')).not.toHaveAttribute('data-riposo');
   // anche in Casa
   await vaiA(p, 'casa');
   await expect(faccenda(p, 'Lenzuola')).toHaveAttribute('data-riposo', '');

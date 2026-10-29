@@ -20,7 +20,7 @@ test('memoria svuotata da Safari: l’app riparte pulita, senza errori, e un fil
   await p.evaluate(() => localStorage.clear());
   await p.reload();
   expect(await nomiCarte(p)).toEqual([]);
-  await expect(p.locator('#carte')).toContainText('Nessuna attività, per ora');
+  await expect(p.locator('#carte')).toContainText('Nessuna attività in questo giorno, per ora');
 
   expect(await unisciFile(p, file)).toContain('Unisco il file');
   expect(await nomiCarte(p)).toEqual(prima);

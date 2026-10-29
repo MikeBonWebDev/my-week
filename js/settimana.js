@@ -1,13 +1,12 @@
 // js/settimana.js — la settimana visualizzata e il disegno: tabella (computer) e vista a un giorno (telefono).
 import * as Core from '../core.js';
 import {
-  $, aggiungiGiorni, ATTIVITA_INIZIALI, attivitaDi, bloccoAggiungi, boxRiprendi, boxSuggerimenti, campoNuova, carte,
-  chiaveData, chiaveNome, corpo, dataDaChiave, db, FINESTRA, formNuova, GIORNI, inSettimanaCorrente, LIVELLI,
-  lunediCorrente, MAX_DETTAGLIO, MAX_FREQUENTI, MAX_RICERCA, NOME_LIVELLO, notaPassata, oggiK, piede,
-  rigaIntestazione, riposoGiorno, riposoOggi, scheda, segmenti, state, striscia, telefono, vistaGiorno, visualizzata,
-  vociSuggerite
+  $, aggiungiGiorni, ATTIVITA_INIZIALI, attivitaDi, bloccoAggiungi, boxSuggerimenti, campoNuova, carte, chiaveData,
+  chiaveNome, corpo, dataDaChiave, db, FINESTRA, formNuova, GIORNI, inSettimanaCorrente, LIVELLI, lunediCorrente,
+  MAX_DETTAGLIO, MAX_FREQUENTI, MAX_RICERCA, NOME_LIVELLO, notaPassata, oggiK, piede, rigaIntestazione, riposoGiorno,
+  riposoOggi, scheda, segmenti, state, striscia, telefono, vistaGiorno, visualizzata, vociSuggerite
 } from './base.js';
-import { etichettaPeriodo, fmt, fmtBreve, fmtNumerica, testoCadenza } from './testi.js';
+import { etichettaPeriodo, fmt, fmtBreve, testoCadenza } from './testi.js';
 import { el, nomeRinominabile, segnaCalore } from './pezzi.js';
 import { aggiornaPromemoria } from './promemoria.js';
 
@@ -17,11 +16,8 @@ import { aggiornaPromemoria } from './promemoria.js';
    --calore, che stile.css trasforma in colore secondo l'intensità scelta nel menu. Nelle settimane passate no:
    il calore parla di oggi. */
 const faccendeDiOggi = () => new Map(Core.faccende(db.registro, oggiK).map((f) => [f.id, f]));
-// L'ultima settimana prima di quella corrente che aveva delle attività: da lì si può riprendere la lista
-export function settimanaDaRiprendere() {
-  const corrente = lunediCorrente();
-  return Object.keys(state.weeks).filter((k) => k < corrente && attivitaDi(k).length > 0).sort().pop() ?? null;
-}
+// C'è una settimana prima di quella corrente con delle attività? Se no, è la prima settimana d'uso
+const haStoria = () => Object.keys(state.weeks).some((k) => k < lunediCorrente() && attivitaDi(k).length > 0);
 
 /* ───────── Disegno della tabella ─────────
    Le funzioni crea… costruiscono gli elementi della tabella con el() (pezzi.js) e li riempiono con
@@ -56,7 +52,7 @@ function creaRiga(attivita) {
       el('div', { class: 'riga-nome' },
         el('div', { class: 'testi' },
           nomeDellaVoce(attivita),
-          faccenda && el('span', { class: 'riga-cadenza' }),   // il testo lo mette aggiornaFaccendeTabella
+          faccenda && el('span', { class: 'riga-cadenza' }),   // il testo lo mette aggiornaTabellaSulPosto
           el('input', {
             type: 'text', class: 'dettaglio', value: attivita.dettaglio, title: attivita.dettaglio,
             maxLength: MAX_DETTAGLIO, placeholder: 'dettaglio (facoltativo)', dataset: { id: attivita.id },
@@ -66,7 +62,9 @@ function creaRiga(attivita) {
           type: 'button', class: 'elimina', dataset: { id: attivita.id }, testo: '×',
           aria: { label: `Togli «${attivita.name}» da questa settimana` },
         }))),
-    ...GIORNI.map((giorno, i) => el('td', { dataset: { col: i } },
+    // un giorno in cui l'attività non è in programma (o, per una faccenda, è coperta da una spunta vicina) si vede
+    // attenuato, ma resta spuntabile: fatta fuori programma, vale lo stesso
+    ...GIORNI.map((giorno, i) => el('td', { dataset: { col: i, fuori: !attivita.giorni[i] } },
       el('label', { class: 'cella' },
         el('input', {
           type: 'checkbox', dataset: { id: attivita.id, giorno: i }, checked: w?.done[attivita.id]?.[i] === true,
@@ -178,7 +176,11 @@ const perRicerca = (t) => chiaveNome(t).normalize('NFD').replace(/[\u0300-\u036f
 // Mentre scrivi: tutta la libreria, anche le voci che non usi da tempo.
 export function aggiornaSuggerimenti() {
   const corrente = inSettimanaCorrente();
-  const presenti = new Set((state.weeks[visualizzata]?.activities ?? []).map((a) => a.id));
+  // già presenti: un'attività per giorni conta solo se è già nel giorno in cui aggiungeresti (negli altri giorni si
+  // propone); una faccenda, o un'attività di prima, sta sulla settimana intera
+  const g = giornoPerAggiungere();
+  const presenti = new Set((state.weeks[visualizzata]?.activities ?? [])
+    .filter((a) => a.tipo !== 'giorni' || a.giorni[g]).map((a) => a.id));
   const candidate = corrente ? state.libreria.filter((v) => !presenti.has(v.id)) : [];
   const uso = usoRecente();
   const zero = { giorni: 0, settimane: 0, ultima: '' };
@@ -201,7 +203,7 @@ export function aggiornaSuggerimenti() {
     voci = candidate.filter((v) => uso.has(v.id)).sort(perFrequenza).slice(0, MAX_FREQUENTI);
     $('#titolo-suggerimenti').textContent = 'Frequenti:';
     // Prima settimana d'uso (nessuna settimana passata da riprendere): proposte di esempio, finché non le scegli
-    if (corrente && !voci.length && !settimanaDaRiprendere()) {
+    if (corrente && !voci.length && !haStoria()) {
       const nomi = new Set(state.libreria.map((v) => chiaveNome(v.name)));
       voci = ATTIVITA_INIZIALI.filter((n) => !nomi.has(chiaveNome(n))).map((name) => ({ name }));
       $('#titolo-suggerimenti').textContent = 'Per cominciare:';
@@ -210,7 +212,7 @@ export function aggiornaSuggerimenti() {
 
   vociSuggerite.replaceChildren(...voci.map((v) => el('button', {
     type: 'button', class: 'chip', dataset: { nome: v.name }, testo: `+ ${v.name}`,
-    aria: { label: `Aggiungi «${v.name}» a questa settimana` },
+    aria: { label: `Aggiungi «${v.name}» ${dove(g)}` },
   })));
   // Su telefono i suggerimenti occupano spazio prezioso: compaiono mentre usi il campo, oppure se la settimana
   // è ancora vuota (è il momento in cui servono di più).
@@ -219,28 +221,22 @@ export function aggiornaSuggerimenti() {
   boxSuggerimenti.hidden = voci.length === 0 || !mostra;
 }
 
-// Settimana corrente ancora vuota: proposta di riprendere la lista della settimana precedente.
-function aggiornaRiprendi() {
-  const vuota = !(state.weeks[visualizzata]?.activities.length);
-  const fonte = inSettimanaCorrente() && vuota ? settimanaDaRiprendere() : null;
-  boxRiprendi.hidden = !fonte;
-  if (fonte) {
-    const n = attivitaDi(fonte).length;
-    $('#testo-riprendi').textContent = `Questa settimana è ancora vuota. Puoi riprendere le ${n === 1 ? 'attività' : `${n} attività`} `
-      + `della settimana del ${fmtNumerica.format(dataDaChiave(fonte))}, senza i dettagli, oppure scegliere da capo.`;
-  }
-}
-
-// Le faccende della tabella: testo della cadenza e calore, aggiornati sul posto (dopo una spunta o un riposo
-// la tabella non si ridisegna, per non far perdere il fuoco alla casella appena toccata).
+// La tabella sul posto: dopo una spunta o un riposo non si ridisegna, per non far perdere il fuoco alla casella appena
+// toccata. Si aggiornano il testo della cadenza e il calore delle faccende, e i giorni attenuati, che una spunta può
+// cambiare (un giorno fuori programma, segnato, diventa normale; una faccenda segnata copre i giorni vicini).
 let faccendeTabella = new Map();
-export function aggiornaFaccendeTabella() {
+export function aggiornaTabellaSulPosto() {
   faccendeTabella = faccendeDiOggi();
   const riposo = inSettimanaCorrente() && riposoOggi();
   corpo.querySelectorAll('th[data-faccenda]').forEach((th) => {
     const f = faccendeTabella.get(th.dataset.faccenda);
     th.querySelector('.riga-cadenza').textContent = f ? testoCadenza(f) : '';
     segnaCalore(th, f, { riposo });
+  });
+  const perId = new Map(attivitaDi(visualizzata).map((a) => [a.id, a]));
+  corpo.querySelectorAll('td[data-col] input[data-id]').forEach((casella) => {
+    const a = perId.get(casella.dataset.id);
+    casella.closest('td').toggleAttribute('data-fuori', Boolean(a) && !a.giorni[Number(casella.dataset.giorno)]);
   });
 }
 
@@ -256,7 +252,7 @@ function disegnaTabella() {
         : 'In questa settimana non c’erano attività.')]));
   piede.replaceChildren(creaRigaEnergia(), creaRigaRiposo());
   aggiornaColonne();
-  aggiornaFaccendeTabella();
+  aggiornaTabellaSulPosto();
 }
 
 /* ───────── Vista a un giorno (telefono) ───────── */
@@ -264,6 +260,13 @@ function disegnaTabella() {
 // Passando da una settimana all'altra resta lo stesso giorno della settimana, se non è nel futuro.
 let giornoScelto = null;
 export function scegliGiorno(g) { giornoScelto = g; }
+
+// Il giorno a cui va un'attività aggiunta adesso: sul telefono quello mostrato, sul computer oggi
+export function giornoPerAggiungere() {
+  return telefono.matches ? giornoMostrato() : (dataDaChiave(oggiK).getDay() + 6) % 7;
+}
+// "a oggi", "a lunedì": dove finisce, detto per esteso (per i pulsanti e i messaggi)
+export const dove = (g) => (chiaveData(aggiungiGiorni(dataDaChiave(visualizzata), g)) === oggiK ? 'a oggi' : `a ${GIORNI[g].toLowerCase()}`);
 
 function giornoMostrato() {
   const lun = dataDaChiave(visualizzata);
@@ -278,19 +281,22 @@ function disegnaGiorno() {
   const g = giornoMostrato();
   const lun = dataDaChiave(visualizzata);
   const w = state.weeks[visualizzata];
-  const attivita = attivitaDi(visualizzata);
+  const tutte = attivitaDi(visualizzata);
+  const delGiorno = (i) => tutte.filter((a) => a.giorni[i]);
+  const attivita = delGiorno(g);
   const data = aggiungiGiorni(lun, g);
 
   // La striscia: per ogni giorno abbreviazione, numero, barra (quota di attività segnate), puntino dell'energia
   striscia.replaceChildren(...GIORNI.map((nome, i) => {
     const giorno = aggiungiGiorni(lun, i);
     const giornoK = chiaveData(giorno);
-    const fatti = attivita.filter((a) => w?.done[a.id]?.[i]).length;
+    const quelGiorno = delGiorno(i);
+    const fatti = quelGiorno.filter((a) => w?.done[a.id]?.[i]).length;
     return el('button', {
       type: 'button', class: 'giorno', disabled: giornoK > oggiK,
       dataset: { giorno: i, oggi: giornoK === oggiK, riposo: w?.rest[i] === true, energia: w?.energy[i] },
-      aria: { pressed: i === g, label: `${nome} ${fmtBreve.format(giorno)}: ${fatti} di ${attivita.length} attività segnate` },
-      stile: { '--pieno': attivita.length ? fatti / attivita.length : 0 },
+      aria: { pressed: i === g, label: `${nome} ${fmtBreve.format(giorno)}: ${fatti} di ${quelGiorno.length} attività segnate` },
+      stile: { '--pieno': quelGiorno.length ? fatti / quelGiorno.length : 0 },
     },
     el('span', { class: 'giorno-nome', testo: nome.slice(0, 3) }),
     el('span', { class: 'giorno-num', testo: giorno.getDate() }),
@@ -315,8 +321,8 @@ function disegnaGiorno() {
   carte.replaceChildren(...(attivita.length
     ? attivita.map((a) => creaCarta(a, g, faccende.get(a.id)))
     : [creaCartaVuota(inSettimanaCorrente()
-        ? 'Nessuna attività, per ora: aggiungine una qui sopra.'
-        : 'In questa settimana non c’erano attività.')]));
+        ? 'Nessuna attività in questo giorno, per ora: aggiungine una qui sopra.'
+        : 'In questo giorno non c’erano attività.')]));
 }
 
 // Una scheda: nome, dettaglio, sette puntini della settimana, "Togli"; a destra l'interruttore del giorno scelto.
@@ -340,10 +346,7 @@ function creaCarta(attivita, g, f) {
         // la stessa informazione è nella striscia e nelle schede degli altri giorni: per i lettori di schermo, nascosta
         el('span', { class: 'puntini', aria: { hidden: 'true' } },
           GIORNI.map((_, i) => el('span', { class: 'puntino', dataset: { fatto: fatto[i] === true, scelto: i === g } }))),
-        inSettimanaCorrente() && el('button', {
-          type: 'button', class: 'togli', dataset: { id: attivita.id }, testo: 'Togli dalla settimana',
-          aria: { label: `Togli «${attivita.name}» da questa settimana` },
-        }))),
+        inSettimanaCorrente() && bottoneTogli(attivita, g, fatto[g] === true))),
     el('label', { class: 'carta-spunta' },
       el('input', {
         type: 'checkbox', dataset: { id: attivita.id, giorno: g }, checked: fatto[g] === true,
@@ -351,6 +354,22 @@ function creaCarta(attivita, g, f) {
       })));
   if (fatto[g] !== true) segnaCalore(li, f, { riposo });
   return li;
+}
+
+// Su una scheda: un'attività per giorni si toglie da quel giorno (non se lì è segnata: la spunta è storia);
+// le altre, dalla settimana
+function bottoneTogli(attivita, g, fattaQui) {
+  if (attivita.tipo !== 'giorni') {
+    return el('button', {
+      type: 'button', class: 'togli', dataset: { id: attivita.id }, testo: 'Togli dalla settimana',
+      aria: { label: `Togli «${attivita.name}» da questa settimana` },
+    });
+  }
+  if (fattaQui) return null;
+  return el('button', {
+    type: 'button', class: 'togli togli-giorno', dataset: { id: attivita.id, giorno: g }, testo: 'Togli da questo giorno',
+    aria: { label: `Togli «${attivita.name}» da ${GIORNI[g].toLowerCase()}` },
+  });
 }
 
 function creaCartaVuota(testo) {
@@ -371,7 +390,6 @@ function disegnaSettimana() {
   aggiornaNavigatore();
   aggiornaPromemoria(visualizzata);
   aggiornaSuggerimenti();
-  aggiornaRiprendi();
 }
 
 // La sezione Settimana, come la vede il registro delle sezioni (sezioni.js; la registra guscio.js)

@@ -334,6 +334,9 @@ tbody td[data-oggi]:has(input:checked)   { background: color-mix(in srgb, var(--
 tbody td[data-riposo]:has(input:checked) { background: color-mix(in srgb, var(--fatto) 65%, var(--riposo)); }
 
 td[data-futuro] .cella, td[data-futuro] .energia { opacity: .35; }
+/* un giorno in cui l'attività non è in programma (o la faccenda è coperta da una spunta vicina): la casella c'è,
+   ma tratteggiata e chiara, per non sembrare una cosa da fare. Spuntata, torna normale: l'hai fatta, vale. */
+td[data-fuori] input[type="checkbox"]:not(:checked) { border-style: dashed; border-color: color-mix(in srgb, var(--linea-forte) 55%, transparent); }
 
 .cella {
   display: grid;
@@ -459,18 +462,6 @@ input.riposo:checked::after { background: light-dark(#fff, #14202a); }
 }
 .chip:hover { border-color: var(--accento); background: color-mix(in srgb, var(--accento) 10%, transparent); }
 .chip:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
-
-/* settimana nuova e vuota: riprendere la lista della precedente */
-.riprendi {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .5rem 1rem;
-  padding: 1rem 1.1rem 1rem 1.5rem;
-  border-top: 1px solid var(--linea);
-  background: var(--fascia);
-}
-.riprendi p { flex: 1 1 18rem; margin: 0; font-size: .92rem; color: var(--tenue); }
 
 /* pannello della libreria */
 .libreria { margin: 0 0 .9rem; padding: 0; list-style: none; max-width: 38rem; }
@@ -1137,7 +1128,6 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
   .blocco-aggiungi .riga-aggiungi { flex-wrap: nowrap; }
   .blocco-aggiungi .riga-aggiungi input[type="text"] { flex: 1; background: var(--scheda); border-color: var(--scheda-bordo); }
   .blocco-aggiungi .riga-aggiungi .pulsante { flex: none; min-width: 2.9rem; padding: 0 1rem; font-size: 1.5rem; line-height: 1; }
-  .blocco-aggiungi .riprendi { margin-bottom: .6rem; border: 1px solid var(--scheda-bordo); border-radius: 1.1rem; padding: .8rem 1rem; }
   .blocco-aggiungi .nota { padding: 0; border: 0; }
 
   dialog.foglio {

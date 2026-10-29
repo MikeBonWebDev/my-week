@@ -1,4 +1,4 @@
-// Test nel browser dell'uso quotidiano: primo avvio, suggerimenti, riprendi, dettagli, libreria, CSV, telefono.
+// Test nel browser dell'uso quotidiano: primo avvio, suggerimenti, dettagli, libreria, CSV.
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import fs from 'node:fs';
 import { creaSeme } from '../strumenti/seme.js';
@@ -27,9 +27,10 @@ test.describe('primo avvio', () => {
     await p.locator('#voci-suggerite .chip', { hasText: 'Camminare' }).click();
     expect(await nomi(p)).toEqual(['Camminare']);
     expect(await suggerimenti(p)).toHaveLength(5);            // le altre proposte restano
-    // nel registro c'è solo ciò che hai scelto: il nome della voce e la sua presenza nella settimana
+    // nel registro c'è solo ciò che hai scelto: il nome della voce, la sua presenza nella settimana e il giorno
+    // (sul computer si aggiunge a oggi: mercoledì, il giorno 2)
     const chiavi = await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('settimana:registro')).registro).sort());
-    expect(chiavi).toEqual(['s/2026-10-12/m/camminare', 'v/camminare/nome']);
+    expect(chiavi).toEqual(['s/2026-10-12/a/camminare/g/2', 's/2026-10-12/m/camminare', 'v/camminare/nome']);
   });
 
   test('nomi riservati e doppioni vengono rifiutati con un messaggio', async ({ browser }) => {
@@ -38,7 +39,7 @@ test.describe('primo avvio', () => {
     await expect(p.locator('#stato')).toContainText('riservati');
     await aggiungi(p, 'Sviluppo');
     await aggiungi(p, 'SVILUPPO');
-    await expect(p.locator('#stato')).toContainText('già in questa settimana');
+    await expect(p.locator('#stato')).toContainText('già in questo giorno');
     expect(await nomi(p)).toEqual(['Sviluppo']);
   });
 });
@@ -64,14 +65,11 @@ test.describe('con qualche settimana di storia', () => {
     await expect(p.locator('#suggerimenti')).toBeHidden();
   });
 
-  test('riprendi copia la lista, non i dettagli; ogni settimana tiene il suo dettaglio', async ({ browser }) => {
+  test('ogni settimana tiene il suo dettaglio; «Riprendi la lista» non c’è più', async ({ browser }) => {
     const p = await conStoria(browser);
-    await expect(p.locator('#testo-riprendi')).toContainText('3 attività');
-    await p.click('#riprendi-settimana');
-    expect(await nomi(p)).toEqual(['Sviluppo', 'Diario', 'Chitarra']);
-    expect((await foto(p)).righe.map((r) => r.dettaglio)).toEqual(['', '', '']);
-    await expect(p.locator('#riprendi')).toBeHidden();
-
+    await expect(p.locator('#riprendi-settimana')).toHaveCount(0);   // con le attività per giorno non avrebbe senso
+    await aggiungi(p, 'Sviluppo');
+    expect((await foto(p)).righe.map((r) => r.dettaglio)).toEqual(['']);
     await dettaglio(p, 'Sviluppo', 'Programma B');
     await p.click('#sett-prec');
     await expect(riga(p, 'Sviluppo').locator('.dettaglio')).toHaveValue('Programma A');
@@ -81,7 +79,7 @@ test.describe('con qualche settimana di storia', () => {
 
   test('libreria: rinomina ovunque, rifiuta i doppioni, cancella solo le voci mai usate', async ({ browser }) => {
     const p = await conStoria(browser);
-    await p.click('#riprendi-settimana');
+    await aggiungi(p, 'Sviluppo');
     await apriPannello(p, 'Libreria');
 
     const sviluppo = p.locator('.lib-nome[data-id="sviluppo"]');

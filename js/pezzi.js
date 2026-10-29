@@ -39,7 +39,7 @@ const presente = (v) => v !== false && v !== null && v !== undefined;
 
 // Lo stesso per i disegni SVG, che vivono in un altro "spazio dei nomi": qui gli attributi sono tutti attributi.
 const SVG = 'http://www.w3.org/2000/svg';
-export function svg(tag, attributi = {}, ...figli) {
+function svg(tag, attributi = {}, ...figli) {
   const e = document.createElementNS(SVG, tag);
   for (const [k, v] of Object.entries(attributi)) e.setAttribute(k, String(v));
   e.append(...figli);

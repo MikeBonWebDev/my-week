@@ -78,7 +78,6 @@ export const formNuova = $('#form-nuova');
 export const campoNuova = $('#nuova-attivita');
 export const boxSuggerimenti = $('#suggerimenti');
 export const vociSuggerite = $('#voci-suggerite');
-export const boxRiprendi = $('#riprendi');
 export const notaPassata = $('#nota-passata');
 const msgStato = $('#stato');
 const dialogo = $('#conferma');
@@ -121,7 +120,8 @@ export const lunediCorrente = () => chiaveLunedi(dataDaChiave(oggiK));
    state = {
      libreria: [{ id, name }],                    // le voci: cosa fai, in generale ("Sviluppo"). Il nome vale ovunque.
      weeks: { 'AAAA-MM-GG' (il lunedì): {
-       activities: [{ id, dettaglio }],            // la lista di QUESTA settimana: voce + cosa nello specifico
+       activities: [{ id, dettaglio, tipo, giorni }], // la lista di QUESTA settimana: voce + cosa nello specifico;
+                                                      // tipo 'giorni' | 'settimana' | 'faccenda', giorni = dove si vede
        done: { [id]: [bool × 7] },
        rest: [bool × 7],
        energy: [null | 'pesa' | 'ok' | 'leggero' × 7],
@@ -266,6 +266,8 @@ export const MESSAGGI = {
   vuoto: () => 'Il nome non può essere vuoto.',
   riservato: () => MSG_RISERVATO,
   'gia-in-settimana': (n) => `«${n}» è già in questa settimana.`,
+  'gia-nel-giorno': (n) => `«${n}» è già in questo giorno.`,
+  fatta: () => 'In questo giorno è segnata: per toglierla da qui, togli prima la spunta.',
   esiste: (n) => `Esiste già la voce «${n}».`,
   usata: () => 'Questa voce compare nello storico: non si può cancellare.',
   'gia-faccenda': (n) => `«${n}» è già in Casa: la cadenza si cambia dalla sua scheda.`,

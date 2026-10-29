@@ -14,7 +14,7 @@ Per pubblicarla, installarla e usarla c’è [LEGGIMI.md](LEGGIMI.md).
 6. [I dati: registro e vista](#6-i-dati-registro-e-vista)
 7. [L’unione tra dispositivi](#7-lunione-tra-dispositivi)
 8. [La pagina: index.html](#8-la-pagina-indexhtml)
-9. [Libreria, suggerimenti, «Riprendi»](#9-libreria-suggerimenti-riprendi)
+9. [Libreria e suggerimenti](#9-libreria-e-suggerimenti)
 10. [L’app installabile: manifest e service worker](#10-lapp-installabile-manifest-e-service-worker)
 11. [I test](#11-i-test)
 12. [Limiti e scelte consapevoli](#12-limiti-e-scelte-consapevoli)
@@ -73,6 +73,7 @@ settimana-pwa/
 │   ├── aiuti.js          azioni comuni: aggiungi, spunta, salva file, unisci…
 │   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
 │   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, menu dal basso
+│   ├── giorni.spec.js    le attività per giorno e le faccende coperte dalle spunte vicine
 │   ├── casa.spec.js      le sezioni e la sezione Casa: faccende, cadenza, «Aggiungi a questa settimana»
 │   ├── colore.spec.js    calore delle faccende, intensità, tema, riposo, «Salto questo giro», parole vietate
 │   ├── dati.spec.js      la sezione Dati: puntino e invito alla copia, «Salva con nome», CSV, unione
@@ -89,6 +90,7 @@ settimana-pwa/
 ├── playwright.config.js  configurazione dei test nel browser
 ├── package.json          comandi (npm test, npm run test:browser, npm start) e dipendenze di sviluppo
 ├── README.md             questo documento
+├── DATI.md               i dati chiave per chiave: come si compone ogni record, chi lo scrive, chi lo legge
 └── LEGGIMI.md            come pubblicarla, installarla, usarla
 ```
 
@@ -216,6 +218,8 @@ I dati esistono in due forme, ognuna adatta a un compito.
 
 ### Il registro: per salvare e unire
 
+Qui il quadro; il glossario completo, chiave per chiave (chi scrive, chi legge, i valori ammessi), è in `DATI.md`.
+
 Un oggetto **piatto**: tante chiavi indipendenti, ognuna con valore (`v`), momento (`t`, millisecondi dal 1970)
 e dispositivo (`d`).
 
@@ -226,6 +230,7 @@ e dispositivo (`d`).
 | `s/2026-10-12/m/sviluppo` | `true` / `false` | la voce è (o non è più) nella lista della settimana del 12/10 |
 | `s/2026-10-12/a/sviluppo/det` | `"Programma A"` | il dettaglio di quella voce in quella settimana |
 | `s/2026-10-12/a/sviluppo/f/2` | `true` / `false` | fatto il giorno 2 (0 = lunedì, quindi mercoledì) |
+| `s/2026-10-12/a/sviluppo/g/1` | `true` / `false` | in programma il giorno 1, martedì (vedi «I giorni») |
 | `s/2026-10-12/r/6` | `true` / `false` | domenica è giorno di riposo |
 | `s/2026-10-12/e/2` | `"pesa"` / `"ok"` / `"leggero"` / `null` | energia di mercoledì |
 | `v/bagno/cad` | `14` / `false` | la voce `bagno` è una faccenda, da fare ogni 14 giorni (`false`: nessuna cadenza) |
@@ -252,7 +257,11 @@ c’è già. Così il registro contiene solo ciò che hai davvero fatto.
   libreria: [{ id: 'sviluppo', name: 'Sviluppo' }, …],
   weeks: {
     '2026-10-12': {
-      activities: [{ id: 'sviluppo', dettaglio: 'Programma A' }, …],   // in ordine di aggiunta
+      activities: [{                                                  // in ordine di aggiunta
+        id: 'sviluppo', dettaglio: 'Programma A',
+        tipo: 'giorni',                                               // 'giorni' | 'settimana' | 'faccenda'
+        giorni: [true, false, true, false, false, false, false],      // i giorni in cui si vede (vedi «I giorni»)
+      }, …],
       done:   { sviluppo: [true, false, true, false, false, false, false] },
       rest:   [false, false, false, false, false, false, true],
       energy: [null, 'pesa', 'ok', null, null, null, null],
@@ -263,6 +272,32 @@ c’è già. Così il registro contiene solo ciò che hai davvero fatto.
 
 La vista non si salva mai: si ricalcola ogni volta (bastano pochi millisecondi). Contiene anche `intensita`
 (`'morbida'` se nessuno l’ha mai scelta).
+
+### I giorni: dove si vede un’attività
+
+Una settimana ha la sua lista, ma non tutto vale per tutti i giorni. La vista dice, per ogni attività, i **giorni in
+cui si vede** (`giorni`), secondo il suo tipo:
+
+- **Attività per giorni** (`tipo: 'giorni'`). Aggiunta a un giorno, vale per quel giorno (`…/g/<giorno>`): sul
+  telefono si aggiunge al giorno che stai guardando, sul computer a oggi. Si vede nei giorni in programma e in quelli
+  in cui l’hai segnata: una spunta fuori programma vale lo stesso. «Togli da questo giorno» scrive `g` = `false`;
+  un giorno segnato non si toglie (prima si toglie la spunta: la spunta è storia). Se non resta in nessun giorno,
+  esce dalla settimana.
+- **Faccende** (`tipo: 'faccenda'`, una voce con una cadenza). Restano sulla settimana intera, ma **una spunta copre
+  i giorni a meno di una cadenza di distanza, prima e dopo**, anche tra una settimana e l’altra. Bagno ogni 7 giorni,
+  fatto mercoledì: si vede solo mercoledì, e la settimana dopo ricompare mercoledì, al giro. Piante ogni 3 giorni,
+  fatte lunedì: coperte martedì e mercoledì, di nuovo visibili da giovedì. Ogni giorno: sempre visibile. Niente di
+  tutto questo è salvato: si ricalcola dalle spunte, e togliendone una la faccenda ricompare.
+- **Attività di prima** (`tipo: 'settimana'`). Le attività aggiunte prima che esistessero i giorni non hanno nessuna
+  chiave `g`: valgono per tutta la settimana, come allora. La storia non cambia significato.
+
+Perché: sul telefono si vede un giorno, e chi aggiunge un’attività pensa «oggi». Con l’attività su tutta la
+settimana, una cosa non fatta lasciava una casella vuota in sette giorni, che ti seguiva fino a domenica. Ora un vuoto
+resta solo nel giorno in cui l’attività era in programma.
+
+Nella **tabella** i giorni in cui un’attività non si vede hanno la casella tratteggiata e chiara (`td[data-fuori]`),
+ma restano spuntabili. Sul **telefono** la scheda in quei giorni non c’è, e la barra della striscia conta solo le
+attività di quel giorno. Nel **CSV** un giorno fuori programma è «—», né Sì né No.
 
 ### Le faccende: «da quanto tempo non fai cosa»
 
@@ -417,7 +452,7 @@ quando quel codice gira. Lo trova prima `npm run lint` (§11), che legge il codi
 
 `index.html` carica solo `js/guscio.js`; gli altri file arrivano con gli `import`. Gli `import` scrivono
 `'./base.js'`, senza numero di versione: la *import map* in fondo a `index.html` dice al browser che `./js/base.js`
-è `./js/base.js?v=16` (il numero di adesso). Così il numero sta in un posto solo e la pagina nuova non si mescola con file vecchi rimasti
+è `./js/base.js?v=N` (N = il numero di `VERSIONE`). Così il numero sta in un posto solo e la pagina nuova non si mescola con file vecchi rimasti
 nella cache del browser (§10). Un test controlla che ogni file di codice sia nella import map, con il numero giusto,
 e nell’elenco di `sw.js`.
 
@@ -428,8 +463,8 @@ e nell’elenco di `sw.js`.
 | Come si vede | la tabella: attività × sette giorni | un giorno alla volta |
 | Scegliere il giorno | tutti visibili insieme | striscia dei sette giorni in alto (barra = quota di attività segnate, puntino = energia) |
 | Energia | tre puntini per ogni giorno | una barra con tre segmenti: Pesa, Ok, Leggero |
-| Attività | righe della tabella | schede: nome, dettaglio, sette puntini della settimana, «Togli», interruttore grande |
-| Aggiungere | sotto la tabella | in cima, sopra le schede; i suggerimenti compaiono quando usi il campo |
+| Attività | righe della tabella; i giorni fuori programma attenuati (§6, «I giorni») | schede delle attività di quel giorno: nome, dettaglio, sette puntini della settimana, «Togli», interruttore grande |
+| Aggiungere | sotto la tabella, a oggi | in cima, sopra le schede, al giorno che stai guardando; i suggerimenti compaiono quando usi il campo |
 
 Quale vista mostrare lo decide JavaScript con `matchMedia('(max-width: 40rem)')`, la stessa soglia del CSS:
 `disegnaSettimana()` chiama `disegnaTabella()` oppure `disegnaGiorno()` e nasconde l’altra. Se ruoti il telefono o
@@ -606,13 +641,13 @@ lettere accentate, e un apostrofo davanti ai testi che iniziano con `=`, `+`, `-
 formule (`campoCsv`). Il CSV si può solo **esportare**: non ha i momenti delle modifiche, quindi non potrebbe
 partecipare all’unione e diventerebbe una terza versione dei dati.
 
-## 9. Libreria, suggerimenti, «Riprendi»
+## 9. Libreria e suggerimenti
 
 - **Libreria.** Le voci nascono quando le aggiungi a una settimana. Rinominare una voce vale ovunque, anche nel
   passato (la pagina lo dice prima). Una voce già usata non si cancella, perché fa parte dello storico; una voce
   mai usata sì.
 - **Suggerimenti a campo vuoto ("Frequenti").** Le 3 voci più segnate nelle ultime 4 settimane (`FINESTRA`,
-  `MAX_FREQUENTI`), escluse quelle già nella settimana. Ordine: giorni segnati, poi settimane in cui compaiono, poi
+  `MAX_FREQUENTI`), escluse quelle già presenti nel giorno in cui aggiungeresti. Ordine: giorni segnati, poi settimane in cui compaiono, poi
   la più recente. Le voci non usate da più di 4 settimane spariscono da qui da sole.
 - **Mentre scrivi ("Nella libreria").** Tutta la libreria, comprese le voci vecchie. La ricerca ignora maiuscole e
   accenti (`perRicerca`); vengono prima le voci che *iniziano* con il testo, poi quelle che lo *contengono*.
@@ -621,8 +656,11 @@ partecipare all’unione e diventerebbe una terza versione dei dati.
 - **Per cominciare.** Nella prima settimana d’uso compaiono sei attività di esempio, finché non le scegli. Non sono
   scritte nei dati: lo diventano solo quando ne tocchi una. Altrimenti, togliendole su un dispositivo, ricomparirebbero
   dall’altro.
-- **Riprendi.** Se la settimana corrente è vuota, propone di copiare la lista dell’ultima settimana che ne aveva una,
-  senza dettagli né spunte (`db.riprendi`).
+- **Niente «Riprendi».** C’era un pulsante per copiare la lista della settimana precedente. Con le attività per giorno
+  (§6, «I giorni») una lista della settimana non ha più un senso chiaro, e le attività frequenti sono già a un tocco
+  nei suggerimenti: è stato tolto.
+- **Per giorno.** Un’attività già nella settimana ma in un altro giorno si propone ancora: aggiungerla la mette anche
+  nel giorno in cui sei. Una faccenda già nella settimana no: sta sulla settimana intera.
 
 ## 10. L’app installabile: manifest e service worker
 

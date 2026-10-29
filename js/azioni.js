@@ -2,11 +2,11 @@
 import * as Core from '../core.js';
 import {
   $, aggiungiGiorni, boxSuggerimenti, cambiaOggi, campoNuova, carte, chiaveData, conferma, corpo, dataDaChiave, db,
-  disegna, esito, formNuova, GIORNI, inSettimanaCorrente, lunediCorrente, MAX_NOME, mostraSettimana, oggiK, piede,
-  riposoGiorno, segmenti, soloData, state, striscia, telefono, visualizzata, voce
+  disegna, esito, formNuova, GIORNI, inSettimanaCorrente, lunediCorrente, MAX_NOME, mostraSettimana, mostraStato,
+  oggiK, piede, riposoGiorno, segmenti, soloData, state, striscia, telefono, visualizzata, voce
 } from './base.js';
 import {
-  aggiornaColonne, aggiornaFaccendeTabella, aggiornaSuggerimenti, scegliGiorno, settimanaDaRiprendere
+  aggiornaColonne, aggiornaSuggerimenti, aggiornaTabellaSulPosto, dove, giornoPerAggiungere, scegliGiorno
 } from './settimana.js';
 
 /* ───────── Azioni: attività della settimana ─────────
@@ -14,10 +14,11 @@ import {
    un evento "risale" dall'elemento toccato fino ai suoi antenati, quindi un solo gestore sul corpo della tabella
    riceve i tocchi di tutte le caselle, anche di quelle create dopo. Si chiama "delega degli eventi".
    Dentro, e.target è l'elemento toccato; matches() e closest() dicono di che elemento si tratta. */
-// Aggiunge una voce alla settimana corrente (il nucleo riconosce i nomi già in libreria).
+// Aggiunge una voce alla settimana corrente, nel giorno giusto (giornoPerAggiungere: sul telefono quello mostrato,
+// sul computer oggi). Il nucleo riconosce i nomi già in libreria, e mette le faccende sulla settimana intera.
 function aggiungiAllaSettimana(nome) {
   if (!inSettimanaCorrente() || !Core.pulisci(nome, MAX_NOME)) return false;
-  return esito(db.aggiungi(visualizzata, nome));
+  return esito(db.aggiungi(visualizzata, nome, giornoPerAggiungere()));
 }
 
 // Invio nel campo o pulsante «Aggiungi». preventDefault() impedisce al modulo di ricaricare la pagina.
@@ -65,12 +66,6 @@ boxSuggerimenti.addEventListener('click', (e) => {
   }
 });
 
-$('#riprendi-settimana').addEventListener('click', () => {
-  const fonte = settimanaDaRiprendere();
-  if (!fonte || !inSettimanaCorrente()) return;
-  esito(db.riprendi(visualizzata, fonte));
-});
-
 // Una casella spuntata o tolta, oppure un dettaglio modificato ("change" arriva quando esci dal campo).
 // Lo stesso gestore serve la tabella (corpo) e le schede del telefono (carte).
 // Su telefono, dopo una spunta, ridisegno: cambiano anche la striscia, il colore della scheda, i puntini.
@@ -79,9 +74,9 @@ function suCambio(e) {
 
   if (campo.matches('input[type="checkbox"]')) {
     const { id, giorno } = campo.dataset;
-    // su computer la casella è già spuntata: aggiorno solo testo e calore della faccenda, se lo è
+    // su computer la casella è già spuntata: aggiorno sul posto faccende e giorni attenuati
     if (esito(db.spunta(visualizzata, id, Number(giorno), campo.checked), { ridisegna: telefono.matches }) && !telefono.matches) {
-      aggiornaFaccendeTabella();
+      aggiornaTabellaSulPosto();
     }
     return;
   }
@@ -104,6 +99,14 @@ async function suTogli(e) {
   const id = bottone.dataset.id;
   const v = voce(id);
   if (!v) return;
+
+  // Da un giorno solo: niente conferma, si rimette con un tocco dai suggerimenti
+  if (bottone.matches('.togli-giorno')) {
+    const giorno = Number(bottone.dataset.giorno);
+    const r = db.togliGiorno(visualizzata, id, giorno);
+    if (esito(r)) mostraStato(r.uscita ? `«${v.name}» è uscita dalla settimana.` : `«${v.name}» tolta ${dove(giorno).replace(/^a /, 'da ')}.`);
+    return;
+  }
 
   // In quali giorni di questa settimana l'attività risulta svolta. Togliendola, le spunte non si perdono:
   // restano nel registro come storico (vedi togli in core.js) e ricompaiono se la rimetti.
@@ -141,7 +144,7 @@ piede.addEventListener('change', (e) => {
   if (!campo.matches('input.riposo')) return;
   if (esito(db.riposo(visualizzata, Number(campo.dataset.giorno), campo.checked), { ridisegna: false })) {
     aggiornaColonne();
-    aggiornaFaccendeTabella();   // con il riposo oggi, le faccende perdono il calore
+    aggiornaTabellaSulPosto();   // con il riposo oggi, le faccende perdono il calore
   }
 });
 

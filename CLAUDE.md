@@ -71,6 +71,8 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 - Una modifica al comportamento porta con sé il suo test. Un test nuovo deve **saper fallire**: romperlo apposta
   (invertire una condizione, togliere una riga) e controllare che fallisca, poi rimettere com'era (README §11).
 - Se cambia il comportamento o la struttura, aggiornare anche `README.md` (e `LEGGIMI.md` se tocca l'uso).
+- **Una chiave del registro nuova o cambiata** si documenta in `DATI.md` (il glossario dei dati: forma, valori, chi
+  scrive, chi legge) nella stessa modifica, insieme alla tabella del registro nel README.
 - `file-claude/` è una cartella locale di lavoro (zip, bozze): è ignorata da git, non va toccata né committata.
 - **Questo file si tiene allineato.** Quando nella conversazione si decide una regola, una convenzione o un passo del
   piano, si aggiorna qui nella stessa modifica. I file in `.github/` Claude non li può scrivere: si indicano al
@@ -85,7 +87,7 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
   `index.html`: stile, script di partenza e ogni riga della import map. Devono coincidere: un test lo verifica.
   Senza, il telefono continua a usare la copia vecchia.
 - **Il registro non cancella mai.** Chiavi piatte con ultimo-scritto-vince (`v/<id>/nome`, `v/<id>/cad`,
-  `s/<lunedì>/m/<id>`, `s/<lunedì>/a/<id>/f/<giorno>`, `e/<giorno>`, `r/<giorno>`, `i/intensita`…). Togliere
+  `s/<lunedì>/m/<id>`, `s/<lunedì>/a/<id>/f/<giorno>`, `s/<lunedì>/a/<id>/g/<giorno>`, `e/<giorno>`, `r/<giorno>`, `i/intensita`…). Togliere
   significa scrivere `false`, non eliminare la chiave: altrimenti il file vecchio dell'altro dispositivo la
   rimette. Le tre garanzie dell'unione (ordine indifferente, ripetibile, un file vecchio non toglie niente) sono
   coperte dai test di proprietà in `test/core.test.js`: non indebolirli.
@@ -100,6 +102,9 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
   ottobre», «giro aperto dall'8 ottobre», «Mai segnata».
 - La prova: *se la ignoro per tre settimane, cosa mi dice l'app quando la riapro?* Deve informare, non rimproverare.
 - Quanto è vecchio un dato si mostra, non si nasconde.
+- **Un vuoto non deve seguirti.** Un'attività vale per i giorni in cui l'hai messa (sul telefono il giorno che
+  guardi, sul computer oggi); una faccenda resta sulla settimana, ma una spunta copre i giorni a meno di una cadenza,
+  prima e dopo. Una casella vuota resta solo dove l'attività era in programma (README §6, «I giorni»).
 - Prima di cambiare parole dell'interfaccia, proporre le alternative al proprietario: le scelte di lessico sono sue.
 
 ## Test nel browser: le lezioni già pagate
@@ -147,7 +152,9 @@ Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push 
 4. ~~Costruzione del DOM prolissa.~~ Fatto: `el()` e `svg()` in `pezzi.js`; DOM prodotto identico, verificato
    confrontando la pagina prima e dopo in 25 situazioni (`settimana-18`).
 
-Debiti della 2.0 chiusi. Prossimo passo: il documento funzionale della Fase 2.
+Debiti della 2.0 chiusi. Poi, dall'uso vero, un ritocco della Fase 1: **la settimana giorno per giorno** (attività per
+giorno, faccende coperte dalle spunte vicine, «Riprendi la lista» tolto; `settimana-19`). Prossimo passo: il
+documento funzionale della Fase 2.
 
 ## Comunicazione con il proprietario
 

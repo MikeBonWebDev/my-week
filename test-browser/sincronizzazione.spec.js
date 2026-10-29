@@ -98,7 +98,7 @@ test('la sezione Dati mostra quando hai salvato e unito un file', async ({ brows
   await vaiA(p, 'dati');
   await expect(p.locator('#ultimo-salvataggio')).toContainText('(oggi)');
   const altro = await apri(await browser.newContext());
-  expect(await unisciFile(altro, file)).toContain('Porta 2 modifiche');
+  expect(await unisciFile(altro, file)).toContain('Porta 3 modifiche');   // nome, presenza nella settimana, giorno
   await vaiA(altro, 'dati');
   await expect(altro.locator('#ultima-unione')).toContainText('(oggi)');
 });

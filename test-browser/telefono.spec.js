@@ -3,7 +3,7 @@
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import { creaSeme } from '../strumenti/seme.js';
 import {
-  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, conferma, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto, telefono,
+  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto, telefono,
 } from './aiuti.js';
 
 /** Apre l'app in un contesto "telefono". */
@@ -72,12 +72,15 @@ test('segnare, energia, riposo e cambio di giorno', async ({ browser }) => {
   await p.check('#riposo-giorno');
   await expect(giorno(p, 2)).toHaveAttribute('data-riposo', '');
 
-  // un altro giorno: lunedì è vuoto, e segnarlo non tocca mercoledì
+  // un altro giorno: le attività aggiunte mercoledì valgono mercoledì, e lunedì non ci sono.
+  // Aggiunta lunedì e segnata lì, Camminare non tocca mercoledì
   await giorno(p, 0).click();
   await expect(p.locator('#titolo-giorno')).toHaveText('Lunedì 12 ottobre');
-  await expect(carta(p, 'Sviluppo').locator('input[type=checkbox]')).not.toBeChecked();
+  expect(await nomiCarte(p)).toEqual([]);
   await expect(p.locator('#riposo-giorno')).not.toBeChecked();
+  await aggiungi(p, 'Camminare');
   await carta(p, 'Camminare').locator('input[type=checkbox]').check();
+  await expect(giorno(p, 0)).toHaveAttribute('aria-label', /1 di 1 attività segnate/);
   await giorno(p, 2).click();
   await expect(carta(p, 'Sviluppo').locator('input[type=checkbox]')).toBeChecked();
   await expect(carta(p, 'Camminare').locator('input[type=checkbox]')).not.toBeChecked();
@@ -99,8 +102,9 @@ test('dettaglio e «Togli» sulle schede', async ({ browser }) => {
   await p.reload();
   await expect(carta(p, 'Sviluppo').locator('.dettaglio')).toHaveValue('Programma B');
 
+  // aggiunta oggi, si toglie da oggi: niente conferma, si rimette con un tocco
   await carta(p, 'Prova').locator('.togli').click();
-  await conferma(p);
+  await expect(p.locator('#stato')).toContainText('«Prova» è uscita dalla settimana');
   expect(await nomiCarte(p)).toEqual(['Sviluppo']);
 });
 
@@ -119,31 +123,23 @@ test('un tocco lento subito dopo aver aggiunto arriva comunque alla casella: i s
   await expect(p.locator('#foglio-rinomina')).toBeVisible();
 });
 
-test('togliendo un’attività, la conferma dice in quali giorni risulta svolta', async ({ browser }) => {
+test('togliere da un giorno: un giorno segnato non si toglie, gli altri sì; dall’ultimo giorno esce dalla settimana', async ({ browser }) => {
   const p = await apriTelefono(browser);                        // mercoledì 14 ottobre
   await aggiungi(p, 'Sviluppo');
-  await aggiungi(p, 'Prova');
-  await carta(p, 'Sviluppo').locator('input[type=checkbox]').check();   // mercoledì
   await giorno(p, 0).click();
-  await carta(p, 'Sviluppo').locator('input[type=checkbox]').check();   // lunedì
-
-  await carta(p, 'Sviluppo').locator('.togli').click();
-  await expect(p.locator('#conferma-testo')).toContainText('Risulta svolta lunedì e mercoledì');
-  await p.click('#conferma button[value="annulla"]');           // annullo: non cambia niente
-  await expect(carta(p, 'Sviluppo')).toBeVisible();
-
-  await carta(p, 'Prova').locator('.togli').click();
-  await expect(p.locator('#conferma-testo')).toContainText('Non ha spunte in questa settimana');
-  await conferma(p);
-  expect(await nomiCarte(p)).toEqual(['Sviluppo']);
-
-  // togliendola davvero, le spunte non si perdono: restano nello storico e ricompaiono rimettendola
-  await carta(p, 'Sviluppo').locator('.togli').click();
-  await expect(p.locator('#conferma-testo')).toContainText('le spunte restano nello storico');
-  await conferma(p);
+  await aggiungi(p, 'Sviluppo');                                // anche lunedì
+  await carta(p, 'Sviluppo').locator('input[type=checkbox]').check();
+  await expect(carta(p, 'Sviluppo').locator('.togli')).toHaveCount(0);   // segnata lunedì: da lunedì non si toglie
+  await giorno(p, 2).click();
+  await carta(p, 'Sviluppo').getByRole('button', { name: 'Togli «Sviluppo» da mercoledì' }).click();
+  await expect(p.locator('#stato')).toContainText('«Sviluppo» tolta da oggi');
   expect(await nomiCarte(p)).toEqual([]);
-  await aggiungi(p, 'Sviluppo');
-  await expect(carta(p, 'Sviluppo').locator('.puntino[data-fatto]')).toHaveCount(2);   // lunedì e mercoledì
+  await giorno(p, 0).click();
+  expect(await nomiCarte(p)).toEqual(['Sviluppo']);              // lunedì resta, con la sua spunta
+  await carta(p, 'Sviluppo').locator('input[type=checkbox]').uncheck();
+  await carta(p, 'Sviluppo').locator('.togli').click();          // tolta la spunta, si toglie anche da lunedì
+  await expect(p.locator('#stato')).toContainText('«Sviluppo» è uscita dalla settimana');
+  expect(p.errori).toEqual([]);
 });
 
 test('settimane passate: si consultano e correggono, senza aggiungere né togliere', async ({ browser }) => {
@@ -208,7 +204,7 @@ for (const schema of ['light', 'dark']) {
   test(`tema ${schema}: niente scorrimento di lato, nessun errore`, async ({ browser }) => {
     const p = await apriTelefono(browser, LUNEDI_DOPO, { colorScheme: schema });
     await caricaDati(p, creaSeme());
-    await p.click('#riprendi-settimana');
+    for (const nome of ['Sviluppo', 'Diario', 'Chitarra']) await aggiungi(p, nome);
     await apriMenu(p);
     expect(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     expect(p.errori).toEqual([]);

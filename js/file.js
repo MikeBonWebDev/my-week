@@ -96,8 +96,11 @@ function campoCsv(valore) {
 // Le righe di una settimana: una per attività (nome, sette Sì/No, dettaglio), poi Riposo ed Energia.
 function righeSettimana(k) {
   const w = state.weeks[k];
-  const righe = attivitaDi(k).map((a) =>
-    [a.name, ...GIORNI.map((_, i) => valoreCella(w?.done[a.id]?.[i] === true)), a.dettaglio]);
+  // un giorno in cui l'attività non era in programma: «—», né Sì né No
+  const righe = attivitaDi(k).map((a) => [a.name, ...GIORNI.map((_, i) => {
+    const fatta = w?.done[a.id]?.[i] === true;
+    return fatta || a.giorni[i] ? valoreCella(fatta) : '—';
+  }), a.dettaglio]);
   righe.push(['Riposo', ...GIORNI.map((_, i) => valoreCella(w?.rest[i] === true)), '']);
   righe.push(['Energia', ...GIORNI.map((_, i) => NOME_LIVELLO[w?.energy[i]] ?? 'Non indicato'), '']);
   return righe;

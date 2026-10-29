@@ -14,6 +14,7 @@
      "s/2026-10-12/m/sviluppo"        → { v: true,          t: …, d: … }         la voce è nella lista di quella settimana
      "s/2026-10-12/a/sviluppo/det"    → { v: "Programma A", t: …, d: … }         dettaglio della settimana
      "s/2026-10-12/a/sviluppo/f/2"    → { v: true,          t: …, d: … }         fatto mercoledì (0 = lunedì)
+     "s/2026-10-12/a/sviluppo/g/1"    → { v: true,          t: …, d: … }         in programma martedì (vedi I GIORNI)
      "s/2026-10-12/r/6"               → { v: true,          t: …, d: … }         domenica di riposo
      "s/2026-10-12/e/2"               → { v: "ok",          t: …, d: … }         energia di mercoledì
      "v/bagno/cad"                    → { v: 14,            t: …, d: … }         faccenda: ogni 14 giorni
@@ -33,6 +34,13 @@
 
    Togliere qualcosa NON cancella la chiave: la porta a false / '' con il suo momento,
    altrimenti la copia dell'altro dispositivo la farebbe ricomparire.
+
+   I GIORNI
+   Un'attività aggiunta a un giorno (g/<giorno>) vale per quel giorno: compare lì, e in ogni giorno in cui l'hai
+   segnata (una spunta fuori programma vale lo stesso). Un'attività senza nessuna chiave g — aggiunta prima che i
+   giorni esistessero — vale per tutta la settimana, come allora. Le faccende no: restano sulla settimana, e ogni
+   spunta «copre» i giorni a meno di una cadenza di distanza, prima e dopo (vedi vista). In ogni settimana, per ogni
+   attività, la vista dice i giorni in cui si vede.
 
    LE FACCENDE
    Una voce con una cadenza (v/<id>/cad) è una faccenda. "L'ultima volta" non si salva: si ricava
@@ -103,6 +111,7 @@ const SCHEMI = [
   [new RegExp(`^s/${SETT}/m/${ID}$`), isBool],
   [new RegExp(`^s/${SETT}/a/${ID}/det$`), (v) => typeof v === 'string' && v.length <= MAX_DETTAGLIO],
   [new RegExp(`^s/${SETT}/a/${ID}/f/[0-6]$`), isBool],
+  [new RegExp(`^s/${SETT}/a/${ID}/g/[0-6]$`), isBool],
   [new RegExp(`^s/${SETT}/r/[0-6]$`), isBool],
   [new RegExp(`^s/${SETT}/e/[0-6]$`), (v) => v === null || LIVELLI.includes(v)],
   [new RegExp(`^v/${ID}/cad$`), (v) => v === false || cadenzaValida(v)],
@@ -163,6 +172,7 @@ function vista(reg) {
   const cancellate = {};
   const grezze = {};
   const usate = new Set();   // voci che fanno parte dello storico: in una lista, o con una spunta
+  const spunte = {};         // per ogni voce, i giorni (AAAA-MM-GG) in cui è stata segnata, in qualunque settimana
   for (const [k, x] of Object.entries(reg)) {
     const p = k.split('/');
     if (p[0] === 'v' && p.length === 3) {
@@ -173,12 +183,20 @@ function vista(reg) {
     if (p[0] !== 's') continue;
     // il giorno, dove c'è, deve essere 0-6: una chiave sconosciuta di forma simile non deve finire nella tabella
     const giorno = (i) => (/^[0-6]$/.test(p[i]) ? Number(p[i]) : -1);
-    const w = (grezze[p[1]] ??= { membri: [], det: {}, fatto: {}, rest: Array(7).fill(false), energy: Array(7).fill(null) });
+    const w = (grezze[p[1]] ??= {
+      membri: [], det: {}, fatto: {}, programma: {}, rest: Array(7).fill(false), energy: Array(7).fill(null),
+    });
     if (p.length === 4 && p[2] === 'm') { if (x.v === true) w.membri.push([p[3], x.t]); }
     else if (p.length === 5 && p[2] === 'a' && p[4] === 'det') w.det[p[3]] = x.v;
     else if (p.length === 6 && p[2] === 'a' && p[4] === 'f' && giorno(5) >= 0) {
       (w.fatto[p[3]] ??= Array(7).fill(false))[giorno(5)] = x.v;
-      if (x.v === true) usate.add(p[3]);
+      if (x.v === true) {
+        usate.add(p[3]);
+        if (eLunedi(p[1])) (spunte[p[3]] ??= []).push(piuGiorni(p[1], giorno(5)));
+      }
+    }
+    else if (p.length === 6 && p[2] === 'a' && p[4] === 'g' && giorno(5) >= 0) {
+      (w.programma[p[3]] ??= Array(7).fill(null))[giorno(5)] = x.v;
     }
     else if (p.length === 4 && p[2] === 'r' && giorno(3) >= 0) w.rest[giorno(3)] = x.v;
     else if (p.length === 4 && p[2] === 'e' && giorno(3) >= 0) w.energy[giorno(3)] = x.v;
@@ -189,7 +207,27 @@ function vista(reg) {
     // l'ordine delle righe è quello in cui le hai aggiunte alla settimana
     const membri = w.membri.filter(([id]) => typeof nomi[id] === 'string')
       .sort((a, b) => a[1] - b[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
-    const activities = membri.map(([id]) => ({ id, dettaglio: w.det[id] ?? '' }));
+    const activities = membri.map(([id]) => {
+      const fatto = w.fatto[id] ?? Array(7).fill(false);
+      const cadenza = reg[`v/${id}/cad`]?.v;
+      let tipo, giorni;
+      if (cadenzaValida(cadenza)) {
+        // una faccenda: si vede dove l'hai segnata, e dove nessuna spunta la copre
+        tipo = 'faccenda';
+        const coperto = (d) => (spunte[id] ?? []).some((c) => c !== d && Math.abs(giorniTra(c, d)) < cadenza);
+        giorni = fatto.map((f, i) => f === true || !coperto(piuGiorni(k, i)));
+      } else if (w.programma[id]) {
+        // un'attività per giorni: nei giorni in programma, e dove l'hai segnata
+        tipo = 'giorni';
+        giorni = fatto.map((f, i) => f === true || w.programma[id][i] === true);
+      } else {
+        tipo = 'settimana';   // aggiunta prima dei giorni: tutta la settimana, come allora
+        giorni = Array(7).fill(true);
+      }
+      return { id, dettaglio: w.det[id] ?? '', tipo, giorni };
+    })
+      // un'attività per giorni senza più nessun giorno (tolti tutti, o tolta l'ultima spunta) non si vede
+      .filter((a) => a.tipo !== 'giorni' || a.giorni.includes(true));
     // le spunte di una voce tolta dalla settimana restano nel registro (storico), ma la tabella non le mostra
     const done = {};
     for (const { id } of activities) {
@@ -304,40 +342,56 @@ function crea({ dispositivo, registro = {}, ora = () => Date.now() }) {
     },
 
     // Aggiunge una voce a una settimana. Se il nome c'è già in libreria (maiuscole e spazi non contano)
-    // usa quella voce, altrimenti ne crea una nuova.
-    aggiungi(sett, nomeGrezzo) {
+    // usa quella voce, altrimenti ne crea una nuova. Con un giorno (0-6), un'attività vale per quel giorno; se è già
+    // nella settimana per altri giorni, si aggiunge anche a questo. Una faccenda (voce con una cadenza) va sempre
+    // sulla settimana intera: il giorno non conta (vedi I GIORNI).
+    aggiungi(sett, nomeGrezzo, giorno = null) {
       if (!eLunedi(sett)) return errore('settimana');
+      if (giorno !== null && !giornoValido(giorno)) return errore('valore');
       const nome = pulisci(nomeGrezzo, MAX_NOME);
       if (!nome) return errore('vuoto');
       if (eRiservato(nome)) return errore('riservato', nome);
       const vis = vista(reg);
       const esistente = perNome(vis, nome);
-      if (esistente && membro(vis, sett, esistente.id)) return errore('gia-in-settimana', esistente.name);
       const id = esistente?.id ?? idPer(nome);
+      const perGiorno = giorno !== null && !cadenzaValida(reg[`v/${id}/cad`]?.v);
+      const presente = esistente && vis.weeks[sett]?.activities.find((a) => a.id === id);
+      if (presente) {
+        if (!perGiorno || presente.tipo !== 'giorni') return errore('gia-in-settimana', esistente.name);
+        if (presente.giorni[giorno]) return errore('gia-nel-giorno', esistente.name);
+        scrivi(`s/${sett}/a/${id}/g/${giorno}`, true);
+        return { ok: true, id };
+      }
       // il nome si scrive solo per una voce davvero nuova: riprendere una voce cancellata non la rinomina
       if (!reg[`v/${id}/nome`]) scrivi(`v/${id}/nome`, nome);
       scrivi(`v/${id}/del`, false);
       scrivi(`s/${sett}/m/${id}`, true);
+      if (perGiorno) scrivi(`s/${sett}/a/${id}/g/${giorno}`, true);
       return { ok: true, id };
     },
 
     // Toglie una voce dalla lista di una settimana. Spunte e dettaglio restano nel registro, come storico:
     // la tabella non li mostra, ma contano per «l'ultima volta» delle faccende, e ricompaiono
     // se la voce torna in quella settimana.
+    // Anche i giorni in programma si tolgono: se la voce torna, torna solo nel giorno in cui la rimetti.
     togli(sett, id) {
       if (!membro(vista(reg), sett, id)) return errore('non-trovata');
       scrivi(`s/${sett}/m/${id}`, false);
+      for (let g = 0; g < 7; g++) scrivi(`s/${sett}/a/${id}/g/${g}`, false);
       return { ok: true };
     },
 
-    // Copia in una settimana vuota la lista di un'altra settimana, senza dettagli né spunte.
-    riprendi(sett, fonte) {
-      const vis = vista(reg);
-      if (!eLunedi(sett)) return errore('settimana');
-      if (vis.weeks[sett]?.activities.length) return errore('non-vuota');
-      const lista = vis.weeks[fonte]?.activities ?? [];
-      for (const a of lista) scrivi(`s/${sett}/m/${a.id}`, true);
-      return { ok: true, quante: lista.length };
+    // Toglie un'attività da un giorno solo. Un giorno in cui è segnata non si toglie (prima si toglie la spunta):
+    // la spunta è storia. Se non resta in nessun giorno, esce dalla settimana.
+    togliGiorno(sett, id, giorno) {
+      if (!giornoValido(giorno)) return errore('valore');
+      const a = vista(reg).weeks[sett]?.activities.find((x) => x.id === id);
+      if (!a || a.tipo !== 'giorni') return errore('non-trovata');
+      if (reg[`s/${sett}/a/${id}/f/${giorno}`]?.v === true) return errore('fatta');
+      scrivi(`s/${sett}/a/${id}/g/${giorno}`, false);
+      const resta = vista(reg).weeks[sett].activities.some((x) => x.id === id);   // senza giorni la vista non la mostra
+      if (!resta) scrivi(`s/${sett}/m/${id}`, false);
+      return { ok: true, uscita: !resta };
     },
 
     spunta(sett, id, giorno, fatto) {

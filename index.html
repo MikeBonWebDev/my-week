@@ -18,8 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- ?v=18: vedi la nota sugli script in fondo -->
-  <link rel="stylesheet" href="stile.css?v=18">
+  <!-- ?v=19: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=19">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -111,12 +111,8 @@
         </table>
       </div>
 
-      <!-- Riprendi, aggiungi e nota: su telefono questo blocco viene spostato in cima alla vista a un giorno -->
+      <!-- Aggiungi e nota: su telefono questo blocco viene spostato in cima alla vista a un giorno -->
       <div class="blocco-aggiungi" id="blocco-aggiungi">
-      <div class="riprendi" id="riprendi" hidden>
-        <p id="testo-riprendi"></p>
-        <button type="button" class="pulsante secondario piccolo" id="riprendi-settimana">Riprendi quelle attività</button>
-      </div>
       <form id="form-nuova" class="aggiungi" autocomplete="off">
         <div class="riga-aggiungi">
           <input type="text" id="nuova-attivita" maxlength="60"
@@ -327,29 +323,29 @@
        divisa per argomento in js/. Si carica solo guscio.js, che avvia l'app: i file che gli servono li chiede lui,
        con import, e così via a cascata (vedi la nota MODULI in js/base.js).
 
-       Il «?v=18» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       Il «?v=19» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
        può mescolare la pagina nuova con file vecchi che ha in memoria. Un import dentro un modulo scrive solo
        './base.js', senza numero: l'elenco qui sotto (import map) dice al browser che './base.js' è
-       'js/base.js?v=18'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
+       'js/base.js?v=19'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
        Ogni file di codice deve comparire qui: un test controlla che ci siano tutti, con il numero giusto. -->
   <script type="importmap">
     {
       "imports": {
-        "./core.js": "./core.js?v=18",
-        "./js/base.js": "./js/base.js?v=18",
-        "./js/testi.js": "./js/testi.js?v=18",
-        "./js/pezzi.js": "./js/pezzi.js?v=18",
-        "./js/sezioni.js": "./js/sezioni.js?v=18",
-        "./js/settimana.js": "./js/settimana.js?v=18",
-        "./js/promemoria.js": "./js/promemoria.js?v=18",
-        "./js/libreria.js": "./js/libreria.js?v=18",
-        "./js/azioni.js": "./js/azioni.js?v=18",
-        "./js/file.js": "./js/file.js?v=18",
-        "./js/casa.js": "./js/casa.js?v=18",
-        "./js/guscio.js": "./js/guscio.js?v=18"
+        "./core.js": "./core.js?v=19",
+        "./js/base.js": "./js/base.js?v=19",
+        "./js/testi.js": "./js/testi.js?v=19",
+        "./js/pezzi.js": "./js/pezzi.js?v=19",
+        "./js/sezioni.js": "./js/sezioni.js?v=19",
+        "./js/settimana.js": "./js/settimana.js?v=19",
+        "./js/promemoria.js": "./js/promemoria.js?v=19",
+        "./js/libreria.js": "./js/libreria.js?v=19",
+        "./js/azioni.js": "./js/azioni.js?v=19",
+        "./js/file.js": "./js/file.js?v=19",
+        "./js/casa.js": "./js/casa.js?v=19",
+        "./js/guscio.js": "./js/guscio.js?v=19"
       }
     }
   </script>
-  <script type="module" src="js/guscio.js?v=18"></script>
+  <script type="module" src="js/guscio.js?v=19"></script>
 </body>
 </html>

@@ -49,7 +49,8 @@ function modificaCasuale(r, db) {
   const giorno = Math.floor(r() * 7);
   const voce = vis.libreria.length ? scegli(r, vis.libreria) : null;
   switch (Math.floor(r() * 13)) {
-    case 0: case 1: return db.aggiungi(sett, scegli(r, NOMI));
+    case 0: return db.aggiungi(sett, scegli(r, NOMI));
+    case 1: return db.aggiungi(sett, scegli(r, NOMI), giorno);   // per un giorno solo
     case 2: return id && db.togli(sett, id);
     case 3: case 4: return id && db.spunta(sett, id, giorno, r() < 0.7);
     case 5: return id && db.dettaglio(sett, id, scegli(r, DETTAGLI));
@@ -60,7 +61,7 @@ function modificaCasuale(r, db) {
     case 9: return r() < 0.3 ? db.nuovaFaccenda(scegli(r, NOMI), scegli(r, [7, 14])) : voce && db.cadenza(voce.id, scegli(r, [null, 1, 7, 14, 15, 30]));
     case 10: return voce && db.salta(voce.id, scegli(r, [null, '2026-10-01', '2026-10-14', '2026-10-20']));
     case 11: return db.intensita(scegli(r, ['nessuna', 'morbida', 'decisa']));
-    default: return db.riprendi(sett, scegli(r, SETTIMANE));
+    default: return id && db.togliGiorno(sett, id, giorno);
   }
 }
 
@@ -265,17 +266,60 @@ test('una voce rinominata libera il nome: crearlo di nuovo dà una voce distinta
   assert.deepEqual(tel.vista().weeks['2026-10-12'].activities.map((a) => a.id), ['sviluppo', 'sviluppo-2']);
 });
 
-test('riprendi: copia la lista nello stesso ordine, senza dettagli né spunte', () => {
+test('per giorno: un\'attività aggiunta a un giorno vale lì, e dove la segni; togliendo l\'ultimo giorno esce', () => {
   const tel = dispositivo('telefono');
-  for (const n of ['Chitarra', 'Sviluppo', 'Camminare']) tel.aggiungi('2026-10-05', n);
-  tel.dettaglio('2026-10-05', 'sviluppo', 'Programma A');
-  tel.spunta('2026-10-05', 'chitarra', 0, true);
-  assert.equal(tel.riprendi('2026-10-12', '2026-10-05').quante, 3);
-  const w = tel.vista().weeks['2026-10-12'];
-  assert.deepEqual(w.activities, [
-    { id: 'chitarra', dettaglio: '' }, { id: 'sviluppo', dettaglio: '' }, { id: 'camminare', dettaglio: '' }]);
-  assert.deepEqual(w.done, {});
-  assert.equal(tel.riprendi('2026-10-12', '2026-10-05').errore, 'non-vuota');
+  const S = '2026-10-12';
+  const att = (id) => tel.vista().weeks[S].activities.find((a) => a.id === id);
+  tel.aggiungi(S, 'Sviluppo', 1);                                      // martedì
+  assert.equal(att('sviluppo').tipo, 'giorni');
+  assert.deepEqual(att('sviluppo').giorni, [false, true, false, false, false, false, false]);
+  assert.equal(tel.aggiungi(S, 'sviluppo', 1).errore, 'gia-nel-giorno');
+  assert.ok(tel.aggiungi(S, 'Sviluppo', 3).ok);                        // anche giovedì
+  assert.deepEqual(att('sviluppo').giorni, [false, true, false, true, false, false, false]);
+  tel.spunta(S, 'sviluppo', 5, true);                                  // fatta sabato, fuori programma: vale
+  assert.deepEqual(att('sviluppo').giorni, [false, true, false, true, false, true, false]);
+  assert.equal(tel.togliGiorno(S, 'sviluppo', 5).errore, 'fatta');     // un giorno segnato non si toglie
+  assert.equal(tel.togliGiorno(S, 'sviluppo', 1).uscita, false);
+  assert.equal(tel.togliGiorno(S, 'sviluppo', 3).uscita, false);       // resta sabato, perché è segnata
+  tel.spunta(S, 'sviluppo', 5, false);
+  assert.equal(att('sviluppo'), undefined);                            // nessun giorno: non si vede più…
+  assert.equal(tel.vista().weeks[S].activities.length, 0);
+  // …e togliendola dalla settimana i giorni si azzerano: se torna, torna solo dove la rimetti
+  tel.aggiungi(S, 'Camminare', 0);
+  tel.aggiungi(S, 'Camminare', 2);
+  tel.togli(S, 'camminare');
+  tel.aggiungi(S, 'Camminare', 4);
+  assert.deepEqual(att('camminare').giorni, [false, false, false, false, true, false, false]);
+});
+
+test('per giorno: senza giorno (e le voci di prima) valgono per tutta la settimana', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-10-12', 'Leggere');
+  const a = tel.vista().weeks['2026-10-12'].activities[0];
+  assert.equal(a.tipo, 'settimana');
+  assert.deepEqual(a.giorni, Array(7).fill(true));
+  assert.equal(tel.aggiungi('2026-10-12', 'Leggere', 2).errore, 'gia-in-settimana');
+  assert.equal(tel.togliGiorno('2026-10-12', 'leggere', 2).errore, 'non-trovata');
+});
+
+test('faccende: una spunta copre i giorni a meno di una cadenza, prima e dopo, anche tra settimane', () => {
+  const tel = dispositivo('telefono');
+  const giorni = (sett, id) => tel.vista().weeks[sett].activities.find((a) => a.id === id).giorni;
+  for (const [nome, cad] of [['Ogni giorno', 1], ['Due', 2], ['Tre', 3], ['Bagno', 7]]) {
+    tel.nuovaFaccenda(nome, cad);
+    assert.ok(tel.aggiungi('2026-10-12', nome, 0).ok);                 // il giorno non conta: va sulla settimana
+    tel.spunta('2026-10-12', tel.vista().libreria.find((v) => v.name === nome).id, 2, true);   // mercoledì
+  }
+  assert.deepEqual(giorni('2026-10-12', 'ogni-giorno'), Array(7).fill(true));
+  assert.deepEqual(giorni('2026-10-12', 'due'), [true, false, true, false, true, true, true]);
+  assert.deepEqual(giorni('2026-10-12', 'tre'), [false, false, true, false, false, true, true]);
+  assert.deepEqual(giorni('2026-10-12', 'bagno'), [false, false, true, false, false, false, false]);
+  // la settimana dopo: fatta mercoledì 14, il giro è mercoledì 21. Prima è coperta, da lì si vede
+  tel.aggiungi('2026-10-19', 'Bagno');
+  assert.deepEqual(giorni('2026-10-19', 'bagno'), [false, false, true, true, true, true, true]);
+  // togliendo la spunta tutto si ricalcola: niente è salvato
+  tel.spunta('2026-10-12', 'bagno', 2, false);
+  assert.deepEqual(giorni('2026-10-12', 'bagno'), Array(7).fill(true));
 });
 
 test('regole su nomi e valori', () => {
@@ -441,7 +485,9 @@ test('togli: le spunte e il dettaglio restano come storico, e ricompaiono rimett
   assert.equal(tel.cancella('sviluppo').errore, 'usata');                    // e la voce fa parte dello storico
   tel.aggiungi('2026-10-19', 'Sviluppo');
   const dopo = tel.vista().weeks['2026-10-19'];
-  assert.deepEqual(dopo.activities, [{ id: 'sviluppo', dettaglio: 'Programma B' }]);
+  assert.deepEqual(dopo.activities, [{
+    id: 'sviluppo', dettaglio: 'Programma B', tipo: 'faccenda', giorni: [true, false, false, false, false, false, false],
+  }]);
   assert.equal(dopo.done.sviluppo[0], true);
 });
 
