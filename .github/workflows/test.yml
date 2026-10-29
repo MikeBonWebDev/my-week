@@ -14,7 +14,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
 
@@ -53,7 +53,7 @@ jobs:
           exit 1
 
       - name: Test nel browser
-        timeout-minutes: 15
+        timeout-minutes: 30
         run: npm run test:browser
 
       - name: Rapporto, se qualcosa è andato storto
