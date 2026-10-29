@@ -125,6 +125,11 @@ ha tentativi ripetuti e cache, perché i mirror apt a volte si bloccano. GitHub 
 Limiti: 45 minuti il job, 30 lo step dei test nel browser (ottobre 2026: circa 6 minuti in tutto, WebKit il più
 lento). Quando arrivano i moduli della Fase 2: un job per motore (in parallelo) e il test di accessibilità diviso
 per sezione, perché oggi visita tutte le viste in un solo test e con altre sezioni supererebbe i 30 secondi.
+**Il sistema della CI è fissato a `ubuntu-24.04`**, non `ubuntu-latest`: tra ottobre e novembre 2026 GitHub ha
+spostato `ubuntu-latest` su Ubuntu 26.04, e WebKit di Playwright non partiva più (gli mancava `libicudata.so.74`,
+una libreria di Ubuntu 24.04). Anche la chiave della cache dei browser contiene `ubuntu-24.04`: i browser sono
+compilati per una versione precisa del sistema. Si passa a 26.04 solo insieme a una versione di Playwright che la
+supporta dichiaratamente, cambiando le due righe insieme.
 
 ## Piano in corso
 

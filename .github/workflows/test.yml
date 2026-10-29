@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-ubuntu-24.04-${{ hashFiles('package-lock.json') }}
 
       # Il primo tentativo si è bloccato per 25 minuti scaricando le librerie dal mirror di Ubuntu. Qui ogni tentativo
       # ha 8 minuti; se non basta, si riprova (fino a tre volte), rimettendo in ordine apt prima di ripartire.
