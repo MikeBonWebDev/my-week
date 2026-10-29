@@ -63,6 +63,9 @@ for (const dispositivo of ['computer', 'telefono']) {
   for (const schema of ['light', 'dark']) {
     for (const intensita of ['morbida', 'decisa']) {
       test(`${dispositivo}, tema ${schema}, colore ${intensita}: nessuna violazione WCAG A/AA`, async ({ browser }) => {
+        // Sei viste, ognuna analizzata da axe: è il test più pesante della suite. Sulle macchine di GitHub, in WebKit,
+        // superava i 30 secondi ogni tanto (in un punto diverso ogni volta: probabilmente lentezza, non un blocco). Tempo triplo.
+        test.slow();
         // movimento ridotto: senza, axe misurerebbe i colori a metà di una transizione (per esempio la voce della
         // barra appena toccata, che sta passando dal chiaro allo scuro) e segnalerebbe un contrasto che non esiste
         const contesto = await browser.newContext({

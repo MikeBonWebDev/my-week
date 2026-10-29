@@ -708,8 +708,12 @@ E una terza: nel test di sincronizzazione ogni "dispositivo" ha un orologio fint
 pagina si apre. Telefono e PC creano la stessa voce con nomi diversi («Sviluppo» e «sviluppo»), e vince il nome con
 il momento più recente. Se la pagina del PC ci metteva ad aprirsi più di quanto il telefono impiegasse a lavorare, il
 suo orologio restava indietro e vinceva il nome sbagliato. Il test dipendeva dalla velocità della macchina: passava
-qui e falliva su un computer più lento. Ora il PC fa avanzare il suo orologio di un minuto (`clock.fastForward`)
-prima di lavorare: l’ordine degli eventi è scritto nel test, non lasciato al caso.
+qui e falliva su un computer più lento. Ora il PC apre la sua pagina con l’orologio un minuto avanti
+(`apri(contesto, MERCOLEDI + 1 minuto)`): l’ordine degli eventi è scritto nel test, non lasciato al caso.
+La prima correzione faceva saltare l’orologio a metà test (`clock.fastForward`); nella CI, in WebKit, il test
+superava comunque i 30 secondi. Il punto in cui si fermava cambiava a ogni giro, insieme ai test di accessibilità:
+probabilmente lentezza della macchina, non un blocco (da confermare). I test più pesanti ora hanno tempo triplo (`test.slow()`), e in CI un test
+fallito lascia nel rapporto la traccia passo per passo, che dice dove è andato il tempo.
 
 ## 12. Limiti e scelte consapevoli
 
