@@ -1,7 +1,17 @@
-'use strict';
-// js/guscio.js — il menu, la finestra di conferma, l’avvio, l’app installabile.
-// Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
-// (vedi l’elenco in index.html e la nota in base.js).
+// js/guscio.js — il punto di partenza: carica gli altri moduli, il menu, l’avvio, l’app installabile.
+import {
+  $, avvisoIniziale, db, disegna, disegnaAnche, esito, menu, mostraStato, rigaIntestazione, state, telefono
+} from './base.js';
+import { disegnaSettimana } from './settimana.js';
+import { aggiornaLibreria } from './libreria.js';
+import './azioni.js';   // i gestori delle azioni sulla settimana: non esporta niente, basta caricarlo
+import { aggiornaSync } from './file.js';
+import { disegnaCasa, mostraSezione, sezione } from './casa.js';
+
+/* ───────── Il disegno ─────────
+   Le parti della pagina, nell'ordine in cui si ridisegnano (vedi disegnaAnche in base.js). Una sezione nuova
+   si aggiunge qui. */
+disegnaAnche(disegnaSettimana, aggiornaLibreria, aggiornaSync, disegnaCasa);
 
 /* ───────── Il menu ─────────
    Un <dialog> aperto con showModal(): sta sopra alla pagina, che intanto non risponde ai tocchi.
@@ -130,23 +140,6 @@ async function mostraVersione() {
 
 $('#chiudi-menu').addEventListener('click', () => menu.close());
 menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
-
-/* ───────── Finestra di conferma ───────── */
-// Apre la finestra di conferma e restituisce una Promise che si risolve con true (Conferma) o false
-// (Annulla, Esc, clic fuori). Chi la usa scrive  const ok = await conferma(…)  e il codice si "ferma" ad aspettare
-// la risposta senza bloccare la pagina. I pulsanti stanno in un <form method="dialog">: premerli chiude
-// la finestra e mette il loro value in dialogo.returnValue.
-function conferma(testoDomanda, etichettaOk) {
-  return new Promise((risolvi) => {
-    $('#conferma-testo').textContent = testoDomanda;
-    $('#conferma-ok').textContent = etichettaOk;
-    dialogo.returnValue = '';
-    dialogo.addEventListener('close', () => risolvi(dialogo.returnValue === 'ok'), { once: true });
-    dialogo.showModal();
-  });
-}
-// un clic sullo sfondo oscurato chiude la finestra senza confermare
-dialogo.addEventListener('click', (e) => { if (e.target === dialogo) dialogo.close(); });
 
 /* ───────── Avvio ───────── */
 // Su schermi stretti la tabella scorre: porto la colonna di oggi al centro, così non devi cercarla.

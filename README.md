@@ -48,17 +48,17 @@ sono quelli che il browser esegue.
 
 ```
 settimana-pwa/
-├── index.html            la pagina: la struttura (HTML) e l’elenco dei file da caricare
+├── index.html            la pagina: la struttura (HTML) e l’elenco dei file di codice (import map)
 ├── stile.css             l’aspetto (CSS)
 ├── core.js               il nucleo: dati, regola di unione, faccende, operazioni. Nessun browser: gira anche in Node
-├── js/                   il comportamento della pagina (JavaScript), diviso per argomento
-│   ├── base.js           impostazioni, elementi, date, dati (caricare, salvare, esito delle azioni)
+├── js/                   il comportamento della pagina (JavaScript), un modulo per argomento
+│   ├── base.js           impostazioni, elementi, date, dati (caricare, salvare, esito), conferma, elenco del disegno
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
 │   ├── libreria.js       il pannello «Libreria delle attività»
 │   ├── azioni.js         aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
 │   ├── file.js           la sezione Dati: ultimo salvataggio, invito alla copia, CSV, sincronizzazione
 │   ├── casa.js           le sezioni (Settimana, Casa, Dati) e la sezione Casa: le faccende
-│   └── guscio.js         menu (tema, colore delle faccende, libreria), conferma, avvio, app installabile
+│   └── guscio.js         il punto di partenza: carica gli altri moduli, menu (tema, colore, libreria), avvio
 ├── sw.js                 il service worker: copia dei file per l'uso senza rete
 ├── manifest.webmanifest  nome, colori e icone dell'app installata
 ├── icone/                icone per Android, iPhone, scheda del browser
@@ -97,12 +97,13 @@ Serve [Node.js](https://nodejs.org) 22 o successivo (consigliata la LTS più rec
 npm install                       # una volta: scarica Playwright (serve solo ai test nel browser)
 npx playwright install chromium   # una volta: scarica il browser usato dai test
 npm start                         # avvia il server: apri http://localhost:8765/
+npm run lint                      # controllo del codice senza eseguirlo (ESLint, 2 secondi)
 npm test                          # test del nucleo (pochi secondi)
 npm run test:browser              # test nel browser (circa 20 secondi)
 ```
 
-Si può anche aprire `index.html` con un doppio clic: funziona, ma senza service worker, e il browser lo tratta
-come un sito diverso da `localhost` (quindi con dati separati).
+Aprire `index.html` con un doppio clic **non funziona**: il codice è fatto di moduli ES, e il browser li carica
+solo da un server (`npm start` in locale, oppure GitHub Pages). Con il doppio clic la pagina resta vuota.
 
 ## 4. L’architettura in un disegno
 
@@ -127,6 +128,30 @@ Tre idee reggono tutto:
    da lì; la pagina non tiene copie "sue" da tenere allineate.
 3. **Nessun server, ma unione sicura.** Ogni dispositivo lavora da solo. Quando si incontrano (tramite il file),
    una regola semplice decide, informazione per informazione, quale versione tenere.
+
+**Come si parlano i file del codice.** Ogni file è un modulo: dichiara ciò che condivide (`export`) e chiede per nome
+ciò che gli serve (`import`). Le frecce vanno in un verso solo, dall’alto verso il basso: chi sta sotto non conosce
+chi sta sopra.
+
+```
+   guscio.js            il punto di partenza: carica tutto, mette in elenco le parti da disegnare, avvia
+       │
+   casa.js  file.js  azioni.js  libreria.js       le sezioni e le azioni
+       │       │        │          │
+       └───────┴── settimana.js ───┘               la settimana visualizzata e il suo disegno
+                         │
+                      base.js                      elementi, date, dati, salvare, esito, conferma, disegna()
+                         │
+                      core.js                      il nucleo: nessun browser
+```
+
+Due regole tengono le frecce in un verso solo. **Il disegno è un elenco**: `base.js` ha `disegna()`, che chiama
+in ordine le funzioni di disegno che `guscio.js` gli consegna all’avvio (`disegnaAnche`); così `base.js` non deve
+importare chi disegna, e una sezione nuova si aggiunge a quell’elenco senza toccare gli altri file. **Un valore che
+cambia lo cambia solo il suo file**: `state` e `oggiK` stanno in `base.js` e cambiano con `rileggi()` e
+`cambiaOggi()`; la settimana visualizzata e il giorno scelto stanno in `settimana.js` e cambiano con
+`mostraSettimana()` e `scegliGiorno()`. Gli altri file li leggono, e vedono sempre il valore attuale (un `import` è
+un collegamento al valore, non una copia).
 
 ## 5. Il viaggio di una spunta
 
@@ -365,12 +390,20 @@ Fino alla Fase 1 erano un unico file di oltre duemila righe; sono stati divisi s
 mantenendo l’ordine di prima. Dentro ogni file, le sezioni sono segnate da commenti `/* ───── … ───── */`.
 In testa a `js/base.js` c’è un riassunto del giro di una modifica e l’elenco dei file.
 
-**Più file senza `import`.** I file di `js/` sono *script classici*, non moduli: le costanti e le funzioni dichiarate
-in cima a uno script finiscono in un ambito comune a tutta la pagina, quindi `guscio.js` può chiamare `disegna()` di
-`settimana.js`. Due regole lo rendono sicuro: un nome si dichiara una volta sola, e il codice che gira subito
-(fuori dalle funzioni) usa solo ciò che sta nei file caricati prima; per questo `guscio.js`, che avvia l’app, è
-l’ultimo. I moduli (`<script type="module">`) sarebbero più ordinati, ma non funzionano aprendo la pagina come
-file locale, e richiederebbero di riscrivere ogni collegamento tra le parti.
+**Moduli.** Fino alla Fase 1 i file di `js/` erano *script classici*: tutto ciò che dichiaravano finiva in un
+ambito comune a tutta la pagina. Funzionava, ma con tre difetti che i moduli della Fase 2 avrebbero peggiorato: due
+file con lo stesso nome (`foglio`, per esempio) facevano scartare al browser il secondo file intero; le dipendenze
+non erano scritte da nessuna parte (contava l’ordine dei `<script>`); qualunque file poteva cambiare i valori di un
+altro. Ora ogni file è un modulo ES, con i suoi nomi, e gli `import` in cima dicono da chi dipende (§4).
+Il guadagno più importante: se un modulo chiede un nome che un altro non esporta, il browser **non avvia l’app**, e
+lo vedono subito tutti i test. Un limite dei moduli resta: un nome usato senza importarlo, il browser lo scopre solo
+quando quel codice gira. Lo trova prima `npm run lint` (§11), che legge il codice senza eseguirlo.
+
+`index.html` carica solo `js/guscio.js`; gli altri file arrivano con gli `import`. Gli `import` scrivono
+`'./base.js'`, senza numero di versione: la *import map* in fondo a `index.html` dice al browser che `./js/base.js`
+è `./js/base.js?v=15`. Così il numero sta in un posto solo e la pagina nuova non si mescola con file vecchi rimasti
+nella cache del browser (§10). Un test controlla che ogni file di codice sia nella import map, con il numero giusto,
+e nell’elenco di `sw.js`.
 
 ### Due viste della stessa settimana
 
@@ -383,8 +416,9 @@ file locale, e richiederebbero di riscrivere ogni collegamento tra le parti.
 | Aggiungere | sotto la tabella | in cima, sopra le schede; i suggerimenti compaiono quando usi il campo |
 
 Quale vista mostrare lo decide JavaScript con `matchMedia('(max-width: 40rem)')`, la stessa soglia del CSS:
-`disegna()` chiama `disegnaTabella()` oppure `disegnaGiorno()` e nasconde l’altra. Se ruoti il telefono o stringi la
-finestra, l’evento `change` della media query ridisegna. Il modulo per aggiungere è uno solo: `disegna()` lo sposta
+`disegnaSettimana()` chiama `disegnaTabella()` oppure `disegnaGiorno()` e nasconde l’altra. Se ruoti il telefono o
+stringi la finestra, l’evento `change` della media query ridisegna. Il modulo per aggiungere è uno solo:
+`disegnaSettimana()` lo sposta
 dove serve con `append` (spostare un elemento non gli toglie i gestori degli eventi). Le caselle delle schede hanno
 gli stessi `data-id` e `data-giorno` della tabella, quindi i gestori sono gli stessi.
 
@@ -606,7 +640,15 @@ scarseggia; il browser può rifiutare, e per questo il file di sincronizzazione 
 
 ## 11. I test
 
-Ci sono due livelli di test, e servono a cose diverse.
+Ci sono due livelli di test, più un controllo che non esegue niente, e servono a cose diverse.
+
+### Controllo del codice (`npm run lint`)
+
+[ESLint](https://eslint.org) legge il codice **senza eseguirlo** e segnala un nome usato senza dichiararlo né
+importarlo, un import inutile, un nome dichiarato due volte, una chiave ripetuta in un oggetto, codice dopo un
+`return`. Sono pochi controlli, scelti perché indicano errori veri; niente regole di stile (`eslint.config.js`).
+Serve soprattutto con i moduli (§8): se un file usa un nome che non ha importato, il browser se ne accorge solo
+quando quel pezzo di codice gira, ESLint subito. In VS Code l'estensione ESLint lo sottolinea mentre scrivi.
 
 ### Test del nucleo (`npm test`)
 
@@ -686,7 +728,7 @@ si leggono come una storia.
 ### I test su GitHub (CI)
 
 `.github/workflows/test.yml` fa girare tutti i test a **ogni push e ogni pull request**, su una macchina Linux pulita
-di GitHub: nucleo e browser, nei tre motori. Il risultato compare accanto al commit (✓ o ✗) e nella scheda *Actions*.
+di GitHub: prima il controllo del codice, poi nucleo e browser, nei tre motori. Il risultato compare accanto al commit (✓ o ✗) e nella scheda *Actions*.
 Se un test nel browser fallisce, il rapporto di Playwright, con le schermate, si scarica da lì («Artifacts»).
 È la stessa regola che si usa a mano, «test verdi prima di pubblicare», fatta da una macchina che non se ne dimentica.
 
@@ -756,21 +798,22 @@ traccia passo per passo, che dice dove è andato il tempo.
 | `` `Ciao ${nome}` `` | `$"Ciao {nome}"` |
 | `{ ...x }` | copia superficiale di un oggetto (come un `with` sui `record`) |
 | `const { id, giorno } = el.dataset` | deconstruction: `var (id, giorno) = …` |
-| `module.exports = { … }` / `require('…')` | `public` + `using` di un altro assembly |
+| `export function f…` / `import { f } from './x.js'` | `public` + `using` di un altro namespace |
+| `import * as Core from '../core.js'` | `using Core = …;` (un alias per tutto il namespace) |
 | `structuredClone(x)` | copia profonda |
 | `Object.entries(o)` | enumerare un `Dictionary` come coppie chiave/valore |
 | `Array.prototype.map/filter/some` | LINQ `Select/Where/Any` |
 | `addEventListener('click', f)` | `button.Click += f` |
 | `localStorage` | una piccola tabella chiave/valore persistente, per sito |
-| `'use strict'` | modalità rigorosa: certi errori silenziosi diventano eccezioni |
+| modulo ES | sempre in modalità rigorosa: certi errori silenziosi diventano eccezioni |
 
 Due differenze da tenere a mente. **Tipi**: JavaScript non li controlla; per questo il nucleo valida tutto ciò che
 arriva da fuori (`valida`, `daFile`) e i test fanno da rete di sicurezza. **`==` contro `===`**: qui si usa sempre
 `===`, che non converte i tipi (`0 == ''` è vero, `0 === ''` è falso).
 
-La struttura di `core.js` è un *modulo UMD* minimo: la funzione in fondo restituisce l’oggetto con le funzioni
-pubbliche; l’involucro in cima lo assegna a `module.exports` se c’è Node, altrimenti a `window.SettimanaCore`.
-Così lo stesso file funziona in entrambi.
+`core.js` è un modulo ES, come tutto il resto: l’elenco `export { … }` in fondo dice cosa è pubblico. La pagina e
+Node (test, `strumenti/`) lo caricano allo stesso modo, con `import * as Core from './core.js'`. Anche i file per Node
+sono moduli: `package.json` dice `"type": "module"`.
 
 ## 14. Un percorso per studiarla
 

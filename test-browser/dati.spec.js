@@ -1,10 +1,9 @@
 // Test nel browser della sezione Dati: stato, puntino e invito alla copia, «Salva con nome», CSV, unione.
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const fs = require('node:fs');
-const { creaSeme } = require('../strumenti/seme.js');
-const { apri, caricaDati, aggiungi, apriMenu, vaiA, salvaFile, unisciFile, telefono } = require('./aiuti');
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import fs from 'node:fs';
+import { creaSeme } from '../strumenti/seme.js';
+import { apri, caricaDati, aggiungi, apriMenu, vaiA, salvaFile, unisciFile, telefono } from './aiuti.js';
 
 
 // Una data di ultimo salvataggio già scritta nella memoria del dispositivo, prima che la pagina si apra

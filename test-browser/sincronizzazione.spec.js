@@ -1,10 +1,10 @@
 // Test nel browser della sincronizzazione: due "dispositivi" (due contesti del browser, ognuno con la sua memoria)
 // lavorano per conto loro e si scambiano il file. Alla fine devono mostrare la stessa tabella.
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const {
-  MERCOLEDI, apri, nomi, aggiungi, dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
-} = require('./aiuti');
+import fs from 'node:fs';
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import {
+  MERCOLEDI, apri, nomi, aggiungi, dettaglio, spunta, togli, vaiA, salvaFile, unisciFile, foto,
+} from './aiuti.js';
 
 test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali', async ({ browser }, info) => {
   // Il PC parte un minuto avanti rispetto al telefono, così il nome scritto dal PC («sviluppo») è il più recente e vince.
@@ -69,7 +69,7 @@ test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali'
 test('un file qualsiasi viene rifiutato', async ({ browser }, info) => {
   const p = await apri(await browser.newContext());
   const percorso = info.outputPath('altro.json');
-  require('node:fs').writeFileSync(percorso, JSON.stringify({ versione: 3, dati: {} }));
+  fs.writeFileSync(percorso, JSON.stringify({ versione: 3, dati: {} }));
   expect(await unisciFile(p, percorso)).toBeNull();
   await expect(p.locator('#stato')).toContainText('non sembra un file di sincronizzazione');
 });

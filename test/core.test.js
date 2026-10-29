@@ -5,10 +5,9 @@
 // con orologi diversi e unioni parziali, e alla fine si controlla che valgano le garanzie dell'unione
 // (ordine indifferente, idempotenza, file vecchi innocui). Il generatore casuale ha un seme fisso:
 // se un test fallisce, il messaggio dice il seme e il caso si riproduce identico.
-'use strict';
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const Core = require('../core.js');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import * as Core from '../core.js';
 
 /* ───────── Attrezzi ───────── */
 // Generatore pseudo-casuale con seme (mulberry32): stessi semi, stessi risultati

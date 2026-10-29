@@ -1,9 +1,8 @@
 // Test nel browser del promemoria delle faccende, in cima alla settimana corrente.
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js): la settimana va da lunedì 12 a domenica 18.
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const Core = require('../core.js');
-const { apri, caricaDati, vaiA, telefono } = require('./aiuti');
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import * as Core from '../core.js';
+import { apri, caricaDati, vaiA, telefono } from './aiuti.js';
 
 
 // Sei faccende; nella settimana del 12 ottobre ci sono solo Lavatrice e Sviluppo (che non è una faccenda).

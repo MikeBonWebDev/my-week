@@ -10,10 +10,30 @@ pubblicazione, installazione e la prova a mano su iPhone. Qui c'è solo ciò che
 per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su un telefono Android: un errore su
 `main` arriva in produzione.
 
-- JavaScript puro, **nessun passaggio di build**, nessuna dipendenza a runtime, script classici (niente moduli ES).
-  Le dipendenze di sviluppo servono solo ai test.
+- JavaScript puro, **nessun passaggio di build**, nessuna dipendenza a runtime, **moduli ES** ovunque: nella pagina
+  e in Node (`package.json` ha `"type": "module"`). Le dipendenze di sviluppo servono solo ai test.
+- La pagina si apre solo da un server (`npm start` o GitHub Pages): i moduli non funzionano con il doppio clic.
 - `core.js` è il nucleo: registro dei dati, regola di unione, faccende. **Niente DOM**: gira anche in Node.
-- `js/*.js` è il comportamento della pagina, diviso per argomento (vedi README §2).
+- `js/*.js` è il comportamento della pagina, un modulo per argomento (README §2). `index.html` carica solo
+  `js/guscio.js`, il punto di partenza; gli altri arrivano con gli `import`.
+
+## Regole dei moduli
+
+- **Le dipendenze vanno in un verso solo** (disegno in README §4): `core.js` ← `base.js` ← `settimana.js` ← le
+  sezioni (`libreria.js`, `azioni.js`, `file.js`, `casa.js`) ← `guscio.js`. Nessun file importa `guscio.js`;
+  `base.js` non importa nessun file della pagina. Niente import circolari.
+- **Il disegno è un elenco.** Chi cambia qualcosa chiama `disegna()` di `base.js`; le parti da disegnare le mette
+  in elenco `guscio.js` con `disegnaAnche(...)`. Una sezione nuova esporta la sua funzione di disegno e si aggiunge
+  a quell'elenco, senza toccare gli altri file.
+- **Un valore che cambia lo cambia solo il suo file**, con una funzione: `rileggi()` e `cambiaOggi()` in `base.js`,
+  `mostraSettimana()` e `scegliGiorno()` in `settimana.js`. Gli altri leggono il valore importato (è un collegamento,
+  vede sempre il valore attuale), ma non lo assegnano: un `import` non si può riassegnare.
+- **Un file di codice nuovo** va aggiunto alla *import map* di `index.html` (con `?v=N`) e all'elenco `FILE` di
+  `sw.js`. `pwa.spec.js` controlla che ci siano tutti.
+- Si esporta solo ciò che un altro file usa davvero.
+- Un nome usato **senza importarlo** il browser lo scopre solo quando quel codice gira: lo trova prima
+  `npm run lint` (ESLint, regola `no-undef`), che legge il codice senza eseguirlo. Anche gli import inutili.
+- ESLint ha poche regole, solo errori veri, niente stile (`eslint.config.js`). Non aggiungerne senza parlarne.
 - Codice, nomi, commenti, testi dell'interfaccia e messaggi dei test sono **in italiano**.
 
 ## Comandi
@@ -22,6 +42,7 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
 npm install                       # una volta
 npx playwright install            # una volta: Chromium, Firefox, WebKit
 npm start                         # server locale: http://localhost:8765/
+npm run lint                      # ESLint: nomi non importati, import inutili (2 secondi)
 npm test                          # test del nucleo (Node, pochi secondi)
 npm run test:browser              # test nel browser: chromium, firefox, webkit, iphone
 npx playwright test --project=webkit test-browser/casa.spec.js   # un motore, un file
@@ -33,7 +54,7 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 
 - **Commit e push li fa il proprietario, non Claude.** Si lavora direttamente su `main`. Claude modifica i file,
   lancia i test e lascia le modifiche non committate, con un riassunto di cosa ha cambiato e perché.
-- Prima di dire che qualcosa è fatto: `npm test` e `npm run test:browser`, **tutti i progetti**, verdi.
+- Prima di dire che qualcosa è fatto: `npm run lint`, `npm test` e `npm run test:browser`, **tutti i progetti**, verdi.
   Se un motore non si può lanciare, dirlo esplicitamente.
 - Una modifica al comportamento porta con sé il suo test. Un test nuovo deve **saper fallire**: romperlo apposta
   (invertire una condizione, togliere una riga) e controllare che fallisca, poi rimettere com'era (README §11).
@@ -49,7 +70,8 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 
 - **Versione della cache.** A ogni modifica di un file dell'app (`index.html`, `stile.css`, `core.js`, `js/*.js`,
   `manifest.webmanifest`, icone) si alza di uno `VERSIONE` in `sw.js` (`'settimana-N'`) **e** tutti i `?v=N` in
-  `index.html`. Devono coincidere: un test lo verifica. Senza, il telefono continua a usare la copia vecchia.
+  `index.html`: stile, script di partenza e ogni riga della import map. Devono coincidere: un test lo verifica.
+  Senza, il telefono continua a usare la copia vecchia.
 - **Il registro non cancella mai.** Chiavi piatte con ultimo-scritto-vince (`v/<id>/nome`, `v/<id>/cad`,
   `s/<lunedì>/m/<id>`, `s/<lunedì>/a/<id>/f/<giorno>`, `e/<giorno>`, `r/<giorno>`, `i/intensita`…). Togliere
   significa scrivere `false`, non eliminare la chiave: altrimenti il file vecchio dell'altro dispositivo la
@@ -77,7 +99,7 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
   "dispositivi" con orari diversi si passa un'ora di partenza diversa ad `apri()`, non `clock.fastForward`.
 - Telefono: usare `telefono()` di `aiuti.js` per le opzioni del contesto (Firefox non supporta `isMobile`;
   il progetto `iphone` usa il profilo di iPhone 15). Il progetto `iphone` esegue solo `telefono|ios` spec.
-- **`test` ed `expect` si prendono da `./aiuti`, mai da `'@playwright/test'`**: il `test` di `aiuti.js` chiude alla
+- **`test` ed `expect` si prendono da `./aiuti.js`, mai da `'@playwright/test'`**: il `test` di `aiuti.js` chiude alla
   fine di ogni test i contesti creati con `browser.newContext()`, che Playwright lascerebbe aperti (in WebKit, in CI,
   rallentavano ogni test più del precedente). `regole.spec.js` lo controlla.
 - Un test lento non si cura con `test.slow()` o timeout più lunghi prima di aver capito dove va il tempo.
@@ -99,8 +121,8 @@ Fase 1 chiusa (tre motori più iphone, axe, CI verde). Fase 2: Impostazioni e na
 debiti di struttura, poi il documento funzionale della Fase 2.
 
 Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push tra l'uno e l'altro):
-1. Un solo ambito globale condiviso dagli script classici: dipendenze implicite nell'ordine dei `<script>`, nomi
-   che possono scontrarsi. In discussione il passaggio ai moduli ES.
+1. ~~Un solo ambito globale condiviso dagli script classici.~~ Fatto: moduli ES, dipendenze in un verso solo,
+   import map versionata (`settimana-15`).
 2. `js/settimana.js` fa tre mestieri: parole e date (da spostare in un file proprio, le usano anche altre sezioni),
    promemoria (file proprio), disegno della settimana.
 3. La navigazione tra sezioni sta in `js/casa.js`: diventa un registro di sezioni in un file proprio.

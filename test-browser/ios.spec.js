@@ -2,11 +2,10 @@
 // nelle stesse condizioni (documentate da Apple e dal team di WebKit) e si controlla che si comporti bene.
 // Girano in tutti i motori; nel progetto «iphone» con il profilo di un iPhone 15 (WebKit, schermo e tocco).
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
-'use strict';
-const fs = require('node:fs');
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const { creaSeme } = require('../strumenti/seme.js');
-const { apri, caricaDati, vaiA, salvaFile, unisciFile, apriMenu, telefono } = require('./aiuti');
+import fs from 'node:fs';
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import { creaSeme } from '../strumenti/seme.js';
+import { apri, caricaDati, vaiA, salvaFile, unisciFile, apriMenu, telefono } from './aiuti.js';
 
 const nomiCarte = (p) => p.locator('#carte .nome-voce').allTextContents();
 

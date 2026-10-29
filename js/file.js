@@ -1,7 +1,10 @@
-'use strict';
 // js/file.js — la sezione Dati: quando hai salvato e unito l’ultima volta, invito alla copia, CSV, sincronizzazione.
-// Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
-// (vedi l’elenco in index.html e la nota in base.js).
+import * as Core from '../core.js';
+import {
+  $, aggiungiGiorni, CHIAVE_SYNC, conferma, dataDaChiave, db, disegna, fmt, fmtLungo, fmtNumerica, GIORNI, isObj,
+  mostraStato, NOME_LIVELLO, oggiK, RE_CHIAVE, rileggi, salva, SEPARATORE, state, telefono
+} from './base.js';
+import { attivitaDi, haContenuto, lunediCorrente, mostraSettimana, visualizzata } from './settimana.js';
 
 /* ───────── Quando hai salvato e unito l'ultima volta ─────────
    È un'informazione di questo dispositivo (localStorage, settimana:sync), non un dato da sincronizzare.
@@ -32,7 +35,7 @@ function giorniSenzaCopia() {
   return primo ? Core.giorniTra(primo, oggiK) : 0;
 }
 
-function aggiornaSync() {
+export function aggiornaSync() {
   const c = leggiSync();
   $('#ultimo-salvataggio').textContent = descriviData(c.salvato);
   $('#ultima-unione').textContent = descriviData(c.unito);
@@ -236,8 +239,8 @@ $('#file-sync').addEventListener('change', async (e) => {
 
   db.unisci(reg);
   salva(true);
-  state = db.vista();
-  visualizzata = lunediCorrente();
+  rileggi();
+  mostraSettimana(lunediCorrente());
   disegna();
   segnaSync('unito');
   mostraStato('File unito');

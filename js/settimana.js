@@ -1,19 +1,24 @@
-'use strict';
 // js/settimana.js — la settimana visualizzata e il disegno: tabella (computer) e vista a un giorno (telefono).
-// Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
-// (vedi l’elenco in index.html e la nota in base.js).
+import * as Core from '../core.js';
+import {
+  $, aggiungiGiorni, ATTIVITA_INIZIALI, bloccoAggiungi, boxRiprendi, boxSuggerimenti, campoNuova, carte, chiaveData,
+  chiaveLunedi, chiaveNome, corpo, dataDaChiave, db, etichettaPeriodo, FINESTRA, fmt, fmtBreve, fmtNumerica,
+  formNuova, GIORNI, LIVELLI, MAX_DETTAGLIO, MAX_FREQUENTI, MAX_RICERCA, NOME_LIVELLO, notaPassata, oggiK, piede,
+  rigaIntestazione, riposoGiorno, scheda, segmenti, soloData, state, striscia, telefono, vistaGiorno, vociSuggerite
+} from './base.js';
 
 /* ───────── Settimana visualizzata ───────── */
-let oggiK = chiaveData(soloData());          // data di oggi, come 'AAAA-MM-GG'
-let visualizzata = chiaveLunedi(soloData()); // lunedì della settimana che stai guardando
+// Il lunedì della settimana che stai guardando. Cambia solo da qui: mostraSettimana.
+export let visualizzata = chiaveLunedi(soloData());
+export function mostraSettimana(k) { visualizzata = k; }
 
-const lunediCorrente = () => chiaveLunedi(dataDaChiave(oggiK));
-const inSettimanaCorrente = () => visualizzata === lunediCorrente();
+export const lunediCorrente = () => chiaveLunedi(dataDaChiave(oggiK));
+export const inSettimanaCorrente = () => visualizzata === lunediCorrente();
 
-const voce = (id) => state.libreria.find((v) => v.id === id);
+export const voce = (id) => state.libreria.find((v) => v.id === id);
 
 // Le attività di una settimana, con il nome preso dalla libreria
-const attivitaDi = (k) => (state.weeks[k]?.activities ?? [])
+export const attivitaDi = (k) => (state.weeks[k]?.activities ?? [])
   .map((a) => ({ ...a, name: voce(a.id)?.name }))
   .filter((a) => a.name);
 
@@ -21,9 +26,9 @@ const attivitaDi = (k) => (state.weeks[k]?.activities ?? [])
 const haSegni = (w) => Boolean(w)
   && (Object.keys(w.done).length > 0 || w.rest.includes(true) || w.energy.some((e) => e !== null)
     || w.activities.some((a) => a.dettaglio));
-const haContenuto = (w) => Boolean(w) && (w.activities.length > 0 || haSegni(w));
+export const haContenuto = (w) => Boolean(w) && (w.activities.length > 0 || haSegni(w));
 // In quante settimane compare una voce (serve alla libreria: una voce usata non si cancella)
-const settimaneConVoce = (id) => Object.values(state.weeks).filter((w) => w.activities.some((a) => a.id === id)).length;
+export const settimaneConVoce = (id) => Object.values(state.weeks).filter((w) => w.activities.some((a) => a.id === id)).length;
 
 /* ───────── Faccende nella settimana ─────────
    Una voce con una cadenza è una faccenda (vedi core.js, faccende). Nella settimana corrente la sua scheda
@@ -32,7 +37,7 @@ const settimaneConVoce = (id) => Object.values(state.weeks).filter((w) => w.acti
    il calore parla di oggi. */
 const faccendeDiOggi = () => new Map(Core.faccende(db.registro, oggiK).map((f) => [f.id, f]));
 const fmtGiorno = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
-const ogniGiorni = (n) => (n === 1 ? 'Ogni giorno' : `Ogni ${n} giorni`);
+export const ogniGiorni = (n) => (n === 1 ? 'Ogni giorno' : `Ogni ${n} giorni`);
 
 // "oggi", "ieri", "16 giorni fa"
 function daQuando(k) {
@@ -40,7 +45,7 @@ function daQuando(k) {
   return giorni <= 0 ? 'oggi' : giorni === 1 ? 'ieri' : `${giorni} giorni fa`;
 }
 // "oggi", "ieri", "giovedì 22 ottobre": quando hai saltato il giro
-const quandoSalto = (k) => (Core.giorniTra(k, oggiK) <= 1 ? daQuando(k) : fmtGiorno.format(dataDaChiave(k)));
+export const quandoSalto = (k) => (Core.giorniTra(k, oggiK) <= 1 ? daQuando(k) : fmtGiorno.format(dataDaChiave(k)));
 
 /* Le date delle faccende si scrivono come date, non come conti da fare: «Fatta il 23 settembre», e il giro che ne
    segue, «giro aperto dal 7 ottobre» oppure «prossimo giro: venerdì 30 ottobre». Le parole sono quelle di un
@@ -57,7 +62,7 @@ function giornoMese(k) {
 const elide = (k) => [8, 11].includes(dataDaChiave(k).getDate());
 
 // "Fatta oggi", "Fatta ieri", "Fatta il 23 settembre", "Fatta l’8 ottobre", "Mai segnata"
-function testoFatta(f) {
+export function testoFatta(f) {
   if (!f.ultima) return 'Mai segnata';
   const giorni = Core.giorniTra(f.ultima, oggiK);
   if (giorni <= 0) return 'Fatta oggi';
@@ -66,7 +71,7 @@ function testoFatta(f) {
 }
 
 // "prossimo giro: domani", "prossimo giro: venerdì 30 ottobre", "giro aperto dal 7 ottobre", "" se mai segnata
-function testoGiro(f) {
+export function testoGiro(f) {
   if (!f.scade) return '';
   const giorni = Core.giorniTra(oggiK, f.scade);   // positivo: il giro deve ancora arrivare
   if (giorni === 0) return 'prossimo giro: oggi';
@@ -75,7 +80,7 @@ function testoGiro(f) {
   if (giorni === -1) return 'giro aperto da ieri';
   return `giro aperto ${elide(f.scade) ? 'dall’' : 'dal '}${giornoMese(f.scade)}`;
 }
-const conMaiuscola = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+export const conMaiuscola = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 
 // "Fatta il 6 ottobre · ogni 14 giorni · giro aperto dal 20 ottobre", "Mai segnata · ogni 30 giorni",
 // "Fatta il 21 settembre · giro saltato ieri · ogni 7 giorni · prossimo giro: mercoledì 28 ottobre"
@@ -85,7 +90,7 @@ function testoCadenza(f) {
 }
 
 // Mette (o toglie) il calore su un elemento. Con il riposo, al posto del calore la tinta quieta del riposo.
-function segnaCalore(el, f, { riposo = false } = {}) {
+export function segnaCalore(el, f, { riposo = false } = {}) {
   const caldo = Boolean(f && f.calore > 0 && !riposo);
   el.toggleAttribute('data-calore', caldo);
   if (caldo) el.style.setProperty('--calore', f.calore.toFixed(3));
@@ -93,7 +98,7 @@ function segnaCalore(el, f, { riposo = false } = {}) {
 }
 
 // L'ultima settimana prima di quella corrente che aveva delle attività: da lì si può riprendere la lista
-function settimanaDaRiprendere() {
+export function settimanaDaRiprendere() {
   const corrente = lunediCorrente();
   return Object.keys(state.weeks).filter((k) => k < corrente && attivitaDi(k).length > 0).sort().pop() ?? null;
 }
@@ -104,9 +109,9 @@ function settimanaDaRiprendere() {
    scelte: «Aggiungi» (entra nella settimana) e «Salto questo giro» (il conteggio riparte da oggi). Senza scelta
    la riga resta lì: è un'informazione, non una richiesta. Il promemoria non scrive niente da solo. */
 const boxPromemoria = $('#promemoria');
-const listaPromemoria = $('#lista-promemoria');
+export const listaPromemoria = $('#lista-promemoria');
 // le faccende saltate da qui restano nel promemoria con «Annulla», finché non cambi sezione o ricarichi
-const saltatiDalPromemoria = new Set();
+export const saltatiDalPromemoria = new Set();
 
 function faccendeDaProporre() {
   if (!inSettimanaCorrente()) return [];
@@ -180,7 +185,7 @@ function rigaPromemoria(f, riposoOggi) {
 /* ───────── Il nome che si tocca per rinominare ─────────
    Il nome di una voce è un pulsante: toccandolo si apre il foglio «Rinomina» (js/libreria.js). La matita accanto
    dice che si può toccare anche a chi non ci prova. */
-function nomeRinominabile(id, nome, classe = 'nome-voce') {
+export function nomeRinominabile(id, nome, classe = 'nome-voce') {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = `${classe} rinomina-voce`;
@@ -395,7 +400,7 @@ function creaRigaRiposo() {
 }
 
 // Oggi, riposo e giorni futuri si applicano per colonna: si aggiorna senza ridisegnare tutto.
-function aggiornaColonne() {
+export function aggiornaColonne() {
   const lun = dataDaChiave(visualizzata);
   const w = state.weeks[visualizzata];
   document.querySelectorAll('[data-col]').forEach((el) => {
@@ -456,7 +461,7 @@ const perRicerca = (t) => chiaveNome(t).normalize('NFD').replace(/[\u0300-\u036f
 // Sotto il campo "Aggiungi".
 // Campo vuoto: le voci più frequenti delle ultime settimane (al massimo MAX_FREQUENTI).
 // Mentre scrivi: tutta la libreria, anche le voci che non usi da tempo.
-function aggiornaSuggerimenti() {
+export function aggiornaSuggerimenti() {
   const corrente = inSettimanaCorrente();
   const presenti = new Set((state.weeks[visualizzata]?.activities ?? []).map((a) => a.id));
   const candidate = corrente ? state.libreria.filter((v) => !presenti.has(v.id)) : [];
@@ -519,7 +524,7 @@ function aggiornaRiprendi() {
 // Le faccende della tabella: testo della cadenza e calore, aggiornati sul posto (dopo una spunta o un riposo
 // la tabella non si ridisegna, per non far perdere il fuoco alla casella appena toccata).
 let faccendeTabella = new Map();
-function aggiornaFaccendeTabella() {
+export function aggiornaFaccendeTabella() {
   faccendeTabella = faccendeDiOggi();
   const iOggi = (dataDaChiave(oggiK).getDay() + 6) % 7;
   const riposoOggi = inSettimanaCorrente() && state.weeks[visualizzata]?.rest[iOggi] === true;
@@ -549,6 +554,7 @@ function disegnaTabella() {
 // Il giorno mostrato, da 0 (lunedì) a 6. null = "scegli tu": oggi nella settimana corrente, domenica nelle altre.
 // Passando da una settimana all'altra resta lo stesso giorno della settimana, se non è nel futuro.
 let giornoScelto = null;
+export function scegliGiorno(g) { giornoScelto = g; }
 
 function giornoMostrato() {
   const lun = dataDaChiave(visualizzata);
@@ -707,9 +713,10 @@ function creaCartaVuota(testo) {
   return li;
 }
 
-// Ridisegna tutto dalla vista (state). Rifare la tabella intera costa pochissimo (poche decine di righe)
+// Ridisegna la settimana dalla vista (state). Rifare la tabella intera costa pochissimo (poche decine di righe)
 // e ha un grande vantaggio: ciò che vedi viene sempre e solo dai dati, non può restare indietro.
-function disegna() {
+// È una delle parti di disegna() (base.js): le altre (libreria, Dati, Casa) le aggiunge guscio.js.
+export function disegnaSettimana() {
   // l'intensità del colore delle faccende (menu): vale su tutti i dispositivi, quindi sta nei dati
   document.documentElement.dataset.intensita = state.intensita;
   const suTelefono = telefono.matches;
@@ -723,7 +730,4 @@ function disegna() {
   aggiornaPromemoria();
   aggiornaSuggerimenti();
   aggiornaRiprendi();
-  aggiornaLibreria();
-  aggiornaSync();
-  disegnaCasa();   // js/casa.js: se la sezione Casa è aperta, si aggiorna anche lei
 }

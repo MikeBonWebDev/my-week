@@ -1,11 +1,10 @@
 // Accessibilità: axe-core controlla le regole WCAG 2.1 (livelli A e AA) su ogni sezione e ogni foglio,
 // su computer e telefono, in chiaro e in scuro, con il colore delle faccende Morbido e Deciso.
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const { default: AxeBuilder } = require('@axe-core/playwright');
-const Core = require('../core.js');
-const { apri, caricaDati, vaiA, apriMenu, telefono } = require('./aiuti');
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import AxeBuilder from '@axe-core/playwright';
+import * as Core from '../core.js';
+import { apri, caricaDati, vaiA, apriMenu, telefono } from './aiuti.js';
 
 // Dati che accendono tutto ciò che ha un colore: faccende oltre la cadenza, una saltata, una mai segnata,
 // il promemoria, spunte, energia, un giorno di riposo

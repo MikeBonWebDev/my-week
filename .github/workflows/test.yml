@@ -27,6 +27,10 @@ jobs:
         timeout-minutes: 5
         run: npm ci
 
+      - name: Controllo del codice
+        timeout-minutes: 2
+        run: npm run lint
+
       - name: Test del nucleo
         timeout-minutes: 5
         run: npm test

@@ -1,10 +1,9 @@
 // Test nel browser delle sezioni (Settimana, Casa) e della sezione Casa: faccende, cadenza, «Aggiungi a questa settimana».
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js). Nei dati di prova (strumenti/seme.js):
 // Chitarra segnata lunedì 12 ottobre, Cucinare lunedì 5 ottobre, Camminare martedì 29 settembre, Leggere mai.
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const { creaSeme } = require('../strumenti/seme.js');
-const { apri, caricaDati, nomi, apriMenu, salvaFile, unisciFile, telefono } = require('./aiuti');
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import { creaSeme } from '../strumenti/seme.js';
+import { apri, caricaDati, nomi, apriMenu, salvaFile, unisciFile, telefono } from './aiuti.js';
 
 
 // Piccoli aiuti per la sezione Casa

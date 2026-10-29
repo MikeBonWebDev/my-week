@@ -1,13 +1,12 @@
 // Configurazione dei test nel browser (Playwright).  Si lanciano con:  npm run test:browser
 // Playwright avvia da solo il server statico (strumenti/server.js) e lo spegne alla fine.
-'use strict';
-const { defineConfig, devices } = require('@playwright/test');
+import { defineConfig, devices } from '@playwright/test';
 
 const PORTA = 8765;
 // Su GitHub (CI) i test girano su una macchina pulita: niente server già acceso da riusare, due test alla volta
 const CI = Boolean(process.env.CI);
 
-module.exports = defineConfig({
+export default defineConfig({
   testDir: './test-browser',
   // i test di uno stesso file girano in ordine; file diversi in parallelo
   fullyParallel: false,

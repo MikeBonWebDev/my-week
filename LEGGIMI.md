@@ -59,8 +59,9 @@ a schermo intero, un file scaricato si apre in anteprima invece di essere salvat
 
 1. Sostituisci i file nel repository.
 2. In `sw.js` cambia `VERSIONE` (per esempio da `settimana-9` a `settimana-10`), e in `index.html` il numero
-   dopo `?v=` negli indirizzi di stile e script (da `?v=9` a `?v=10`). Devono coincidere: se ti dimentichi,
-   `npm run test:browser` te lo dice.
+   dopo `?v=`: nello stile, nello script in fondo e in ogni riga della *import map* (da `?v=9` a `?v=10`).
+   Devono coincidere: se ti dimentichi, `npm run test:browser` te lo dice. Un file di codice nuovo va aggiunto
+   sia alla import map di `index.html` sia all’elenco `FILE` di `sw.js`: anche questo lo controlla un test.
 3. Al primo avvio con la rete l’app prende la versione nuova; a volte serve chiuderla e riaprirla.
 
 Gli aggiornamenti non toccano i dati.

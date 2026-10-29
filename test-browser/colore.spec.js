@@ -1,9 +1,8 @@
 // Test nel browser del passo 4 e del salto: il calore delle faccende, l'intensità, il tema, il riposo che ammorbidisce,
 // «Salto questo giro». Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const Core = require('../core.js');
-const { apri, caricaDati, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, telefono } = require('./aiuti');
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import * as Core from '../core.js';
+import { apri, caricaDati, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, telefono } from './aiuti.js';
 
 
 // Tre faccende nella settimana del 12 ottobre, con un orologio finto (ogni operazione un minuto dopo):

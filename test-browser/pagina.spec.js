@@ -1,12 +1,11 @@
 // Test nel browser dell'uso quotidiano: primo avvio, suggerimenti, riprendi, dettagli, libreria, CSV, telefono.
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const fs = require('node:fs');
-const { creaSeme } = require('../strumenti/seme.js');
-const {
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import fs from 'node:fs';
+import { creaSeme } from '../strumenti/seme.js';
+import {
   LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
-  dettaglio, togli, apriMenu, chiudiMenu, apriPannello, vaiA, foto,
-} = require('./aiuti');
+  dettaglio, togli, chiudiMenu, apriPannello, vaiA, foto,
+} from './aiuti.js';
 
 // Lo stile e il codice stanno in file separati (stile.css, js/): se uno non arriva, la pagina sembra viva ma non lo è
 test('stile e script caricati: aspetto della pagina e nessun errore', async ({ browser }) => {

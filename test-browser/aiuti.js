@@ -1,10 +1,8 @@
 // Funzioni d'appoggio per i test nel browser: aprono la pagina a una data fissa e fanno le azioni
 // come le farebbe una persona (scrivere, toccare, confermare), così i test si leggono come una storia.
-'use strict';
-const fs = require('node:fs');
-const path = require('node:path');
-const base = require('@playwright/test');
-const { expect, devices } = base;
+import fs from 'node:fs';
+import path from 'node:path';
+import { test as testBase, expect, devices } from '@playwright/test';
 
 /**
  * Il `test` di Playwright, con una pulizia automatica: alla fine di ogni test chiude tutti i contesti (i
@@ -13,7 +11,7 @@ const { expect, devices } = base;
  * già 26. In WebKit, sulle macchine di GitHub, ogni test diventava più lento del precedente, fino a superare il
  * tempo massimo. Per questo ogni file di test prende `test` ed `expect` da qui, non da '@playwright/test'.
  */
-const test = base.test.extend({
+const test = testBase.extend({
   chiudiContesti: [async ({ browser }, use) => {
     await use();
     await Promise.all(browser.contexts().map((c) => c.close()));
@@ -179,7 +177,7 @@ function foto(p) {
   }));
 }
 
-module.exports = {
+export {
   test, expect, telefono,
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
   dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,

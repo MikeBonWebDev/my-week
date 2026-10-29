@@ -1,7 +1,14 @@
-'use strict';
 // js/azioni.js — le azioni sulla settimana: aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana.
-// Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
-// (vedi l’elenco in index.html e la nota in base.js).
+import * as Core from '../core.js';
+import {
+  $, aggiungiGiorni, boxSuggerimenti, cambiaOggi, campoNuova, carte, chiaveData, conferma, corpo, dataDaChiave, db,
+  disegna, esito, formNuova, GIORNI, MAX_NOME, mostraStato, oggiK, piede, riposoGiorno, segmenti, soloData, state,
+  striscia, telefono
+} from './base.js';
+import {
+  aggiornaColonne, aggiornaFaccendeTabella, aggiornaSuggerimenti, inSettimanaCorrente, listaPromemoria,
+  lunediCorrente, mostraSettimana, saltatiDalPromemoria, scegliGiorno, settimanaDaRiprendere, visualizzata, voce
+} from './settimana.js';
 
 /* ───────── Azioni: attività della settimana ─────────
    I gestori degli eventi sono pochi e stanno sui contenitori (corpo, piede, listaLibreria), non su ogni casella:
@@ -170,29 +177,29 @@ riposoGiorno.addEventListener('change', () => {
 striscia.addEventListener('click', (e) => {
   const b = e.target.closest('.giorno');
   if (!b || b.disabled) return;
-  giornoScelto = Number(b.dataset.giorno);
+  scegliGiorno(Number(b.dataset.giorno));
   disegna();
 });
 
 /* ───────── Azioni: cambiare settimana ───────── */
 // Mostra un'altra settimana (chiave = il suo lunedì).
 function vaiA(chiave) {
-  visualizzata = chiave;
+  mostraSettimana(chiave);
   disegna();
 }
 $('#sett-prec').addEventListener('click', () => vaiA(chiaveData(aggiungiGiorni(dataDaChiave(visualizzata), -7))));
 $('#sett-succ').addEventListener('click', () => {
   if (visualizzata < lunediCorrente()) vaiA(chiaveData(aggiungiGiorni(dataDaChiave(visualizzata), 7)));
 });
-$('#vai-oggi').addEventListener('click', () => { giornoScelto = null; vaiA(lunediCorrente()); });
+$('#vai-oggi').addEventListener('click', () => { scegliGiorno(null); vaiA(lunediCorrente()); });
 
 // Se la pagina resta aperta oltre la mezzanotte, "oggi" si sposta da solo.
 function controllaGiorno() {
   const nuovo = chiaveData(soloData());
   if (nuovo === oggiK) return;
   const guardavoLaCorrente = inSettimanaCorrente();
-  oggiK = nuovo;
-  if (guardavoLaCorrente) { visualizzata = lunediCorrente(); giornoScelto = null; }
+  cambiaOggi(nuovo);
+  if (guardavoLaCorrente) { mostraSettimana(lunediCorrente()); scegliGiorno(null); }
   disegna();
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) controllaGiorno(); });

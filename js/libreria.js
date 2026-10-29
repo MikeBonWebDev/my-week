@@ -1,12 +1,15 @@
-'use strict';
 // js/libreria.js — il pannello «Libreria delle attività» del menu.
-// Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
-// (vedi l’elenco in index.html e la nota in base.js).
+import * as Core from '../core.js';
+import {
+  $, chiaveNome, conferma, dataDaChiave, db, esito, fmtBreve, listaLibreria, MAX_NOME, MESSAGGI, mostraStato,
+  MSG_RISERVATO, state
+} from './base.js';
+import { settimaneConVoce, voce } from './settimana.js';
 
 /* ───────── Libreria ───────── */
 // Il pannello «Libreria delle attività»: ogni voce con nome modificabile, in quante settimane compare,
 // l'ultima volta che l'hai usata e, solo se non l'hai mai usata, il pulsante per cancellarla.
-function aggiornaLibreria() {
+export function aggiornaLibreria() {
   const voci = [...state.libreria].sort((a, b) => a.name.localeCompare(b.name, 'it'));
   $('#conta-libreria').textContent = `(${voci.length})`;
   if (!voci.length) {

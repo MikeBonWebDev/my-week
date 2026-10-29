@@ -1,9 +1,8 @@
 // Test nel browser del foglio «Rinomina»: si apre toccando il nome di una voce (scheda, tabella, Casa).
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const Core = require('../core.js');
-const { apri, caricaDati, aggiungi, vaiA, telefono } = require('./aiuti');
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import * as Core from '../core.js';
+import { apri, caricaDati, aggiungi, vaiA, telefono } from './aiuti.js';
 
 
 // Sviluppo in tre settimane (anche questa), Leggere solo in questa; Bagno è una faccenda

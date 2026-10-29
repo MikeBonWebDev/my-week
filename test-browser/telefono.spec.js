@@ -1,11 +1,10 @@
 // Test nel browser della vista a un giorno (telefono, sotto i 40rem di larghezza):
 // striscia dei giorni, energia e riposo, aggiunta in alto, schede, menu dal basso.
-'use strict';
-const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
-const { creaSeme } = require('../strumenti/seme.js');
-const {
+import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
+import { creaSeme } from '../strumenti/seme.js';
+import {
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, conferma, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto, telefono,
-} = require('./aiuti');
+} from './aiuti.js';
 
 /** Apre l'app in un contesto "telefono". */
 async function apriTelefono(browser, quando = MERCOLEDI, opzioni = {}) {

@@ -3,12 +3,11 @@
 // "localhost" conta come sicuro per il browser: il service worker funziona come su https.
 //
 // Uso:  node strumenti/server.js [porta]      (porta predefinita: 8765)
-'use strict';
-const http = require('node:http');
-const fs = require('node:fs');
-const path = require('node:path');
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const RADICE = path.resolve(__dirname, '..');
+const RADICE = path.resolve(import.meta.dirname, '..');
 const PORTA = Number(process.argv[2]) || 8765;
 const TIPI = {
   '.html': 'text/html; charset=utf-8',

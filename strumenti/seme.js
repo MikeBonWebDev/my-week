@@ -1,7 +1,7 @@
 // Crea un registro di prova: qualche settimana di storia, costruita con le stesse operazioni che usa la pagina.
 // Lo usano i test nel browser. Si può anche lanciare a mano per vederlo:  node strumenti/seme.js > seme.json
-'use strict';
-const Core = require('../core.js');
+import { fileURLToPath } from 'node:url';
+import * as Core from '../core.js';
 
 /** Restituisce il contenuto di un file di sincronizzazione con cinque settimane di attività (fino al 12/10/2026). */
 function creaSeme() {
@@ -26,7 +26,7 @@ function creaSeme() {
   return Core.perFile(db.registro, db.dispositivo, new Date(adesso).toISOString());
 }
 
-module.exports = { creaSeme };
+export { creaSeme };
 
 // lanciato direttamente (non importato da un test): stampa il file
-if (require.main === module) process.stdout.write(JSON.stringify(creaSeme(), null, 2));
+if (process.argv[1] === fileURLToPath(import.meta.url)) process.stdout.write(JSON.stringify(creaSeme(), null, 2));

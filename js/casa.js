@@ -1,7 +1,10 @@
-'use strict';
 // js/casa.js — le sezioni dell'app (Settimana, Casa, Dati) e la sezione Casa: le faccende, e da quanto tempo non le fai.
-// Script classico, non un modulo: condivide le costanti e le funzioni degli altri file di js/
-// (vedi l’elenco in index.html e la nota in base.js).
+import * as Core from '../core.js';
+import { $, dataDaChiave, db, disegna, esito, mostraStato, oggiK, state } from './base.js';
+import {
+  conMaiuscola, lunediCorrente, nomeRinominabile, ogniGiorni, quandoSalto, saltatiDalPromemoria, segnaCalore,
+  testoFatta, testoGiro
+} from './settimana.js';
 
 /* ───────── Le sezioni ─────────
    Una sola pagina, tre sezioni: se ne mostra una. La scelta resta su questo dispositivo
@@ -23,9 +26,9 @@ function leggiSezione() {
     return Object.hasOwn(SEZIONI, s ?? '') ? s : 'settimana';
   } catch { return 'settimana'; }
 }
-let sezione = leggiSezione();
+export let sezione = leggiSezione();
 
-function mostraSezione(nome) {
+export function mostraSezione(nome) {
   const cambia = nome !== sezione;
   sezione = nome;
   try { localStorage.setItem(CHIAVE_SEZIONE, nome); } catch { /* pazienza: si riaprirà sulla settimana */ }
@@ -60,7 +63,7 @@ let ordineCasa = [];
 
 const inQuestaSettimana = (id) => Boolean(state.weeks[lunediCorrente()]?.activities.some((a) => a.id === id));
 
-function disegnaCasa() {
+export function disegnaCasa() {
   if (sezioneCasa.hidden) return;
   const perId = new Map(Core.faccende(db.registro, oggiK).map((f) => [f.id, f]));
   // l'ordine di quando hai aperto la sezione; una faccenda nuova va in fondo
