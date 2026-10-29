@@ -1,57 +1,8 @@
-// js/casa.js — le sezioni dell'app (Settimana, Casa, Dati) e la sezione Casa: le faccende, e da quanto tempo non le fai.
+// js/casa.js — la sezione Casa: le faccende, e da quanto tempo non le fai.
 import * as Core from '../core.js';
-import { $, db, disegna, esito, lunediCorrente, mostraStato, oggiK, riposoOggi, state } from './base.js';
+import { $, db, esito, lunediCorrente, mostraStato, oggiK, riposoOggi, state } from './base.js';
 import { conMaiuscola, ogniGiorni, quandoSalto, testoFatta, testoGiro } from './testi.js';
 import { nomeRinominabile, segnaCalore } from './pezzi.js';
-import { dimenticaSalti } from './promemoria.js';
-
-/* ───────── Le sezioni ─────────
-   Una sola pagina, tre sezioni: se ne mostra una. La scelta resta su questo dispositivo
-   (localStorage), così l'app riapre dove l'avevi lasciata. Non è un dato da sincronizzare. */
-const CHIAVE_SEZIONE = 'settimana:sezione';
-const SEZIONI = {
-  settimana: { titolo: 'La mia settimana', sottotitolo: 'Le attività della settimana, giorno per giorno.' },
-  casa: { titolo: 'Casa', sottotitolo: 'Le faccende con una cadenza.' },
-  dati: { titolo: 'Dati', sottotitolo: 'Copie, altri dispositivi, CSV.' },
-};
-const navSezioni = $('#sezioni');
-const sezioneSettimana = $('#sezione-settimana');
-const sezioneCasa = $('#sezione-casa');
-const sezioneDati = $('#sezione-dati');
-
-function leggiSezione() {
-  try {
-    const s = localStorage.getItem(CHIAVE_SEZIONE);
-    return Object.hasOwn(SEZIONI, s ?? '') ? s : 'settimana';
-  } catch { return 'settimana'; }
-}
-export let sezione = leggiSezione();
-
-export function mostraSezione(nome) {
-  const cambia = nome !== sezione;
-  sezione = nome;
-  try { localStorage.setItem(CHIAVE_SEZIONE, nome); } catch { /* pazienza: si riaprirà sulla settimana */ }
-  sezioneSettimana.hidden = nome !== 'settimana';
-  sezioneCasa.hidden = nome !== 'casa';
-  sezioneDati.hidden = nome !== 'dati';
-  for (const b of navSezioni.querySelectorAll('[data-sezione]')) {
-    if (b.dataset.sezione === nome) b.setAttribute('aria-current', 'page');
-    else b.removeAttribute('aria-current');
-  }
-  $('#titolo-sezione').textContent = SEZIONI[nome].titolo;
-  $('#sottotitolo').textContent = SEZIONI[nome].sottotitolo;
-  document.title = nome === 'settimana' ? 'La mia settimana' : `${SEZIONI[nome].titolo} · La mia settimana`;
-  if (cambia) dimenticaSalti();   // il promemoria della settimana riparte pulito (promemoria.js)
-  // L'ordine di Casa si decide quando la apri, e poi non si muove mentre la guardi
-  if (nome === 'casa') ordineCasa = Core.faccende(db.registro, oggiK).map((f) => f.id);
-  disegna();
-  if (cambia) window.scrollTo(0, 0);
-}
-
-navSezioni.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-sezione]');
-  if (b) mostraSezione(b.dataset.sezione);
-});
 
 /* ───────── La sezione Casa ─────────
    Le faccende sono le voci della libreria con una cadenza (v/<id>/cad nel registro). Tutto quello che si vede
@@ -60,10 +11,21 @@ const listaFaccende = $('#faccende');
 const casaVuota = $('#casa-vuota');
 let ordineCasa = [];
 
+// La sezione Casa, come la vede il registro delle sezioni (sezioni.js; la registra guscio.js)
+export const sezioneCasa = {
+  nome: 'casa',
+  titolo: 'Casa',
+  sottotitolo: 'Le faccende con una cadenza.',
+  elemento: $('#sezione-casa'),
+  disegna: disegnaCasa,
+  // l'ordine di Casa si decide quando la apri, e poi non si muove mentre la guardi
+  quandoSiApre: () => { ordineCasa = Core.faccende(db.registro, oggiK).map((f) => f.id); },
+};
+
 const inQuestaSettimana = (id) => Boolean(state.weeks[lunediCorrente()]?.activities.some((a) => a.id === id));
 
-export function disegnaCasa() {
-  if (sezioneCasa.hidden) return;
+// Si chiama solo quando la sezione Casa è aperta (sezioni.js).
+function disegnaCasa() {
   const perId = new Map(Core.faccende(db.registro, oggiK).map((f) => [f.id, f]));
   // l'ordine di quando hai aperto la sezione; una faccenda nuova va in fondo
   ordineCasa = ordineCasa.filter((id) => perId.has(id));

@@ -12,14 +12,14 @@
    Senza precauzioni, nei 10 minuti dopo un aggiornamento la pagina nuova poteva arrivare insieme agli script
    vecchi, presi dalla cache del browser: una pagina a metà (è successo con i passi 4-5: sezione Dati vuota).
    Tre difese:
-   - gli script e lo stile hanno nell'indirizzo il numero di versione («js/casa.js?v=16», vedi index.html):
+   - gli script e lo stile hanno nell'indirizzo il numero di versione («js/casa.js?v=17», vedi index.html):
      per il browser, versione nuova = file nuovo;
    - il service worker chiede sempre al server ({ cache: 'no-cache' }: se il file è lo stesso il server risponde
      "non è cambiato", quindi costa poco);
    - installandosi, scarica i file da capo ('reload'), mai dalla cache del browser. */
 
-const VERSIONE = 'settimana-16';
-// Pagina, stile e codice si chiedono con «?v=16» (il numero di VERSIONE): vedi la nota in fondo a index.html.
+const VERSIONE = 'settimana-17';
+// Pagina, stile e codice si chiedono con «?v=17» (il numero di VERSIONE): vedi la nota in fondo a index.html.
 const V = `?v=${VERSIONE.split('-')[1]}`;
 const FILE = [
   './',
@@ -29,6 +29,7 @@ const FILE = [
   `./js/base.js${V}`,
   `./js/testi.js${V}`,
   `./js/pezzi.js${V}`,
+  `./js/sezioni.js${V}`,
   `./js/settimana.js${V}`,
   `./js/promemoria.js${V}`,
   `./js/libreria.js${V}`,

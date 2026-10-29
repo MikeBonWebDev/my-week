@@ -2,10 +2,9 @@
 import * as Core from '../core.js';
 import {
   $, chiaveNome, conferma, dataDaChiave, db, esito, listaLibreria, MAX_NOME, MESSAGGI, mostraStato, MSG_RISERVATO,
-  state
+  settimaneConVoce, state, voce
 } from './base.js';
 import { fmtBreve } from './testi.js';
-import { settimaneConVoce, voce } from './settimana.js';
 
 /* ───────── Libreria ───────── */
 // Il pannello «Libreria delle attività»: ogni voce con nome modificabile, in quante settimane compare,

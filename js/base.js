@@ -15,17 +15,20 @@ import * as Core from '../core.js';
    Due modi di mostrare la stessa settimana: su computer la tabella, su telefono (sotto i 40rem di larghezza)
    la "vista a un giorno". disegnaSettimana() sceglie quale, in base a una media query letta da JavaScript (telefono).
 
-   I FILE (dal basso verso l'alto: ognuno importa solo quelli sopra di lui in questo elenco)
-     base.js       impostazioni, elementi della pagina, date e oggi, dati (caricare, salvare, esito), conferma, disegna
-     testi.js      le parole e le date: «Fatta il 23 settembre», «giro aperto dall'8 ottobre», i formati delle date
-     pezzi.js      pezzi di interfaccia comuni a più sezioni: il nome da rinominare, il calore di una faccenda
-     settimana.js  la settimana visualizzata e il disegno: tabella e vista a un giorno
-     promemoria.js il promemoria delle faccende in cima alla settimana, con le sue scelte
-     libreria.js   il pannello «Libreria delle attività»
-     azioni.js     aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
-     file.js       ultimo salvataggio e unione, CSV, sincronizzazione
-     casa.js       le sezioni (Settimana, Casa) e la sezione Casa: le faccende
-     guscio.js     il punto di partenza (l'unico caricato da index.html): menu, avvio, app installabile
+   I FILE (per livelli e gruppi: vedi README §4 e test/struttura.test.js)
+     comuni        base.js       impostazioni, elementi, date e oggi, dati e loro letture, salvare, esito, conferma,
+                                 disegna
+                   testi.js      le parole e le date: «Fatta il 23 settembre», «giro aperto dall'8 ottobre», formati
+                   pezzi.js      pezzi di interfaccia comuni: il nome da rinominare, il calore di una faccenda
+                   sezioni.js    il registro delle sezioni e la navigazione
+     Settimana     promemoria.js il promemoria delle faccende in cima alla settimana, con le sue scelte
+                   settimana.js  la settimana mostrata: tabella e vista a un giorno
+                   azioni.js     aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
+     Casa          casa.js       le faccende
+     Dati          file.js       ultimo salvataggio e unione, CSV, sincronizzazione
+     menu          libreria.js   il pannello «Libreria delle attività»
+     avvio         guscio.js     il punto di partenza (l'unico caricato da index.html): registra le sezioni, menu,
+                                 avvio, app installabile
 
    MODULI
    Ogni file è un modulo ES: ciò che vuole condividere lo dichiara con export, ciò che gli serve lo chiede per
@@ -103,7 +106,7 @@ export const soloData = (d = new Date()) => new Date(d.getFullYear(), d.getMonth
 // getDay() conta da domenica (0) a sabato (6); (getDay() + 6) % 7 conta invece da lunedì (0) a domenica (6),
 // cioè quanti giorni sono passati dal lunedì. Togliendoli si arriva al lunedì della stessa settimana.
 const lunediDi = (d) => aggiungiGiorni(d, -((d.getDay() + 6) % 7));
-export const chiaveLunedi = (d) => chiaveData(lunediDi(d));
+const chiaveLunedi = (d) => chiaveData(lunediDi(d));
 
 // Oggi, come 'AAAA-MM-GG'. Cambia solo da qui (cambiaOggi): se la pagina resta aperta oltre la mezzanotte,
 // azioni.js se ne accorge e lo sposta.
@@ -169,14 +172,41 @@ export function rileggi() { state = db.vista(); }
 // Oggi è un giorno di riposo? (lo usano Casa e il promemoria: le schede si ammorbidiscono, senza calore)
 export const riposoOggi = () => state.weeks[lunediCorrente()]?.rest[(dataDaChiave(oggiK).getDay() + 6) % 7] === true;
 
+/* ───────── La settimana mostrata e le letture dei dati ─────────
+   Qui e non in settimana.js perché servono a più sezioni: Dati esporta in CSV la settimana che stavi guardando,
+   la libreria conta in quante settimane compare una voce. */
+// Il lunedì della settimana che stai guardando. Cambia solo da qui: mostraSettimana.
+export let visualizzata = chiaveLunedi(soloData());
+export function mostraSettimana(k) { visualizzata = k; }
+
+export const inSettimanaCorrente = () => visualizzata === lunediCorrente();
+
+export const voce = (id) => state.libreria.find((v) => v.id === id);
+
+// Le attività di una settimana, con il nome preso dalla libreria
+export const attivitaDi = (k) => (state.weeks[k]?.activities ?? [])
+  .map((a) => ({ ...a, name: voce(a.id)?.name }))
+  .filter((a) => a.name);
+
+// "Segni" = qualcosa che hai scritto tu: spunte, riposo, energia, dettagli. Una lista di attività da sola non lo è.
+const haSegni = (w) => Boolean(w)
+  && (Object.keys(w.done).length > 0 || w.rest.includes(true) || w.energy.some((e) => e !== null)
+    || w.activities.some((a) => a.dettaglio));
+export const haContenuto = (w) => Boolean(w) && (w.activities.length > 0 || haSegni(w));
+// In quante settimane compare una voce (serve alla libreria: una voce usata non si cancella)
+export const settimaneConVoce = (id) => Object.values(state.weeks).filter((w) => w.activities.some((a) => a.id === id)).length;
+
 /* ───────── Il disegno ─────────
-   disegna() rifà tutto ciò che si vede, dalla vista. Ogni parte della pagina (la settimana, la libreria, la
-   sezione Dati, Casa) ha la sua funzione di disegno; guscio.js le mette in elenco all'avvio con disegnaAnche,
-   nell'ordine in cui vanno chiamate. Così chi chiede di ridisegnare non deve sapere chi disegna cosa, e una
-   sezione nuova si aggiunge all'elenco senza toccare gli altri file. */
+   disegna() rifà tutto ciò che si vede, dalla vista. Le parti da disegnare le mette in elenco guscio.js all'avvio,
+   con disegnaAnche: la sezione aperta (sezioni.js), la libreria del menu, il puntino sulla voce Dati. Così chi
+   chiede di ridisegnare non deve sapere chi disegna cosa, e base.js non deve conoscere nessuna sezione. */
 const parti = [];
 export function disegnaAnche(...funzioni) { parti.push(...funzioni); }
-export function disegna() { for (const f of parti) f(); }
+export function disegna() {
+  // l'intensità del colore delle faccende (menu): vale per tutta la pagina e su tutti i dispositivi (sta nei dati)
+  document.documentElement.dataset.intensita = state.intensita;
+  for (const f of parti) f();
+}
 
 // Il messaggino accanto ai pulsanti ("Salvato", errori). Sparisce da solo; gli errori restano più a lungo.
 let timerStato;

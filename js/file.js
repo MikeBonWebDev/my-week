@@ -1,11 +1,11 @@
 // js/file.js — la sezione Dati: quando hai salvato e unito l’ultima volta, invito alla copia, CSV, sincronizzazione.
 import * as Core from '../core.js';
 import {
-  $, aggiungiGiorni, CHIAVE_SYNC, conferma, dataDaChiave, db, disegna, GIORNI, isObj, lunediCorrente, mostraStato,
-  NOME_LIVELLO, oggiK, RE_CHIAVE, rileggi, salva, SEPARATORE, state, telefono
+  $, aggiungiGiorni, attivitaDi, CHIAVE_SYNC, conferma, dataDaChiave, db, disegna, GIORNI, haContenuto, isObj,
+  lunediCorrente, mostraSettimana, mostraStato, NOME_LIVELLO, oggiK, RE_CHIAVE, rileggi, salva, SEPARATORE, state,
+  telefono, visualizzata
 } from './base.js';
 import { daQuando, fmt, fmtLungo, fmtNumerica } from './testi.js';
-import { attivitaDi, haContenuto, mostraSettimana, visualizzata } from './settimana.js';
 
 /* ───────── Quando hai salvato e unito l'ultima volta ─────────
    È un'informazione di questo dispositivo (localStorage, settimana:sync), non un dato da sincronizzare.
@@ -34,17 +34,23 @@ function giorniSenzaCopia() {
   return primo ? Core.giorniTra(primo, oggiK) : 0;
 }
 
-export function aggiornaSync() {
-  const c = leggiSync();
-  $('#ultimo-salvataggio').textContent = descriviData(c.salvato);
-  $('#ultima-unione').textContent = descriviData(c.unito);
-
+// Il puntino sulla voce «Dati» della barra: si vede da ogni sezione, quindi si ridisegna sempre (guscio.js)
+export function aggiornaPuntinoDati() {
   const serve = giorniSenzaCopia() > GIORNI_COPIA;
   $('#puntino-dati').hidden = !serve;
   // il puntino si vede; chi usa un lettore di schermo lo sente nel nome del pulsante
   const voceDati = $('.sezione-voce[data-sezione="dati"]');
   if (serve) voceDati.setAttribute('aria-label', 'Dati, nuova copia consigliata');
   else voceDati.removeAttribute('aria-label');
+}
+
+// Il contenuto della sezione Dati. Si chiama solo quando la sezione è aperta (sezioni.js).
+function disegnaDati() {
+  const c = leggiSync();
+  $('#ultimo-salvataggio').textContent = descriviData(c.salvato);
+  $('#ultima-unione').textContent = descriviData(c.unito);
+
+  const serve = giorniSenzaCopia() > GIORNI_COPIA;
   $('#invito-copia').hidden = !serve;
   if (serve) {
     const salvato = typeof c.salvato === 'string' && RE_CHIAVE.test(c.salvato);
@@ -55,12 +61,22 @@ export function aggiornaSync() {
   $('#dove-file').textContent = doveFinisceIlFile();
 }
 
+// La sezione Dati, come la vede il registro delle sezioni (sezioni.js; la registra guscio.js)
+export const sezioneDati = {
+  nome: 'dati',
+  titolo: 'Dati',
+  sottotitolo: 'Copie, altri dispositivi, CSV.',
+  elemento: $('#sezione-dati'),
+  disegna: disegnaDati,
+};
+
 // Ricorda che oggi hai salvato ('salvato') o unito ('unito') un file.
 function segnaSync(tipo) {
   try {
     localStorage.setItem(CHIAVE_SYNC, JSON.stringify({ ...leggiSync(), [tipo]: oggiK }));
   } catch { /* se non si può scrivere, pazienza: è solo un promemoria */ }
-  aggiornaSync();
+  aggiornaPuntinoDati();
+  disegnaDati();
 }
 
 /* ───────── CSV: solo esportazione, per l'analisi ─────────

@@ -2,12 +2,11 @@
 import * as Core from '../core.js';
 import {
   $, aggiungiGiorni, boxSuggerimenti, cambiaOggi, campoNuova, carte, chiaveData, conferma, corpo, dataDaChiave, db,
-  disegna, esito, formNuova, GIORNI, lunediCorrente, MAX_NOME, oggiK, piede, riposoGiorno, segmenti, soloData, state,
-  striscia, telefono
+  disegna, esito, formNuova, GIORNI, inSettimanaCorrente, lunediCorrente, MAX_NOME, mostraSettimana, oggiK, piede,
+  riposoGiorno, segmenti, soloData, state, striscia, telefono, visualizzata, voce
 } from './base.js';
 import {
-  aggiornaColonne, aggiornaFaccendeTabella, aggiornaSuggerimenti, inSettimanaCorrente, mostraSettimana, scegliGiorno,
-  settimanaDaRiprendere, visualizzata, voce
+  aggiornaColonne, aggiornaFaccendeTabella, aggiornaSuggerimenti, scegliGiorno, settimanaDaRiprendere
 } from './settimana.js';
 
 /* ───────── Azioni: attività della settimana ─────────

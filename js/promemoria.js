@@ -5,7 +5,7 @@ import {
 } from './base.js';
 import { testoCadenza } from './testi.js';
 import { segnaCalore } from './pezzi.js';
-import { inSettimanaCorrente, visualizzata } from './settimana.js';
+import { quandoCambiaSezione } from './sezioni.js';
 
 /* ───────── Promemoria delle faccende ─────────
    In cima alla settimana corrente: le faccende che non sono nella settimana e hanno un giro aperto o in arrivo
@@ -14,15 +14,15 @@ import { inSettimanaCorrente, visualizzata } from './settimana.js';
    la riga resta lì: è un'informazione, non una richiesta. Il promemoria non scrive niente da solo. */
 const boxPromemoria = $('#promemoria');
 const listaPromemoria = $('#lista-promemoria');
-// le faccende saltate da qui restano nel promemoria con «Annulla», finché non cambi sezione o ricarichi.
-// Cambia solo da qui; cambiando sezione, Casa chiama dimenticaSalti().
+// le faccende saltate da qui restano nel promemoria con «Annulla», finché non cambi sezione o ricarichi
 const saltatiDalPromemoria = new Set();
-export function dimenticaSalti() { saltatiDalPromemoria.clear(); }
+quandoCambiaSezione(() => saltatiDalPromemoria.clear());
 
-function faccendeDaProporre() {
-  if (!inSettimanaCorrente()) return [];
-  const domenica = chiaveData(aggiungiGiorni(dataDaChiave(visualizzata), 6));
-  const presenti = new Set((state.weeks[visualizzata]?.activities ?? []).map((a) => a.id));
+// k = il lunedì della settimana mostrata: il promemoria c'è solo nella settimana corrente
+function faccendeDaProporre(k) {
+  if (k !== lunediCorrente()) return [];
+  const domenica = chiaveData(aggiungiGiorni(dataDaChiave(k), 6));
+  const presenti = new Set((state.weeks[k]?.activities ?? []).map((a) => a.id));
   const tutte = Core.faccende(db.registro, oggiK);
   // un salto annullato altrove (in Casa), o una faccenda entrata nella settimana: niente più «Annulla» qui
   for (const id of saltatiDalPromemoria) {
@@ -36,8 +36,9 @@ function faccendeDaProporre() {
       || (a.scade ?? '').localeCompare(b.scade ?? '') || a.nome.localeCompare(b.nome, 'it'));
 }
 
-export function aggiornaPromemoria() {
-  const elenco = faccendeDaProporre();
+// Lo chiama il disegno della settimana, con il lunedì della settimana mostrata
+export function aggiornaPromemoria(k) {
+  const elenco = faccendeDaProporre(k);
   boxPromemoria.hidden = elenco.length === 0;
   $('#conta-promemoria').textContent = String(elenco.length);
   const riposo = riposoOggi();

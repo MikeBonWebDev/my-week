@@ -1,35 +1,15 @@
 // js/settimana.js — la settimana visualizzata e il disegno: tabella (computer) e vista a un giorno (telefono).
 import * as Core from '../core.js';
 import {
-  $, aggiungiGiorni, ATTIVITA_INIZIALI, bloccoAggiungi, boxRiprendi, boxSuggerimenti, campoNuova, carte, chiaveData,
-  chiaveLunedi, chiaveNome, corpo, dataDaChiave, db, FINESTRA, formNuova, GIORNI, LIVELLI, lunediCorrente,
-  MAX_DETTAGLIO, MAX_FREQUENTI, MAX_RICERCA, NOME_LIVELLO, notaPassata, oggiK, piede, rigaIntestazione, riposoGiorno,
-  riposoOggi, scheda, segmenti, soloData, state, striscia, telefono, vistaGiorno, vociSuggerite
+  $, aggiungiGiorni, ATTIVITA_INIZIALI, attivitaDi, bloccoAggiungi, boxRiprendi, boxSuggerimenti, campoNuova, carte,
+  chiaveData, chiaveNome, corpo, dataDaChiave, db, FINESTRA, formNuova, GIORNI, inSettimanaCorrente, LIVELLI,
+  lunediCorrente, MAX_DETTAGLIO, MAX_FREQUENTI, MAX_RICERCA, NOME_LIVELLO, notaPassata, oggiK, piede,
+  rigaIntestazione, riposoGiorno, riposoOggi, scheda, segmenti, state, striscia, telefono, vistaGiorno, visualizzata,
+  vociSuggerite
 } from './base.js';
 import { etichettaPeriodo, fmt, fmtBreve, fmtNumerica, testoCadenza } from './testi.js';
 import { nomeRinominabile, segnaCalore } from './pezzi.js';
-
-/* ───────── Settimana visualizzata ───────── */
-// Il lunedì della settimana che stai guardando. Cambia solo da qui: mostraSettimana.
-export let visualizzata = chiaveLunedi(soloData());
-export function mostraSettimana(k) { visualizzata = k; }
-
-export const inSettimanaCorrente = () => visualizzata === lunediCorrente();
-
-export const voce = (id) => state.libreria.find((v) => v.id === id);
-
-// Le attività di una settimana, con il nome preso dalla libreria
-export const attivitaDi = (k) => (state.weeks[k]?.activities ?? [])
-  .map((a) => ({ ...a, name: voce(a.id)?.name }))
-  .filter((a) => a.name);
-
-// "Segni" = qualcosa che hai scritto tu: spunte, riposo, energia, dettagli. Una lista di attività da sola non lo è.
-const haSegni = (w) => Boolean(w)
-  && (Object.keys(w.done).length > 0 || w.rest.includes(true) || w.energy.some((e) => e !== null)
-    || w.activities.some((a) => a.dettaglio));
-export const haContenuto = (w) => Boolean(w) && (w.activities.length > 0 || haSegni(w));
-// In quante settimane compare una voce (serve alla libreria: una voce usata non si cancella)
-export const settimaneConVoce = (id) => Object.values(state.weeks).filter((w) => w.activities.some((a) => a.id === id)).length;
+import { aggiornaPromemoria } from './promemoria.js';
 
 /* ───────── Faccende nella settimana ─────────
    Una voce con una cadenza è una faccenda (vedi core.js, faccende). Nella settimana corrente la sua scheda
@@ -549,10 +529,8 @@ function creaCartaVuota(testo) {
 
 // Ridisegna la settimana dalla vista (state). Rifare la tabella intera costa pochissimo (poche decine di righe)
 // e ha un grande vantaggio: ciò che vedi viene sempre e solo dai dati, non può restare indietro.
-// È una delle parti di disegna() (base.js): le altre (promemoria, libreria, Dati, Casa) le aggiunge guscio.js.
-export function disegnaSettimana() {
-  // l'intensità del colore delle faccende (menu): vale su tutti i dispositivi, quindi sta nei dati
-  document.documentElement.dataset.intensita = state.intensita;
+// Si chiama solo quando la sezione Settimana è aperta (sezioni.js).
+function disegnaSettimana() {
   const suTelefono = telefono.matches;
   scheda.hidden = suTelefono;
   vistaGiorno.hidden = !suTelefono;
@@ -561,6 +539,16 @@ export function disegnaSettimana() {
   if (bloccoAggiungi.parentElement !== posto) posto.append(bloccoAggiungi);
   if (suTelefono) disegnaGiorno(); else disegnaTabella();
   aggiornaNavigatore();
+  aggiornaPromemoria(visualizzata);
   aggiornaSuggerimenti();
   aggiornaRiprendi();
 }
+
+// La sezione Settimana, come la vede il registro delle sezioni (sezioni.js; la registra guscio.js)
+export const sezioneSettimana = {
+  nome: 'settimana',
+  titolo: 'La mia settimana',
+  sottotitolo: 'Le attività della settimana, giorno per giorno.',
+  elemento: $('#sezione-settimana'),
+  disegna: disegnaSettimana,
+};

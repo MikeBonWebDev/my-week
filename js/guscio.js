@@ -2,17 +2,20 @@
 import {
   $, avvisoIniziale, db, disegna, disegnaAnche, esito, menu, mostraStato, rigaIntestazione, state, telefono
 } from './base.js';
-import { disegnaSettimana } from './settimana.js';
-import { aggiornaPromemoria } from './promemoria.js';
+import { disegnaSezioneAperta, mostraSezione, registraSezioni, sezioneIniziale } from './sezioni.js';
+import { sezioneSettimana } from './settimana.js';
 import { aggiornaLibreria } from './libreria.js';
+import { aggiornaPuntinoDati, sezioneDati } from './file.js';
+import { sezioneCasa } from './casa.js';
 import './azioni.js';   // i gestori delle azioni sulla settimana: non esporta niente, basta caricarlo
-import { aggiornaSync } from './file.js';
-import { disegnaCasa, mostraSezione, sezione } from './casa.js';
 
-/* ───────── Il disegno ─────────
-   Le parti della pagina, nell'ordine in cui si ridisegnano (vedi disegnaAnche in base.js). Una sezione nuova
-   si aggiunge qui. */
-disegnaAnche(disegnaSettimana, aggiornaPromemoria, aggiornaLibreria, aggiornaSync, disegnaCasa);
+/* ───────── Le sezioni e il disegno ─────────
+   Le sezioni, nell'ordine della barra (sezioni.js). Una sezione nuova si descrive nel suo file e si aggiunge qui,
+   insieme al suo pulsante e al suo contenuto in index.html.
+   Poi le parti che disegna() (base.js) ridisegna, in quest'ordine: la sezione aperta, la libreria del menu, il
+   puntino sulla voce Dati (si vede da ogni sezione). */
+registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);
+disegnaAnche(disegnaSezioneAperta, aggiornaLibreria, aggiornaPuntinoDati);
 
 /* ───────── Il menu ─────────
    Un <dialog> aperto con showModal(): sta sopra alla pagina, che intanto non risponde ai tocchi.
@@ -159,7 +162,7 @@ telefono.addEventListener('change', () => { disegna(); mostraOggi(); });
 
 // Si parte: la sezione dove l'avevi lasciata (di solito la settimana), colonna di oggi in vista,
 // eventuale avviso sui dati illeggibili.
-mostraSezione(sezione);
+mostraSezione(sezioneIniziale());
 mostraOggi();
 if (avvisoIniziale) mostraStato(avvisoIniziale, true, 9000);
 

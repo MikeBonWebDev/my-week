@@ -55,12 +55,13 @@ settimana-pwa/
 │   ├── base.js           impostazioni, elementi, date e oggi, dati (caricare, salvare, esito), conferma, disegno
 │   ├── testi.js          le parole e le date: «Fatta il 23 settembre», «giro aperto dall’8 ottobre», formati
 │   ├── pezzi.js          pezzi di interfaccia comuni: il nome da rinominare, il calore di una faccenda
+│   ├── sezioni.js        il registro delle sezioni e la navigazione tra loro
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
 │   ├── promemoria.js     il promemoria delle faccende in cima alla settimana, con le sue scelte
 │   ├── libreria.js       il pannello «Libreria delle attività»
 │   ├── azioni.js         aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
 │   ├── file.js           la sezione Dati: ultimo salvataggio, invito alla copia, CSV, sincronizzazione
-│   ├── casa.js           le sezioni (Settimana, Casa, Dati) e la sezione Casa: le faccende
+│   ├── casa.js           la sezione Casa: le faccende
 │   └── guscio.js         il punto di partenza: carica gli altri moduli, menu (tema, colore, libreria), avvio
 ├── sw.js                 il service worker: copia dei file per l'uso senza rete
 ├── manifest.webmanifest  nome, colori e icone dell'app installata
@@ -138,28 +139,35 @@ ciò che gli serve (`import`). Le frecce vanno in un verso solo, dall’alto ver
 chi sta sopra.
 
 ```
- livello
-    6    guscio.js                               il punto di partenza: carica tutto, elenca le parti da disegnare
-    5    casa.js  file.js  azioni.js             le sezioni e le loro azioni
-    4    promemoria.js  libreria.js              parti della settimana costruite sopra la settimana
-    3    settimana.js                            la settimana visualizzata e il suo disegno
-    2    testi.js  pezzi.js                      parole e date, pezzi di interfaccia: per tutte le sezioni
-    1    base.js                                 elementi, date e oggi, dati, salvare, esito, conferma, disegna()
-    0    core.js                                 il nucleo: nessun browser
+ livello                  comuni                    Settimana                 Casa      Dati      menu
+    6    guscio.js: il punto di partenza. Registra le sezioni, elenca le parti da disegnare, avvia
+    5                                               azioni.js                 casa.js   file.js   libreria.js
+    4                                               settimana.js
+    3                                               promemoria.js
+    2    testi.js  pezzi.js  sezioni.js
+    1    base.js
+    0    core.js
 ```
 
-Un file importa solo file di livello più basso. Così non nascono giri (A che importa B che importa A), e un pezzo
-comune non finisce per dipendere da una sezione: Casa prende le parole da `testi.js`, non dalla settimana.
-`test/struttura.test.js` legge gli import di ogni file e controlla la regola; un file nuovo va messo lì, al suo
-livello.
+Due regole, controllate da `test/struttura.test.js`, che legge gli `import` di ogni file:
 
-Due regole tengono le frecce in un verso solo. **Il disegno è un elenco**: `base.js` ha `disegna()`, che chiama
-in ordine le funzioni di disegno che `guscio.js` gli consegna all’avvio (`disegnaAnche`); così `base.js` non deve
-importare chi disegna, e una sezione nuova si aggiunge a quell’elenco senza toccare gli altri file. **Un valore che
-cambia lo cambia solo il suo file**: `state` e `oggiK` stanno in `base.js` e cambiano con `rileggi()` e
-`cambiaOggi()`; la settimana visualizzata e il giorno scelto stanno in `settimana.js` e cambiano con
-`mostraSettimana()` e `scegliGiorno()`. Gli altri file li leggono, e vedono sempre il valore attuale (un `import` è
-un collegamento al valore, non una copia).
+- **Un file importa solo file di livello più basso.** Così non nascono giri (A che importa B che importa A).
+- **Una sezione non importa niente da un’altra sezione**, solo dai file comuni e dai suoi. Ciò che serve a due
+  sezioni scende nei file comuni: le parole e le date in `testi.js`, i pezzi di interfaccia in `pezzi.js`, «oggi»,
+  la settimana mostrata e le letture dei dati (`voce`, `attivitaDi`…) in `base.js`. Così Casa, Dati e le sezioni
+  della Fase 2 non dipendono dalla settimana, e una sezione si può togliere o cambiare senza toccare le altre.
+
+Un file nuovo va messo nel test, con il suo livello e il suo gruppo: se manca, il test lo dice.
+
+Altre tre scelte tengono le frecce in un verso solo. **Il disegno è un elenco**: `base.js` ha `disegna()`, che
+chiama in ordine le parti che `guscio.js` gli consegna all’avvio (`disegnaAnche`): la sezione aperta, la libreria del
+menu, il puntino sulla voce Dati. **Le sezioni sono un registro** (`sezioni.js`): ognuna si descrive nel suo file
+(nome, titolo, sottotitolo, elemento, disegno) e `guscio.js` le registra; chi deve sapere quando si cambia sezione
+si iscrive con `quandoCambiaSezione` (il promemoria lo usa per dimenticare i giri saltati da lì). **Un valore che
+cambia lo cambia solo il suo file**: `state`, `oggiK` e la settimana mostrata stanno in `base.js` e cambiano con
+`rileggi()`, `cambiaOggi()` e `mostraSettimana()`; il giorno scelto sul telefono sta in `settimana.js` e cambia con
+`scegliGiorno()`. Gli altri file li leggono e vedono sempre il valore attuale (un `import` è un collegamento al
+valore, non una copia).
 
 ## 5. Il viaggio di una spunta
 
@@ -433,10 +441,11 @@ gli stessi `data-id` e `data-giorno` della tabella, quindi i gestori sono gli st
 Nella vista a un giorno `giornoScelto` ricorda il giorno mostrato: oggi nella settimana corrente; passando a un’altra
 settimana resta lo stesso giorno della settimana, se non è nel futuro (`giornoMostrato`).
 
-### Le sezioni: Settimana e Casa
+### Le sezioni: Settimana, Casa, Dati
 
-La pagina è una sola; le sezioni sono due blocchi, e `mostraSezione(nome)` (in `js/casa.js`) nasconde l’uno e mostra
-l’altro, cambia titolo e sottotitolo e segna il pulsante attivo con `aria-current="page"`, che dice ai lettori di
+La pagina è una sola; ogni sezione è un blocco. `js/sezioni.js` tiene il registro delle sezioni: ognuna si descrive
+nel suo file (`sezioneSettimana`, `sezioneCasa`, `sezioneDati`: nome, titolo, sottotitolo, elemento, disegno) e
+`guscio.js` le registra nell’ordine della barra. `mostraSezione(nome)` mostra quella scelta e nasconde le altre, cambia titolo e sottotitolo e segna il pulsante attivo con `aria-current="page"`, che dice ai lettori di
 schermo "sei qui". La sezione scelta resta in `localStorage` (`settimana:sezione`): l’app riapre dove l’avevi
 lasciata. Non viaggia con il file di sincronizzazione: è una comodità di quel dispositivo, non un dato.
 
