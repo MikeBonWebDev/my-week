@@ -1,6 +1,6 @@
 // Test nel browser dell'uso quotidiano: primo avvio, suggerimenti, riprendi, dettagli, libreria, CSV, telefono.
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const fs = require('node:fs');
 const { creaSeme } = require('../strumenti/seme.js');
 const {

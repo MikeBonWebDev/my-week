@@ -1,7 +1,7 @@
 // Test nel browser della sezione Dati: stato, puntino e invito alla copia, «Salva con nome», CSV, unione.
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const fs = require('node:fs');
 const { creaSeme } = require('../strumenti/seme.js');
 const { apri, caricaDati, aggiungi, apriMenu, vaiA, salvaFile, unisciFile, telefono } = require('./aiuti');

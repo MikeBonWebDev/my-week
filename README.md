@@ -72,7 +72,12 @@ settimana-pwa/
 │   ├── colore.spec.js    calore delle faccende, intensità, tema, riposo, «Salto questo giro», parole vietate
 │   ├── dati.spec.js      la sezione Dati: puntino e invito alla copia, «Salva con nome», CSV, unione
 │   ├── sincronizzazione.spec.js   due "dispositivi" che si scambiano il file
-│   └── pwa.spec.js       installabilità e funzionamento senza rete
+│   ├── pwa.spec.js       installabilità e funzionamento senza rete
+│   ├── promemoria.spec.js   le faccende proposte nella settimana: «Aggiungi», «Salto questo giro»
+│   ├── rinomina.spec.js  rinominare una voce dal suo nome, su computer, telefono e in Casa
+│   ├── ios.spec.js       le regole di Safari su iPhone applicate all'app
+│   ├── accessibilita.spec.js   axe-core: WCAG 2.1 A e AA su ogni sezione e foglio
+│   └── regole.spec.js    regole sui file dei test stessi (ogni file prende `test` da aiuti.js)
 ├── strumenti/
 │   ├── server.js         server statico minimo per provare l'app in locale
 │   └── seme.js           genera dati di prova (cinque settimane di storia)
@@ -710,10 +715,18 @@ il momento più recente. Se la pagina del PC ci metteva ad aprirsi più di quant
 suo orologio restava indietro e vinceva il nome sbagliato. Il test dipendeva dalla velocità della macchina: passava
 qui e falliva su un computer più lento. Ora il PC apre la sua pagina con l’orologio un minuto avanti
 (`apri(contesto, MERCOLEDI + 1 minuto)`): l’ordine degli eventi è scritto nel test, non lasciato al caso.
-La prima correzione faceva saltare l’orologio a metà test (`clock.fastForward`); nella CI, in WebKit, il test
-superava comunque i 30 secondi. Il punto in cui si fermava cambiava a ogni giro, insieme ai test di accessibilità:
-probabilmente lentezza della macchina, non un blocco (da confermare). I test più pesanti ora hanno tempo triplo (`test.slow()`), e in CI un test
-fallito lascia nel rapporto la traccia passo per passo, che dice dove è andato il tempo.
+La prima correzione faceva saltare l’orologio a metà test (`clock.fastForward`).
+
+Poi la lezione più istruttiva, perché la prima diagnosi era sbagliata. Nella CI, in WebKit, alcuni test superavano i
+30 secondi, ogni volta in un punto diverso. Prima ipotesi: l’orologio finto. Smentita. Seconda: macchina lenta, quindi
+più tempo ai test pesanti (`test.slow()`). Il giro dopo GitHub ha fermato tutto allo scadere dei 15 minuti, e il
+registro mostrava la cosa importante: in WebKit ogni test era più lento del precedente. Lo stesso test che in
+Chromium dura un secondo passava da 4 a 25 secondi andando avanti. Non una macchina lenta: qualcosa che si
+accumulava. Erano i contesti: quelli creati con `browser.newContext()` Playwright non li chiude da solo, e restavano
+aperti fino alla fine, ognuno con la sua pagina viva. Dopo due file di test erano già 26. Ora il `test` di
+`aiuti.js` li chiude alla fine di ogni test, e ogni file di test prende `test` da lì (`regole.spec.js` lo controlla).
+`test.slow()` è stato tolto: allungare il tempo nascondeva il sintomo. In CI, un test fallito lascia nel rapporto la
+traccia passo per passo, che dice dove è andato il tempo.
 
 ## 12. Limiti e scelte consapevoli
 

@@ -1,7 +1,7 @@
 // Test nel browser della vista a un giorno (telefono, sotto i 40rem di larghezza):
 // striscia dei giorni, energia e riposo, aggiunta in alto, schede, menu dal basso.
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const { creaSeme } = require('../strumenti/seme.js');
 const {
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, conferma, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto, telefono,

@@ -1,7 +1,7 @@
 // Test nel browser del promemoria delle faccende, in cima alla settimana corrente.
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js): la settimana va da lunedì 12 a domenica 18.
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const Core = require('../core.js');
 const { apri, caricaDati, vaiA, telefono } = require('./aiuti');
 

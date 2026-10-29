@@ -4,7 +4,7 @@
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
 'use strict';
 const fs = require('node:fs');
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const { creaSeme } = require('../strumenti/seme.js');
 const { apri, caricaDati, vaiA, salvaFile, unisciFile, apriMenu, telefono } = require('./aiuti');
 

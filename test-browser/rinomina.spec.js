@@ -1,7 +1,7 @@
 // Test nel browser del foglio «Rinomina»: si apre toccando il nome di una voce (scheda, tabella, Casa).
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const Core = require('../core.js');
 const { apri, caricaDati, aggiungi, vaiA, telefono } = require('./aiuti');
 

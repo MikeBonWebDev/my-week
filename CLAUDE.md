@@ -72,7 +72,10 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
   "dispositivi" con orari diversi si passa un'ora di partenza diversa ad `apri()`, non `clock.fastForward`.
 - Telefono: usare `telefono()` di `aiuti.js` per le opzioni del contesto (Firefox non supporta `isMobile`;
   il progetto `iphone` usa il profilo di iPhone 15). Il progetto `iphone` esegue solo `telefono|ios` spec.
-- Test lunghi (due contesti, molte viste, axe) usano `test.slow()`: in CI WebKit è molto più lento.
+- **`test` ed `expect` si prendono da `./aiuti`, mai da `'@playwright/test'`**: il `test` di `aiuti.js` chiude alla
+  fine di ogni test i contesti creati con `browser.newContext()`, che Playwright lascerebbe aperti (in WebKit, in CI,
+  rallentavano ogni test più del precedente). `regole.spec.js` lo controlla.
+- Un test lento non si cura con `test.slow()` o timeout più lunghi prima di aver capito dove va il tempo.
 - In CI, un test fallito lascia la traccia nel rapporto (`trace: 'retain-on-failure'`): si apre trascinando
   `trace.zip` su trace.playwright.dev.
 

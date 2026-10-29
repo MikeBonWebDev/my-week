@@ -2,7 +2,7 @@
 // su computer e telefono, in chiaro e in scuro, con il colore delle faccende Morbido e Deciso.
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js).
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const { default: AxeBuilder } = require('@axe-core/playwright');
 const Core = require('../core.js');
 const { apri, caricaDati, vaiA, apriMenu, telefono } = require('./aiuti');
@@ -63,9 +63,6 @@ for (const dispositivo of ['computer', 'telefono']) {
   for (const schema of ['light', 'dark']) {
     for (const intensita of ['morbida', 'decisa']) {
       test(`${dispositivo}, tema ${schema}, colore ${intensita}: nessuna violazione WCAG A/AA`, async ({ browser }) => {
-        // Sei viste, ognuna analizzata da axe: è il test più pesante della suite. Sulle macchine di GitHub, in WebKit,
-        // superava i 30 secondi ogni tanto (in un punto diverso ogni volta: probabilmente lentezza, non un blocco). Tempo triplo.
-        test.slow();
         // movimento ridotto: senza, axe misurerebbe i colori a metà di una transizione (per esempio la voce della
         // barra appena toccata, che sta passando dal chiaro allo scuro) e segnalerebbe un contrasto che non esiste
         const contesto = await browser.newContext({

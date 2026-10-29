@@ -1,15 +1,12 @@
 // Test nel browser della sincronizzazione: due "dispositivi" (due contesti del browser, ognuno con la sua memoria)
 // lavorano per conto loro e si scambiano il file. Alla fine devono mostrare la stessa tabella.
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const {
   MERCOLEDI, apri, nomi, aggiungi, dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
 } = require('./aiuti');
 
 test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali', async ({ browser }, info) => {
-  // Due pagine e una ventina di passaggi: sulle macchine di GitHub, in WebKit, superava i 30 secondi ogni tanto
-  // (in un punto diverso ogni volta: probabilmente lentezza, non un blocco). Tempo triplo.
-  test.slow();
   // Il PC parte un minuto avanti rispetto al telefono, così il nome scritto dal PC («sviluppo») è il più recente e vince.
   // Ogni pagina ha il suo orologio finto: se partissero alla stessa ora e il PC ci mettesse più del telefono ad aprirsi,
   // il suo orologio resterebbe indietro, vincerebbe «Sviluppo» e il test fallirebbe più avanti.

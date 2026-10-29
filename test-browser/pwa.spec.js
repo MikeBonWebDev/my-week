@@ -1,6 +1,6 @@
 // Test nel browser della parte "app": installabilità e funzionamento senza rete.
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const { aggiungi, nomi } = require('./aiuti');
 
 // Qui il service worker serve: lo riattivo (nel resto dei test è bloccato, vedi playwright.config.js)

@@ -2,7 +2,7 @@
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js). Nei dati di prova (strumenti/seme.js):
 // Chitarra segnata lunedì 12 ottobre, Cucinare lunedì 5 ottobre, Camminare martedì 29 settembre, Leggere mai.
 'use strict';
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./aiuti');   // non da '@playwright/test': vedi `test` in aiuti.js
 const { creaSeme } = require('../strumenti/seme.js');
 const { apri, caricaDati, nomi, apriMenu, salvaFile, unisciFile, telefono } = require('./aiuti');
 

@@ -3,7 +3,22 @@
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');
-const { test, expect, devices } = require('@playwright/test');
+const base = require('@playwright/test');
+const { expect, devices } = base;
+
+/**
+ * Il `test` di Playwright, con una pulizia automatica: alla fine di ogni test chiude tutti i contesti (i
+ * "dispositivi") ancora aperti. Quelli creati con browser.newContext() Playwright non li chiude da solo: restavano
+ * vivi fino alla fine del processo, ognuno con la sua pagina che continuava a girare. Dopo due file di test erano
+ * già 26. In WebKit, sulle macchine di GitHub, ogni test diventava più lento del precedente, fino a superare il
+ * tempo massimo. Per questo ogni file di test prende `test` ed `expect` da qui, non da '@playwright/test'.
+ */
+const test = base.test.extend({
+  chiudiContesti: [async ({ browser }, use) => {
+    await use();
+    await Promise.all(browser.contexts().map((c) => c.close()));
+  }, { auto: true }],
+});
 
 // Le date di riferimento dei test: un mercoledì e il lunedì successivo (ora locale)
 const MERCOLEDI = new Date(2026, 9, 14, 10, 0);
@@ -165,7 +180,7 @@ function foto(p) {
 }
 
 module.exports = {
-  telefono,
+  test, expect, telefono,
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
   dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
 };
