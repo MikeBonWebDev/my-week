@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 Istruzioni per Claude (Claude Code o altri agenti) che lavorano su questo repository.
-La documentazione completa del progetto è `README.md` (architettura, dati, unione, test); `LEGGIMI.md` spiega
-pubblicazione, installazione e la prova a mano su iPhone. Qui c'è solo ciò che serve per lavorare senza sbagliare.
+La documentazione completa del progetto è `README.md` (architettura, dati, unione, test); `FUNZIONI.md` dice che cosa
+fa l'app oggi, `PIANO.md` che cosa verrà, `DATI.md` è il glossario dei dati; `LEGGIMI.md` spiega pubblicazione,
+installazione e la prova a mano su iPhone. Qui c'è solo ciò che serve per lavorare senza sbagliare.
 
 ## Il progetto
 
@@ -70,7 +71,11 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
   Se un motore non si può lanciare, dirlo esplicitamente.
 - Una modifica al comportamento porta con sé il suo test. Un test nuovo deve **saper fallire**: romperlo apposta
   (invertire una condizione, togliere una riga) e controllare che fallisca, poi rimettere com'era (README §11).
-- Se cambia il comportamento o la struttura, aggiornare anche `README.md` (e `LEGGIMI.md` se tocca l'uso).
+- **Se cambia il comportamento, si aggiorna `FUNZIONI.md`** nella stessa modifica: descrive solo ciò che esiste nel
+  codice. Se il codice e `FUNZIONI.md` non coincidono, si decide quale dei due è sbagliato e si corregge (le
+  differenze note stanno nel suo §12). Se cambia la struttura, `README.md`; se tocca l'uso, `LEGGIMI.md`.
+- **`PIANO.md` è ciò che verrà**: il piano della fase in corso, da verificare prima del codice e da seguire durante.
+  Una parte del piano finita passa in `FUNZIONI.md` ed esce dal piano.
 - **Una chiave del registro nuova o cambiata** si documenta in `DATI.md` (il glossario dei dati: forma, valori, chi
   scrive, chi legge) nella stessa modifica, insieme alla tabella del registro nel README.
 - `file-claude/` è una cartella locale di lavoro (zip, bozze): è ignorata da git, non va toccata né committata.
@@ -153,8 +158,20 @@ Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push 
    confrontando la pagina prima e dopo in 25 situazioni (`settimana-18`).
 
 Debiti della 2.0 chiusi. Poi, dall'uso vero, un ritocco della Fase 1: **la settimana giorno per giorno** (attività per
-giorno, faccende coperte dalle spunte vicine, «Riprendi la lista» tolto; `settimana-19`). Prossimo passo: il
-documento funzionale della Fase 2.
+giorno, faccende coperte dalle spunte vicine, «Riprendi la lista» tolto; `settimana-19`). Il piano della Fase 2
+è scritto (`PIANO.md`), e il comportamento attuale è in `FUNZIONI.md`; prossimo passo, dopo la revisione del piano:
+la 2.1 (Impostazioni, navigazione, Libreria).
+
+Decisioni per la Fase 2 (ottobre 2026):
+- **Menu del telefono:** predefinita la barra di oggi più una voce «Altro» per le sezioni che non ci stanno; il menu
+  a ventaglio (radiale) resta selezionabile nelle Impostazioni.
+- **Colori** (le cinque palette e la predefinita): dopo che i moduli sono completi, così si fanno una volta sola.
+- **Documenti:** il piano per intero, prima del codice, come riferimento da verificare e seguire (`PIANO.md`, senza
+  numero di fase nel nome); il comportamento attuale in un documento vivo (`FUNZIONI.md`), che riceve ogni fase finita.
+- **Libreria:** nella sezione Settimana (un pannello in fondo), non più nel menu.
+
+Il piano è `PIANO.md`: si verifica prima del codice e si segue durante; se il codice deve allontanarsene, si cambia
+prima il piano. I punti ancora aperti sono nel suo §13.
 
 ## Comunicazione con il proprietario
 

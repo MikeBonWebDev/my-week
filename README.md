@@ -2,7 +2,8 @@
 
 Questo documento spiega **come è fatta l’applicazione e perché**. È pensato per studiarla: si può leggere dall’inizio
 alla fine, oppure usare come mappa mentre si legge il codice.
-Per pubblicarla, installarla e usarla c’è [LEGGIMI.md](LEGGIMI.md).
+Per pubblicarla, installarla e usarla c’è [LEGGIMI.md](LEGGIMI.md). Che cosa fa l’app, sezione per sezione e tocco per
+tocco, è in [FUNZIONI.md](FUNZIONI.md); che cosa verrà, in [PIANO.md](PIANO.md).
 
 ## Indice
 
@@ -90,6 +91,8 @@ settimana-pwa/
 ├── playwright.config.js  configurazione dei test nel browser
 ├── package.json          comandi (npm test, npm run test:browser, npm start) e dipendenze di sviluppo
 ├── README.md             questo documento
+├── FUNZIONI.md           che cosa fa l’app, sezione per sezione: il riferimento del comportamento
+├── PIANO.md              che cosa verrà: il piano della fase in corso, da verificare prima del codice
 ├── DATI.md               i dati chiave per chiave: come si compone ogni record, chi lo scrive, chi lo legge
 └── LEGGIMI.md            come pubblicarla, installarla, usarla
 ```
@@ -495,7 +498,7 @@ finestra. Il nome lungo resta, nascosto alla vista ma non ai lettori di schermo.
 ### La sezione Casa
 
 Elenca le faccende, cioè le voci con una cadenza. I dati arrivano tutti da `Core.faccende(registro, oggi)` (§6):
-`disegnaCasa()` li trasforma in schede e basta. Per ognuna: «Fatta 16 giorni fa (martedì 6 ottobre)» oppure
+`disegnaCasa()` li trasforma in schede e basta. Per ognuna: «Fatta il 6 ottobre» oppure
 «Mai segnata», «Ogni 14 giorni», e i pulsanti «+ Aggiungi a questa settimana» (o la scritta «Già in questa
 settimana») e «Cadenza».
 
@@ -529,7 +532,7 @@ schede prendono la tinta quieta del riposo, senza calore (il conteggio non cambi
 casa); nelle **settimane passate** niente calore, perché il calore parla di oggi.
 
 Sul computer, dopo una spunta, la tabella non si ridisegna (la casella toccata perderebbe il fuoco):
-`aggiornaFaccendeTabella()` aggiorna sul posto testo e calore delle sole righe delle faccende.
+`aggiornaTabellaSulPosto()` aggiorna sul posto testo e calore delle righe delle faccende, e i giorni attenuati.
 
 ### Salto questo giro
 
