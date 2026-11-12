@@ -6,7 +6,6 @@ import { creaSeme } from '../strumenti/seme.js';
 import { apri, apriMenu, caricaDati, chiudiMenu, conSezioneFinta, telefono, vaiA } from './aiuti.js';
 
 const FINTE = [['orto', 'Orto'], ['serra', 'Serra']];
-const voce = (p, nome) => p.locator(`#sezioni .sezione-voce[data-sezione="${nome}"]`);
 const inBarra = (p) => p.locator('#sezioni .sezione-voce[data-sezione]:visible')
   .evaluateAll((bb) => bb.map((b) => b.dataset.sezione));
 const sezioneAperta = (p) => p.locator('#titolo-sezione');
