@@ -259,7 +259,8 @@ sempre, da qualunque punto arrivi la richiesta.
       ├─► Core.faccende(reg, oggi)   → ultima volta, prossimo giro, calore: Casa, promemoria, schede, tabella
       └─► Core.primoUso(reg)         → da quando usi l’app: la sezione Dati, per l’invito alla copia
       ▼
- disegna() in base.js → la navigazione e la sezione aperta (con la sua libreria, se è la Settimana), il puntino su Dati
+ disegna() in base.js → la sezione aperta (la Panoramica con le sue card; la Settimana con la sua libreria), il puntino
+                        sul pulsante Dati, la navigazione
 ```
 
 **I giorni in cui si vede un’attività** (`activities[].giorni` nella vista) si calcolano qui, a ogni lettura:
@@ -316,9 +317,9 @@ del singolo dispositivo.
 | `settimana:dispositivo` | il nome casuale di questo browser (`d…`) | `idDispositivo()` in `base.js` | identifica il dispositivo, che è proprio ciò che non si condivide |
 | `settimana:sync` | `{ salvato: 'AAAA-MM-GG', unito: 'AAAA-MM-GG' }` | `segnaSync()` / `leggiSync()` in `file.js` | quando *questo* dispositivo ha salvato o unito: l’invito alla copia è suo |
 | `settimana:tema` | `"chiaro"` / `"scuro"` (assente = automatico) | menu in `guscio.js`; letta anche da uno script in testa a `index.html` | si può volere il telefono scuro e il computer chiaro |
-| `settimana:sezione` | `"settimana"`, `"casa"`, `"dati"` | `sezioni.js` | l’app riapre dove l’avevi lasciata, su quel dispositivo |
+| `settimana:aperta` | quando hai aperto ogni sezione l’ultima volta, `{ "casa": "2026-11-12", … }` | `segnaAperta()` / `apertaIl()` in `sezioni.js`; lo legge la Panoramica | «aperta ieri» dice cosa hai aperto su *questo* dispositivo (deciso: novembre 2026). Sostituisce `settimana:sezione` (l’app riapriva sull’ultima sezione), che non si scrive più: l’app parte sempre dalla Panoramica |
 | `settimana:menu` | `"ventaglio"` (assente o altro = barra) | Impostazioni, `navigazione.js` | barra o ventaglio sul telefono: si può volere il ventaglio sul telefono e la barra sul tablet |
-| `settimana:barra` | i nomi delle tre sezioni nella barra, `["settimana","casa","dati"]` | Impostazioni, `navigazione.js` | come sopra: è il modo di tenere in mano *quel* dispositivo |
+| `settimana:barra` | i nomi delle **due** sezioni scelte per la barra, oltre alla Panoramica che c’è sempre: `["settimana","casa"]`. Una scelta salvata prima della Panoramica (tre nomi, con `"dati"`) vale ancora: i nomi che non sono sezioni della barra si saltano | Impostazioni, `navigazione.js` | come sopra: è il modo di tenere in mano *quel* dispositivo |
 
 ## 11. Chiavi sconosciute, e come aggiungerne una
 

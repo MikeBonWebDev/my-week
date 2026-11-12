@@ -10,7 +10,7 @@ import { el } from './pezzi.js';
 
 /* ───────── Quando hai salvato e unito l'ultima volta ─────────
    È un'informazione di questo dispositivo (localStorage, settimana:sync), non un dato da sincronizzare.
-   Un solo richiamo, discreto: se l'ultima copia ha più di GIORNI_COPIA giorni, un puntino sulla voce «Dati»
+   Un solo richiamo, discreto: se l'ultima copia ha più di GIORNI_COPIA giorni, un puntino sul pulsante «Dati»
    e un invito in cima alla sezione. Niente notifiche, niente numeri. */
 const GIORNI_COPIA = 30;
 function leggiSync() {
@@ -35,14 +35,13 @@ function giorniSenzaCopia() {
   return primo ? Core.giorniTra(primo, oggiK) : 0;
 }
 
-// Il puntino sulla voce «Dati» della barra: si vede da ogni sezione, quindi si ridisegna sempre (guscio.js)
+// Il puntino sul pulsante «Dati» in alto, accanto all'ingranaggio: si vede da ogni sezione, quindi si ridisegna
+// sempre (guscio.js)
 export function aggiornaPuntinoDati() {
   const serve = giorniSenzaCopia() > GIORNI_COPIA;
   $('#puntino-dati').hidden = !serve;
   // il puntino si vede; chi usa un lettore di schermo lo sente nel nome del pulsante
-  const voceDati = $('.sezione-voce[data-sezione="dati"]');
-  if (serve) voceDati.setAttribute('aria-label', 'Dati, nuova copia consigliata');
-  else voceDati.removeAttribute('aria-label');
+  $('#apri-dati').setAttribute('aria-label', serve ? 'Dati, nuova copia consigliata' : 'Dati');
 }
 
 // Il contenuto della sezione Dati. Si chiama solo quando la sezione è aperta (sezioni.js).
@@ -69,6 +68,7 @@ export const sezioneDati = {
   sottotitolo: 'Copie, altri dispositivi, CSV.',
   elemento: $('#sezione-dati'),
   disegna: disegnaDati,
+  strumento: true,   // si apre dal pulsante in alto, non dalla barra; nessuna card nella Panoramica
 };
 
 // Ricorda che oggi hai salvato ('salvato') o unito ('unito') un file.

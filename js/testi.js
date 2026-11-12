@@ -78,3 +78,22 @@ export function testoCadenza(f) {
     .filter(Boolean).join(' · ');
 }
 
+
+/* ───────── La Panoramica ───────── */
+const fmtSettimanale = fmt({ weekday: 'long' });
+const fmtOggi = fmt({ weekday: 'long', day: 'numeric', month: 'long' });
+
+// La data di oggi sotto il titolo della Panoramica: "Giovedì 12 novembre", "Domenica 1° novembre"
+export const oggiPerEsteso = () => conMaiuscola(fmtOggi.format(dataDaChiave(oggiK)))
+  .replace(/ 1 (?=\p{L})/u, ' 1° ');
+
+// Sotto ogni card della Panoramica, quando hai aperto la sezione su questo dispositivo: "aperta oggi", "aperta ieri",
+// "aperta lunedì" (entro la settimana), "aperta il 31 ottobre", "aperta l’8 ottobre", "mai aperta su questo dispositivo"
+export function testoAperta(k) {
+  if (!k) return 'mai aperta su questo dispositivo';
+  const giorni = Core.giorniTra(k, oggiK);
+  if (giorni <= 0) return 'aperta oggi';
+  if (giorni === 1) return 'aperta ieri';
+  if (giorni < 7) return `aperta ${fmtSettimanale.format(dataDaChiave(k))}`;
+  return `aperta ${elide(k) ? 'l’' : 'il '}${giornoMese(k)}`;
+}

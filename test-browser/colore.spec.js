@@ -211,7 +211,7 @@ test.describe('le parole', () => {
     const p = await apri(await browser.newContext(telefono()));
     await caricaDati(p, datiFaccende());
     const testi = [];
-    for (const s of ['settimana', 'casa', 'dati']) { await vaiA(p, s); testi.push(await p.locator('body').innerText()); }
+    for (const s of ['panoramica', 'settimana', 'casa', 'dati']) { await vaiA(p, s); testi.push(await p.locator('body').innerText()); }
     await apriMenu(p);
     testi.push(await p.locator('#menu').innerText());
     for (const parola of ['in ritardo', 'scadut', 'dimentica', 'devi ', 'dovresti', 'non preoccuparti', 'con calma']) {

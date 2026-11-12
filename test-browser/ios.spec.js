@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import { creaSeme } from '../strumenti/seme.js';
-import { apri, caricaDati, vaiA, salvaFile, unisciFile, telefono } from './aiuti.js';
+import { apri, caricaDati, ricarica, vaiA, salvaFile, unisciFile, telefono } from './aiuti.js';
 
 const nomiCarte = (p) => p.locator('#carte .nome-voce').allTextContents();
 
@@ -18,7 +18,7 @@ test('memoria svuotata da Safari: l’app riparte pulita, senza errori, e un fil
   const file = await salvaFile(p, info.outputPath('copia.json'));
 
   await p.evaluate(() => localStorage.clear());
-  await p.reload();
+  await ricarica(p);
   expect(await nomiCarte(p)).toEqual([]);
   await expect(p.locator('#carte')).toContainText('Nessuna attività in questo giorno, per ora');
 

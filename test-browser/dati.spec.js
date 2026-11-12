@@ -42,7 +42,7 @@ test('mai salvato, ma in uso da più di 30 giorni: puntino e invito; salvando sp
   const p = await apri(await browser.newContext());
   await caricaDati(p, creaSeme());                                                // dati dal 31 agosto
   await expect(puntino(p)).toBeVisible();
-  await expect(p.locator('.sezione-voce[data-sezione="dati"]')).toHaveAccessibleName('Dati, nuova copia consigliata');
+  await expect(p.locator('#apri-dati')).toHaveAccessibleName('Dati, nuova copia consigliata');
   await vaiA(p, 'dati');
   await expect(p.locator('#invito-titolo')).toHaveText('Non c’è ancora una copia dei dati.');
   const [scaricato] = await Promise.all([p.waitForEvent('download'), p.click('#salva-sync-invito')]);
@@ -114,6 +114,6 @@ test('i CSV dalla sezione Dati, e un’unione che lascia dove eri', async ({ bro
   const altro = await apri(await browser.newContext());
   await vaiA(altro, 'dati');
   expect(await unisciFile(altro, await salvaFile(p, info.outputPath('p.json')))).toContain('Unisco il file');
-  await expect(altro.locator('.sezione-voce[data-sezione="dati"]')).toHaveAttribute('aria-current', 'page');
+  await expect(altro.locator('#apri-dati')).toHaveAttribute('aria-current', 'page');
   await expect(altro.locator('#ultima-unione')).toContainText('(oggi)');
 });

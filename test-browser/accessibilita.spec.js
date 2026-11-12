@@ -44,9 +44,18 @@ async function controlla(p) {
   return violations.map((v) => `${v.id}: ${v.nodes.slice(0, 3).map((n) => n.target.join(' ') + dettagli(n)).join(' | ')}`);
 }
 
-// Le viste da controllare, in tre gruppi: ognuno è un test a sé, che parte da una pagina appena aperta. Un test solo
+// Le viste da controllare, in gruppi: ognuno è un test a sé, che parte da una pagina appena aperta. Un test solo
 // per tutte le viste durava già quasi 30 secondi in Firefox, e ogni sezione nuova lo avrebbe allungato (CLAUDE.md, CI).
 const gruppi = {
+  // la Panoramica, con le card (anche delle sezioni finte) e il fuoco tornato su una card
+  panoramica: [
+    ['panoramica', async (p) => { await vaiA(p, 'panoramica'); }],
+    ['ritorno da casa', async (p) => {
+      await vaiA(p, 'casa');
+      await vaiA(p, 'panoramica');
+      await expect(p.locator('.apri-card[data-sezione="casa"]')).toBeFocused();
+    }],
+  ],
   settimana: [
     ['promemoria aperto', async (p) => { await p.locator('#promemoria > summary').click(); }],
     ['libreria aperta', async (p) => { await p.locator('#pannello-libreria > summary').click(); }],

@@ -3,7 +3,7 @@
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import { creaSeme } from '../strumenti/seme.js';
 import {
-  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto, telefono,
+  MERCOLEDI, LUNEDI_DOPO, apri, ricarica, caricaDati, aggiungi, apriMenu, chiudiMenu, vaiA, salvaFile, unisciFile, foto, telefono,
 } from './aiuti.js';
 
 /** Apre l'app in un contesto "telefono". */
@@ -99,7 +99,7 @@ test('dettaglio e «Togli» sulle schede', async ({ browser }) => {
   const campo = carta(p, 'Sviluppo').locator('.dettaglio');
   await campo.fill('Programma B');
   await campo.press('Enter');
-  await p.reload();
+  await ricarica(p);
   await expect(carta(p, 'Sviluppo').locator('.dettaglio')).toHaveValue('Programma B');
 
   // aggiunta oggi, si toglie da oggi: niente conferma, si rimette con un tocco

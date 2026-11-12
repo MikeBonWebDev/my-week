@@ -58,6 +58,7 @@ settimana-pwa/
 │   ├── pezzi.js          pezzi di interfaccia comuni: el() per costruire elementi, il nome da rinominare, il calore
 │   ├── sezioni.js        il registro delle sezioni e la sezione aperta
 │   ├── navigazione.js    come si arriva alle sezioni: colonna, barra del telefono con «Altro», ventaglio
+│   ├── panoramica.js     la Panoramica: la prima sezione, una card per sezione accesa
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
 │   ├── promemoria.js     il promemoria delle faccende in cima alla settimana, con le sue scelte
 │   ├── libreria.js       il pannello «Libreria delle attività», in fondo alla Settimana
@@ -77,7 +78,8 @@ settimana-pwa/
 │   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
 │   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, impostazioni dal basso
 │   ├── impostazioni.spec.js   le Impostazioni e le sezioni accese o spente (con una sezione finta)
-│   ├── navigazione.spec.js    barra con «Altro», tre posti scelti, ventaglio (con due sezioni finte)
+│   ├── navigazione.spec.js    barra con «Altro», Panoramica più due posti scelti, ventaglio, Dati in alto (con due sezioni finte)
+│   ├── panoramica.spec.js     la Panoramica: avvio, card in ordine fisso, «aperta…», fuoco al ritorno, a mezzanotte
 │   ├── giorni.spec.js    le attività per giorno e le faccende coperte dalle spunte vicine
 │   ├── casa.spec.js      le sezioni e la sezione Casa: faccende, cadenza, «Aggiungi a questa settimana»
 │   ├── colore.spec.js    calore delle faccende, intensità, tema, riposo, «Salto questo giro», parole vietate
@@ -148,11 +150,11 @@ ciò che gli serve (`import`). Le frecce vanno in un verso solo, dall’alto ver
 chi sta sopra.
 
 ```
- livello                  comuni                       Settimana                         Casa      Dati
+ livello                  comuni                       Settimana                         Casa      Dati      Panoramica
     6    guscio.js: il punto di partenza. Registra le sezioni, elenca le parti da disegnare, avvia
     5                                                  azioni.js                         casa.js   file.js
     4                                                  settimana.js
-    3    navigazione.js                              promemoria.js  libreria.js
+    3    navigazione.js                              promemoria.js  libreria.js                            panoramica.js
     2    testi.js  pezzi.js  sezioni.js  rinomina.js
     1    base.js
     0    core.js
@@ -169,9 +171,11 @@ Due regole, controllate da `test/struttura.test.js`, che legge gli `import` di o
 Un file nuovo va messo nel test, con il suo livello e il suo gruppo: se manca, il test lo dice.
 
 Altre tre scelte tengono le frecce in un verso solo. **Il disegno è un elenco**: `base.js` ha `disegna()`, che
-chiama in ordine le parti che `guscio.js` gli consegna all’avvio (`disegnaAnche`): la sezione aperta e il puntino
-sulla voce Dati. La libreria fa parte della Settimana: la disegna `disegnaSettimana`. **Le sezioni sono un registro** (`sezioni.js`): ognuna si descrive nel suo file
-(nome, titolo, sottotitolo, elemento, disegno) e `guscio.js` le registra; chi deve sapere quando si cambia sezione
+chiama in ordine le parti che `guscio.js` gli consegna all’avvio (`disegnaAnche`): la sezione aperta, il puntino
+sul pulsante Dati, la navigazione. La libreria fa parte della Settimana: la disegna `disegnaSettimana`. **Le sezioni
+sono un registro** (`sezioni.js`): ognuna si descrive nel suo file (nome, titolo, sottotitolo, elemento, disegno, e
+la sua card per la Panoramica, `scheda`) e `guscio.js` le registra. La Panoramica non importa le sezioni: legge le
+loro card dal registro (`schedeAccese()`), quindi resta al livello 3. Chi deve sapere quando si cambia sezione
 si iscrive con `quandoCambiaSezione` (il promemoria lo usa per dimenticare i giri saltati da lì). **Un valore che
 cambia lo cambia solo il suo file**: `state`, `oggiK` e la settimana mostrata stanno in `base.js` e cambiano con
 `rileggi()`, `cambiaOggi()` e `mostraSettimana()`; il giorno scelto sul telefono sta in `settimana.js` e cambia con
@@ -334,7 +338,8 @@ si usa l’app.
 
 ### Dove stanno i dati nel browser
 
-`localStorage` è una piccola memoria chiave → testo che il browser tiene **per sito**. L’app usa tre chiavi:
+`localStorage` è una piccola memoria chiave → testo che il browser tiene **per sito**. Le chiavi principali (l’elenco
+completo, con le scelte di ogni dispositivo come tema, menu e «aperta…», è in `DATI.md`):
 
 | Chiave | Contenuto |
 |---|---|
@@ -484,21 +489,26 @@ gli stessi `data-id` e `data-giorno` della tabella, quindi i gestori sono gli st
 Nella vista a un giorno `giornoScelto` ricorda il giorno mostrato: oggi nella settimana corrente; passando a un’altra
 settimana resta lo stesso giorno della settimana, se non è nel futuro (`giornoMostrato`).
 
-### Le sezioni: Settimana, Casa, Dati
+### Le sezioni: Panoramica, Settimana, Casa, Dati
 
 La pagina è una sola; ogni sezione è un blocco. `js/sezioni.js` tiene il registro delle sezioni: ognuna si descrive
-nel suo file (`sezioneSettimana`, `sezioneCasa`, `sezioneDati`: nome, titolo, sottotitolo, elemento, disegno) e
+nel suo file (`sezionePanoramica`, `sezioneSettimana`, `sezioneCasa`, `sezioneDati`: nome, titolo, sottotitolo,
+elemento, disegno; poi, facoltativi, `quandoSiApre`, `dopoApertura`, `scheda`, `spegnibile`, `strumento`) e
 `guscio.js` le registra nell’ordine della barra. `mostraSezione(nome)` mostra quella scelta e nasconde le altre, cambia titolo e sottotitolo e segna il pulsante attivo con `aria-current="page"`, che dice ai lettori di
-schermo "sei qui". La sezione scelta resta in `localStorage` (`settimana:sezione`): l’app riapre dove l’avevi
-lasciata. Non viaggia con il file di sincronizzazione: è una comodità di quel dispositivo, non un dato.
+schermo "sei qui". All’avvio si apre sempre la prima, la **Panoramica** (`js/panoramica.js`): una card per ogni
+sezione che dichiara `scheda` (una funzione che restituisce solo testo, al massimo tre righe), con sotto «aperta
+ieri». Quando hai aperto ogni sezione lo segna `mostraSezione` in `localStorage` (`settimana:aperta`): non viaggia con
+il file, è un’informazione di quel dispositivo. Tornando alla Panoramica, `dopoApertura` rimette il fuoco sulla card
+da cui eri partito. **Dati** è uno `strumento`: il suo pulsante sta in alto, accanto all’ingranaggio, e non è nella
+navigazione né ha card.
 
 I pulsanti delle sezioni stanno in `index.html`, uno per sezione; quali si vedono e dove lo decide `navigazione.js`,
 una delle parti di `disegna()`. Sul computer: la colonna a sinistra (`position: sticky`, alta quanto la finestra), con
 tutte le sezioni accese. Sul telefono, a scelta (Impostazioni, «Menu del telefono», per dispositivo:
 `settimana:menu`, `settimana:barra`):
 
-- **la barra in basso** (`position: fixed`), sempre visibile. Fino a quattro sezioni ci stanno tutte; oltre, tre
-  posti scelti e «Altro», un `<dialog>` con le sezioni rimaste. La barra non si riordina mai da sola: la posizione di
+- **la barra in basso** (`position: fixed`), sempre visibile. Fino a quattro sezioni ci stanno tutte; oltre, la
+  Panoramica, due posti scelti e «Altro», un `<dialog>` con le sezioni rimaste. La barra non si riordina mai da sola: la posizione di
   un pulsante cambia solo se lo decidi tu.
 - **il ventaglio**: un pulsante in basso con il nome della sezione aperta. Toccandolo, le sezioni escono a petali su
   un arco sopra di lui (animazione CSS `sboccia`), e lo stesso pulsante diventa «Chiudi». Non è un `<dialog>`: un
@@ -576,8 +586,8 @@ diverso). Si chiude con la ×, con Esc o con un tocco fuori.
   con il file.
 - **Sezioni**: le sezioni che si possono spegnere (`spegnibile` nel loro descrittore, `sezioni.js`), una casella per
   sezione. Vale **su tutti i dispositivi** (`i/spenta/<sezione>`). Una sezione spenta perde il suo pulsante nella
-  navigazione e non si apre più (se era aperta, o se l’app si riapre su di lei, si va sulla prima accesa); i suoi dati
-  restano. Settimana, Casa e Dati non si spengono: finché non arrivano le sezioni della Fase 2 questa parte non si
+  navigazione e la sua card, e non si apre più (se era aperta si va sulla prima accesa, la Panoramica); i suoi dati
+  restano. Panoramica, Settimana, Casa e Dati non si spengono: finché non arrivano le sezioni della Fase 2 questa parte non si
   vede. I test la provano con una sezione finta, «Orto», aggiunta a `guscio.js` mentre il browser lo scarica
   (`conSezioneFinta` in `aiuti.js`): nessun aggancio per i test nel codice dell’app.
 - In fondo, la versione installata. La **Libreria delle attività** non sta più qui: è in fondo alla Settimana (§9).
@@ -592,7 +602,7 @@ Raccoglie quello che prima stava nel menu: copie, sincronizzazione, CSV. Ogni az
   Altrove resta il download di sempre, e una riga lo dice («Il file va nella cartella dei download del browser»).
   Chiudere la finestra senza salvare non è un errore: semplicemente la copia non risulta fatta.
 - **Il puntino e l’invito.** Se l’ultima copia ha più di 30 giorni (o non ce n’è mai stata una e l’app si usa da
-  più di 30 giorni), compare un puntino color sabbia sulla voce «Dati» e, in cima alla sezione, un invito a salvare.
+  più di 30 giorni), compare un puntino color sabbia sul pulsante «Dati» in alto e, in cima alla sezione, un invito a salvare.
   Niente notifiche, niente numeri; chi usa un lettore di schermo sente «Dati, nuova copia consigliata». È l’unico
   richiamo dell’app: perdere i dati per un telefono rotto è l’unico danno vero che può fare.
 
@@ -825,7 +835,7 @@ si leggono come una storia.
   sezione e ogni foglio, su computer e telefono, in chiaro e in scuro, con il colore delle faccende Morbido e Deciso:
   nessuna violazione delle regole WCAG 2.1 di livello A e AA, contrasto dei colori compreso. Gira con il *movimento
   ridotto*: altrimenti axe misurerebbe un colore a metà di una transizione e segnalerebbe un contrasto che non c’è.
-  Le viste sono divise in gruppi (Settimana, Casa, Dati e Impostazioni), un test per gruppo, ognuno da una pagina
+  Le viste sono divise in gruppi (Panoramica, Settimana, Casa, Dati e Impostazioni), un test per gruppo, ognuno da una pagina
   appena aperta: un test unico per tutte superava i 30 secondi in Firefox. Una sezione nuova porta il suo gruppo.
   Prova a schiarire `--tenue` in `stile.css`: il test se ne accorge.
 

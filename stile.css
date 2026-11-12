@@ -581,6 +581,49 @@ dialog menu { display: flex; justify-content: flex-end; gap: .6rem; margin: 0; p
 .apri-menu:hover { border-color: var(--accento); }
 .apri-menu:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
 .apri-menu svg { width: 1.15rem; height: 1.15rem; }
+/* Dati e Impostazioni, uno accanto all'altro */
+.attrezzi { flex: none; display: flex; gap: .5rem; }
+
+/* ───────── La Panoramica (js/panoramica.js) ─────────
+   Come nell'anteprima approvata (novembre 2026): le card in una colonna, anche sul computer, nell'ordine fisso delle
+   sezioni. Ogni card ha un solo controllo, il pulsante nel titolo: il suo ::after copre tutta la card, così si
+   tocca ovunque, e il contorno del fuoco si disegna sulla card intera. */
+.card-sezioni { display: grid; gap: .8rem; max-width: 40rem; margin: 0; padding: 0; list-style: none; }
+.card-sezione {
+  position: relative;
+  display: grid;
+  gap: .55rem;
+  padding: 1rem 1.1rem .9rem;
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 1.3rem;
+  box-shadow: var(--ombra);
+  transition: border-color .2s ease, translate .2s ease;
+}
+.card-sezione:hover { border-color: var(--accento); translate: 0 -1px; }
+.card-sezione:has(.apri-card:focus-visible) { outline: 3px solid var(--fuoco); outline-offset: 2px; }
+.titolo-card { margin: 0; font-size: 1.05rem; }
+.apri-card {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  width: 100%;
+  min-height: 1.75rem;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--inchiostro);
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.apri-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.apri-card:focus-visible { outline: none; }
+.apri-card svg { flex: none; width: 1.35rem; height: 1.35rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.apri-card .freccia { margin-left: auto; color: var(--tenue); font-weight: 400; }
+.righe-card { display: grid; gap: .15rem; margin: 0; padding: 0; list-style: none; font-size: .95rem; }
+.piede-card { margin: 0; padding-top: .5rem; border-top: 1px solid var(--linea); color: var(--tenue); font-size: .82rem; }
 
 /* ───────── Il menu: un pannello (al centro su computer, dal basso su telefono) ───────── */
 dialog.foglio {
@@ -1068,12 +1111,13 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
 .spiegazione summary { font-weight: 600; cursor: pointer; min-height: 1.8rem; }
 .spiegazione summary:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; border-radius: .3rem; }
 .spiegazione ol { margin: .3rem 0 0; padding-left: 1.3rem; display: grid; gap: .4rem; }
-/* il puntino sulla voce «Dati»: una nuova copia è consigliata. Sabbia, non rosso; nessun numero */
+/* il puntino sul pulsante «Dati», in alto: una nuova copia è consigliata. Sabbia, non rosso; nessun numero */
 .sezione-voce { position: relative; }
+.apri-dati { position: relative; }
 .puntino-dati {
   position: absolute;
-  top: .55rem;
-  left: 1.95rem;
+  top: .3rem;
+  left: 1.75rem;
   width: .62rem;
   height: .62rem;
   border-radius: 50%;
@@ -1084,7 +1128,6 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
 /* ───────── Altro e ventaglio (telefono, js/navigazione.js) ───────── */
 /* «Altro» quando la sezione aperta sta lì dentro: lo stesso colore della voce aperta */
 .voce-altro[data-attiva] { color: var(--bottone-testo); background: var(--bottone); }
-.puntino-altro { left: calc(50% + .45rem); top: .35rem; }
 
 /* il foglio «Altro»: le sezioni in colonna, una per riga, grandi da toccare */
 .lista-altro { display: grid; gap: .45rem; }
@@ -1095,7 +1138,6 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
   font-size: 1rem;
   border: 1px solid var(--scheda-bordo);
 }
-.lista-altro .puntino-dati { top: .7rem; left: 2.1rem; }
 
 /* ───────── Il ventaglio (telefono) ─────────
    Come nell'anteprima approvata (novembre 2026). Il pulsante in basso al centro dice dove sei; aperto, lo stesso
@@ -1126,7 +1168,6 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
 .pulsante-ventaglio svg { width: 1.375rem; height: 1.375rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .pulsante-ventaglio[aria-expanded="true"] .icona-chiuso, .pulsante-ventaglio[aria-expanded="false"] .icona-aperto { display: none; }
 .pulsante-ventaglio:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
-.pulsante-ventaglio .puntino-altro { top: .45rem; left: 2.1rem; }
 
 .aperto-ventaglio .velo {
   position: fixed;
@@ -1186,7 +1227,6 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
 .petalo[aria-current="page"] .cerchio { color: var(--bottone-testo); background: var(--bottone); border-color: var(--bottone); }
 .petalo:focus-visible { outline: none; }
 .petalo:focus-visible .cerchio { outline: 3px solid var(--fuoco); outline-offset: 3px; }
-.petalo .puntino-dati { top: 2px; left: auto; right: 2px; }
 /* dal pulsante verso il suo posto sull'arco, uno dopo l'altro; chiudendo rientrano tutti insieme */
 @keyframes sboccia { from { translate: 0 0; scale: .4; opacity: 0; } to { translate: var(--x) var(--y); scale: 1; opacity: 1; } }
 @keyframes velo-appare { from { opacity: 0; } }
@@ -1217,12 +1257,17 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
   [data-menu="ventaglio"] .sezioni { display: none; }
   .sezione-voce { flex: 1; flex-direction: column; justify-content: center; gap: .1rem; min-height: 3.4rem; font-size: .82rem; }
   .stato { bottom: calc(5.4rem + env(safe-area-inset-bottom)); }
-  .puntino-dati { top: .35rem; left: calc(50% + .45rem); }
   .azione { flex-wrap: wrap; }
   .azione .pulsante { width: 100%; }
   h1 { font-size: 1.75rem; }
   .sottotitolo, .apri-menu .lungo { display: none; }
-  .apri-menu { margin-top: 0; padding: 0 .85rem; }
+  .card-sezioni { gap: .65rem; max-width: none; }
+  /* la data di oggi sotto «Panoramica» resta anche sul telefono: è l'unico sottotitolo che dice qualcosa di nuovo */
+  body:has(#sezione-panoramica:not([hidden])) .sottotitolo { display: block; }
+  /* Dati e Impostazioni: due tondi, solo l'icona. Il titolo cede lo spazio prima di loro: con il carattere grande
+     e lo schermo stretto (320 px) una parola lunga come «Panoramica» va a capo invece di spingerli fuori */
+  .apri-menu { justify-content: center; width: 2.75rem; margin-top: 0; padding: 0; }
+  .testata h1 { min-width: 0; font-size: min(1.75rem, 8.5vw); overflow-wrap: anywhere; }
   .intestazione { margin-bottom: .8rem; }
   .settimane { margin-bottom: .8rem; }
   .periodo { min-width: 0; flex: 1; }

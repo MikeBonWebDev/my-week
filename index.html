@@ -18,8 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- ?v=23: vedi la nota sugli script in fondo -->
-  <link rel="stylesheet" href="stile.css?v=23">
+  <!-- ?v=24: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=24">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -38,7 +38,11 @@
   <!-- Le sezioni dell'app: colonna a sinistra sul computer, barra in basso sul telefono (stile.css) -->
   <nav class="sezioni" id="sezioni" aria-label="Sezioni">
     <span class="marchio" aria-hidden="true">La mia settimana</span>
-    <button type="button" class="sezione-voce" data-sezione="settimana" aria-current="page">
+    <button type="button" class="sezione-voce" data-sezione="panoramica" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>
+      <span>Panoramica</span>
+    </button>
+    <button type="button" class="sezione-voce" data-sezione="settimana">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       <span>Settimana</span>
     </button>
@@ -46,16 +50,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg>
       <span>Casa</span>
     </button>
-    <button type="button" class="sezione-voce" data-sezione="dati">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14l3 3 3-3"/></svg>
-      <span>Dati</span>
-      <span class="puntino-dati" id="puntino-dati" aria-hidden="true" hidden></span>
-    </button>
     <!-- Telefono: «Altro» apre le sezioni che non stanno nella barra (js/navigazione.js). C'è solo se servono più posti. -->
     <button type="button" class="sezione-voce voce-altro" id="voce-altro" aria-haspopup="dialog" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
       <span>Altro</span>
-      <span class="puntino-dati puntino-altro" aria-hidden="true" hidden></span>
     </button>
   </nav>
 
@@ -69,23 +67,36 @@
     <svg class="icona-chiuso" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>
     <svg class="icona-aperto" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
     <span id="testo-ventaglio"></span>
-    <span class="puntino-dati puntino-altro" aria-hidden="true" hidden></span>
   </button>
 
   <main>
     <header class="intestazione">
       <div class="testata">
-        <h1 id="titolo-sezione">La mia settimana</h1>
-        <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog" aria-label="Impostazioni">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5l1.5 2.4 2.7-.8.7 2.7 2.4 1.5-1.4 2.7 1.4 2.7-2.4 1.5-.7 2.7-2.7-.8-1.5 2.4-1.5-2.4-2.7.8-.7-2.7-2.4-1.5 1.4-2.7-1.4-2.7 2.4-1.5.7-2.7 2.7.8z"/></svg>
-          <span class="lungo">Impostazioni</span>
-        </button>
+        <h1 id="titolo-sezione">Panoramica</h1>
+        <div class="attrezzi">
+          <!-- Dati non è una sezione della barra: è uno strumento, come le Impostazioni, e si raggiunge da ogni sezione.
+               Il puntino dice che una copia nuova è consigliata (js/file.js). -->
+          <button type="button" class="apri-menu apri-dati" id="apri-dati" data-sezione="dati" aria-label="Dati">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14l3 3 3-3"/></svg>
+            <span class="lungo">Dati</span>
+            <span class="puntino-dati" id="puntino-dati" aria-hidden="true" hidden></span>
+          </button>
+          <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog" aria-label="Impostazioni">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5l1.5 2.4 2.7-.8.7 2.7 2.4 1.5-1.4 2.7 1.4 2.7-2.4 1.5-.7 2.7-2.7-.8-1.5 2.4-1.5-2.4-2.7.8-.7-2.7-2.4-1.5 1.4-2.7-1.4-2.7 2.4-1.5.7-2.7 2.7.8z"/></svg>
+            <span class="lungo">Impostazioni</span>
+          </button>
+        </div>
       </div>
-      <p class="sottotitolo" id="sottotitolo">Le attività della settimana, giorno per giorno.</p>
+      <p class="sottotitolo" id="sottotitolo"></p>
     </header>
 
+    <!-- ═════ Panoramica: una card per sezione, in ordine fisso; si apre all'avvio (js/panoramica.js) ═════ -->
+    <section id="sezione-panoramica" aria-labelledby="titolo-sezione">
+      <ul class="card-sezioni" id="card-sezioni"></ul>
+    </section>
+
     <!-- ═════ Sezione Settimana ═════ -->
-    <div id="sezione-settimana">
+    <div id="sezione-settimana" hidden>
     <nav class="settimane" aria-label="Scegli la settimana">
       <button type="button" class="giro" id="sett-prec" aria-label="Settimana precedente">‹</button>
       <div class="periodo" aria-live="polite">
@@ -288,7 +299,7 @@
       <h3 id="titolo-menu-telefono">Menu del telefono</h3>
       <div class="scelte" id="scelte-menu-telefono" role="group" aria-labelledby="titolo-menu-telefono"></div>
       <div class="scelte-sezioni" id="scelte-barra" role="group" aria-labelledby="etichetta-barra" hidden>
-        <span class="etichetta-foglio" id="etichetta-barra">Nella barra (tre)</span>
+        <span class="etichetta-foglio" id="etichetta-barra">Nella barra, oltre alla Panoramica (due)</span>
       </div>
       <p class="nota-foglio" id="nota-menu-telefono"></p>
     </section>
@@ -370,31 +381,32 @@
        divisa per argomento in js/. Si carica solo guscio.js, che avvia l'app: i file che gli servono li chiede lui,
        con import, e così via a cascata (vedi la nota MODULI in js/base.js).
 
-       Il «?v=23» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       Il «?v=24» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
        può mescolare la pagina nuova con file vecchi che ha in memoria. Un import dentro un modulo scrive solo
        './base.js', senza numero: l'elenco qui sotto (import map) dice al browser che './base.js' è
-       'js/base.js?v=23'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
+       'js/base.js?v=24'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
        Ogni file di codice deve comparire qui: un test controlla che ci siano tutti, con il numero giusto. -->
   <script type="importmap">
     {
       "imports": {
-        "./core.js": "./core.js?v=23",
-        "./js/base.js": "./js/base.js?v=23",
-        "./js/testi.js": "./js/testi.js?v=23",
-        "./js/pezzi.js": "./js/pezzi.js?v=23",
-        "./js/sezioni.js": "./js/sezioni.js?v=23",
-        "./js/navigazione.js": "./js/navigazione.js?v=23",
-        "./js/settimana.js": "./js/settimana.js?v=23",
-        "./js/promemoria.js": "./js/promemoria.js?v=23",
-        "./js/libreria.js": "./js/libreria.js?v=23",
-        "./js/rinomina.js": "./js/rinomina.js?v=23",
-        "./js/azioni.js": "./js/azioni.js?v=23",
-        "./js/file.js": "./js/file.js?v=23",
-        "./js/casa.js": "./js/casa.js?v=23",
-        "./js/guscio.js": "./js/guscio.js?v=23"
+        "./core.js": "./core.js?v=24",
+        "./js/base.js": "./js/base.js?v=24",
+        "./js/testi.js": "./js/testi.js?v=24",
+        "./js/pezzi.js": "./js/pezzi.js?v=24",
+        "./js/sezioni.js": "./js/sezioni.js?v=24",
+        "./js/navigazione.js": "./js/navigazione.js?v=24",
+        "./js/panoramica.js": "./js/panoramica.js?v=24",
+        "./js/settimana.js": "./js/settimana.js?v=24",
+        "./js/promemoria.js": "./js/promemoria.js?v=24",
+        "./js/libreria.js": "./js/libreria.js?v=24",
+        "./js/rinomina.js": "./js/rinomina.js?v=24",
+        "./js/azioni.js": "./js/azioni.js?v=24",
+        "./js/file.js": "./js/file.js?v=24",
+        "./js/casa.js": "./js/casa.js?v=24",
+        "./js/guscio.js": "./js/guscio.js?v=24"
       }
     }
   </script>
-  <script type="module" src="js/guscio.js?v=23"></script>
+  <script type="module" src="js/guscio.js?v=24"></script>
 </body>
 </html>

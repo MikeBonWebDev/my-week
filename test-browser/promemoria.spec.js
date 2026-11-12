@@ -2,7 +2,7 @@
 // Oggi, per i test, è mercoledì 14 ottobre 2026 (vedi aiuti.js): la settimana va da lunedì 12 a domenica 18.
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import * as Core from '../core.js';
-import { apri, caricaDati, vaiA, telefono } from './aiuti.js';
+import { apri, caricaDati, ricarica, vaiA, telefono } from './aiuti.js';
 
 
 // Sei faccende; nella settimana del 12 ottobre ci sono solo Lavatrice e Sviluppo (che non è una faccenda).
@@ -168,7 +168,8 @@ test('all’avvio è chiuso, con il numero dei giri; si apre toccando il titolo;
   // si apre anche da tastiera
   await p.locator('#promemoria > summary').press('Enter');
   await expect(righe(p).first()).toBeVisible();
-  await p.reload();
+  await ricarica(p);
+  await expect(promemoria(p)).toBeVisible();
   await expect(promemoria(p)).not.toHaveAttribute('open', '');
   await expect(righe(p).first()).toBeHidden();
 });

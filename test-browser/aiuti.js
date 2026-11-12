@@ -40,8 +40,10 @@ function telefono() {
 /**
  * Apre l'app in un contesto (= un "dispositivo" con la sua memoria) con l'orologio fermato a `quando`.
  * Raccoglie gli errori JavaScript della pagina in `pagina.errori`, da controllare alla fine.
+ * L'app parte sempre dalla Panoramica; quasi tutti i test lavorano sulla Settimana, quindi apri() ci va subito, come
+ * farebbe una persona, toccando «Settimana». Con `{ panoramica: true }` resta sulla Panoramica.
  */
-async function apri(contesto, quando = MERCOLEDI, { salvaConNome = false } = {}) {
+async function apri(contesto, quando = MERCOLEDI, { salvaConNome = false, panoramica = false } = {}) {
   // «Salva con nome» aprirebbe una finestra del sistema, che un test non può usare: di solito qui il file si
   // scarica. I test di «Salva con nome» (dati.spec.js) ne mettono uno finto e chiedono di lasciarlo.
   if (!salvaConNome) await contesto.addInitScript(() => { delete window.showSaveFilePicker; });
@@ -50,13 +52,20 @@ async function apri(contesto, quando = MERCOLEDI, { salvaConNome = false } = {})
   pagina.on('pageerror', (e) => pagina.errori.push(String(e)));
   await pagina.clock.install({ time: quando });
   await pagina.goto('/');
+  if (!panoramica) await vaiA(pagina, 'settimana');
   return pagina;
 }
 
-/** Mette un registro nella memoria del dispositivo e ricarica: la pagina riparte con quei dati. */
+/** Ricarica la pagina (riparte dalla Panoramica) e torna alla Settimana, come apri(). */
+async function ricarica(pagina, { panoramica = false } = {}) {
+  await pagina.reload();
+  if (!panoramica) await vaiA(pagina, 'settimana');
+}
+
+/** Mette un registro nella memoria del dispositivo e ricarica: la pagina riparte con quei dati, dalla Settimana. */
 async function caricaDati(pagina, fileSync) {
   await pagina.evaluate((d) => localStorage.setItem('settimana:registro', JSON.stringify(d)), fileSync);
-  await pagina.reload();
+  await ricarica(pagina);
 }
 
 /** I nomi delle attività nella tabella, dall'alto in basso. */
@@ -124,14 +133,15 @@ async function apriLibreria(p) {
   if ((await pannello.getAttribute('open')) === null) await pannello.locator('summary').click();
 }
 
-/** Va a una sezione: 'settimana', 'casa', 'dati'. */
+/** Va a una sezione: 'panoramica', 'settimana', 'casa' dalla colonna o dalla barra; 'dati' dal pulsante in alto. */
+const pulsanteSezione = (p, sezione) => p.locator(`#sezioni .sezione-voce[data-sezione="${sezione}"], #apri-dati[data-sezione="${sezione}"]`);
 async function vaiA(p, sezione) {
-  await p.click(`.sezione-voce[data-sezione="${sezione}"]`);
-  await expect(p.locator(`.sezione-voce[data-sezione="${sezione}"]`)).toHaveAttribute('aria-current', 'page');
+  await pulsanteSezione(p, sezione).click();
+  await expect(pulsanteSezione(p, sezione)).toHaveAttribute('aria-current', 'page');
 }
 
 /** La sezione mostrata adesso. */
-const sezioneAttuale = (p) => p.locator('.sezione-voce[aria-current="page"]').getAttribute('data-sezione');
+const sezioneAttuale = (p) => p.locator('#sezioni .sezione-voce[aria-current="page"], #apri-dati[aria-current="page"]').getAttribute('data-sezione');
 
 /** «Salva il file» di sincronizzazione (sezione Dati): restituisce il percorso del file scaricato. Poi torna dov'era. */
 async function salvaFile(p, percorso) {
@@ -184,7 +194,7 @@ function foto(p) {
  * dice invece di passare. Ogni sezione finta ha il suo pulsante nella barra e un paragrafo «Le piante.» come contenuto.
  */
 async function conSezioneFinta(contesto, finte = [['orto', 'Orto']]) {
-  const riga = 'registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);';
+  const riga = 'registraSezioni(sezionePanoramica, sezioneSettimana, sezioneCasa, sezioneDati);';
   const codice = `{
     const finta = (nome, titolo) => {
       const b = document.createElement('button');
@@ -193,9 +203,9 @@ async function conSezioneFinta(contesto, finte = [['orto', 'Orto']]) {
       document.querySelector('#voce-altro').before(b);
       const elemento = Object.assign(document.createElement('section'), { id: 'sezione-' + nome, hidden: true, textContent: 'Le piante.' });
       document.querySelector('#stato').before(elemento);
-      return { nome, titolo, sottotitolo: 'Una sezione di prova.', elemento, disegna() {}, spegnibile: true };
+      return { nome, titolo, sottotitolo: 'Una sezione di prova.', elemento, disegna() {}, spegnibile: true, scheda: () => ['Le piante.'] };
     };
-    registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati, ...${JSON.stringify(finte)}.map(([n, t]) => finta(n, t)));
+    registraSezioni(sezionePanoramica, sezioneSettimana, sezioneCasa, sezioneDati, ...${JSON.stringify(finte)}.map(([n, t]) => finta(n, t)));
   }`;
   await contesto.route(/\/js\/guscio\.js/, async (route) => {
     const risposta = await route.fetch();
@@ -208,6 +218,6 @@ async function conSezioneFinta(contesto, finte = [['orto', 'Orto']]) {
 
 export {
   test, expect, telefono, conSezioneFinta,
-  MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
+  MERCOLEDI, LUNEDI_DOPO, apri, ricarica, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
   dettaglio, spunta, togli, apriMenu, chiudiMenu, apriLibreria, vaiA, salvaFile, unisciFile, foto,
 };

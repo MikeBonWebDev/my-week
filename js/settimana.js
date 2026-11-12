@@ -394,6 +394,19 @@ function disegnaSettimana() {
   aggiornaLibreria();
 }
 
+// Su schermi stretti la tabella scorre: porto la colonna di oggi al centro, così non devi cercarla. La chiamano
+// «Torna a oggi», la rotazione dello schermo (guscio.js) e la prima apertura della Settimana dopo l'avvio.
+export function mostraOggi() {
+  if (telefono.matches) return;   // su telefono non c'è la tabella: oggi è già il giorno mostrato
+  const contenitore = $('.scorri');
+  const th = rigaIntestazione.querySelector('[data-oggi]');
+  if (!th || contenitore.scrollWidth <= contenitore.clientWidth) return;
+  const larghezzaNomi = rigaIntestazione.firstElementChild.offsetWidth;
+  const spazio = contenitore.clientWidth - larghezzaNomi - th.offsetWidth;
+  contenitore.scrollLeft = Math.max(0, th.offsetLeft - larghezzaNomi - spazio / 2);
+}
+let giaCentrata = false;
+
 // La sezione Settimana, come la vede il registro delle sezioni (sezioni.js; la registra guscio.js)
 export const sezioneSettimana = {
   nome: 'settimana',
@@ -401,4 +414,8 @@ export const sezioneSettimana = {
   sottotitolo: 'Le attività della settimana, giorno per giorno.',
   elemento: $('#sezione-settimana'),
   disegna: disegnaSettimana,
+  // la prima volta dopo l'avvio, la colonna di oggi in vista (prima della Panoramica lo faceva l'avvio stesso)
+  dopoApertura: () => { if (!giaCentrata) { giaCentrata = true; mostraOggi(); } },
+  // la card nella Panoramica: per ora solo il titolo e «aperta…»; cosa dice si decide nel passo della sua card
+  scheda: () => [],
 };

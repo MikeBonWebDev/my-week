@@ -1,23 +1,23 @@
 // js/guscio.js — il punto di partenza: carica gli altri moduli, le Impostazioni, l’avvio, l’app installabile.
-import {
-  $, avvisoIniziale, db, disegna, disegnaAnche, esito, menu, mostraStato, rigaIntestazione, state, telefono
-} from './base.js';
+import { $, avvisoIniziale, db, disegna, disegnaAnche, esito, menu, mostraStato, state, telefono } from './base.js';
 import { el } from './pezzi.js';
 import { disegnaSezioneAperta, mostraSezione, registraSezioni, sezioneIniziale, sezioniSpegnibili } from './sezioni.js';
 import { disegnaNavigazione, disegnaSceltaMenuTelefono } from './navigazione.js';
-import { sezioneSettimana } from './settimana.js';
+import { sezionePanoramica } from './panoramica.js';
+import { mostraOggi, sezioneSettimana } from './settimana.js';
 import { aggiornaPuntinoDati, sezioneDati } from './file.js';
 import { sezioneCasa } from './casa.js';
 import './azioni.js';   // i gestori delle azioni sulla settimana: non esporta niente, basta caricarlo
 import './rinomina.js'; // il foglio «Rinomina», da qualunque sezione: anche lui basta caricarlo
 
 /* ───────── Le sezioni e il disegno ─────────
-   Le sezioni, nell'ordine della barra (sezioni.js). Una sezione nuova si descrive nel suo file e si aggiunge qui,
-   insieme al suo pulsante e al suo contenuto in index.html.
-   Poi le parti che disegna() (base.js) ridisegna, in quest'ordine: la sezione aperta, il puntino sulla voce Dati
-   (si vede da ogni sezione), la navigazione (quali pulsanti, «Altro», il ventaglio: guarda anche il puntino, per
-   questo viene dopo). La libreria fa parte della Settimana: la disegna lei. */
-registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);
+   Le sezioni, nell'ordine della barra e delle card (sezioni.js): la Panoramica per prima, perché si apre all'avvio.
+   Una sezione nuova si descrive nel suo file e si aggiunge qui, insieme al suo pulsante e al suo contenuto in
+   index.html. Dati è l'ultima: è uno strumento, con il suo pulsante in alto.
+   Poi le parti che disegna() (base.js) ridisegna, in quest'ordine: la sezione aperta, il puntino sul pulsante Dati
+   (si vede da ogni sezione), la navigazione (quali pulsanti, «Altro», il ventaglio). La libreria fa parte della
+   Settimana: la disegna lei. */
+registraSezioni(sezionePanoramica, sezioneSettimana, sezioneCasa, sezioneDati);
 disegnaAnche(disegnaSezioneAperta, aggiornaPuntinoDati, disegnaNavigazione);
 
 /* ───────── Le Impostazioni ─────────
@@ -147,24 +147,14 @@ $('#chiudi-menu').addEventListener('click', () => menu.close());
 menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
 
 /* ───────── Avvio ───────── */
-// Su schermi stretti la tabella scorre: porto la colonna di oggi al centro, così non devi cercarla.
-function mostraOggi() {
-  if (telefono.matches) return;   // su telefono non c'è la tabella: oggi è già il giorno mostrato
-  const contenitore = $('.scorri');
-  const th = rigaIntestazione.querySelector('[data-oggi]');
-  if (!th || contenitore.scrollWidth <= contenitore.clientWidth) return;
-  const larghezzaNomi = rigaIntestazione.firstElementChild.offsetWidth;
-  const spazio = contenitore.clientWidth - larghezzaNomi - th.offsetWidth;
-  contenitore.scrollLeft = Math.max(0, th.offsetLeft - larghezzaNomi - spazio / 2);
-}
+// «Torna a oggi»: azioni.js riporta alla settimana di oggi, poi qui la colonna di oggi in vista. Il gestore sta qui
+// perché guscio.js gira dopo azioni.js: così centra la tabella già ridisegnata.
 $('#vai-oggi').addEventListener('click', mostraOggi);
 // Ruoti il telefono o stringi la finestra oltre la soglia: si passa dall'una all'altra vista.
 telefono.addEventListener('change', () => { disegna(); mostraOggi(); });
 
-// Si parte: la sezione dove l'avevi lasciata (di solito la settimana), colonna di oggi in vista,
-// eventuale avviso sui dati illeggibili.
+// Si parte sempre dalla Panoramica (PIANO.md §3.5.1), con l'eventuale avviso sui dati illeggibili.
 mostraSezione(sezioneIniziale());
-mostraOggi();
 if (avvisoIniziale) mostraStato(avvisoIniziale, true, 9000);
 
 /* ───────── App installabile (PWA) ─────────

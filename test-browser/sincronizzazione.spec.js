@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import {
-  MERCOLEDI, apri, nomi, aggiungi, dettaglio, spunta, togli, vaiA, salvaFile, unisciFile, foto,
+  MERCOLEDI, apri, ricarica, nomi, aggiungi, dettaglio, spunta, togli, vaiA, salvaFile, unisciFile, foto,
 } from './aiuti.js';
 
 test('due dispositivi lavorano separati e, scambiandosi il file, tornano uguali', async ({ browser }, info) => {
@@ -81,8 +81,8 @@ test('due schede sullo stesso browser non si cancellano le modifiche a vicenda',
   await aggiungi(s1, 'Leggere');
   await expect.poll(() => nomi(s2)).toContain('Leggere');   // la seconda scheda si aggiorna da sola
   await aggiungi(s2, 'Chitarra');
-  await s1.reload();
-  await s2.reload();
+  await ricarica(s1);
+  await ricarica(s2);
   expect((await nomi(s1)).sort()).toEqual(['Chitarra', 'Leggere']);
   expect((await nomi(s2)).sort()).toEqual(['Chitarra', 'Leggere']);
 });

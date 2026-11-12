@@ -1,9 +1,10 @@
 // Test nel browser della navigazione: sul computer la colonna con tutte le sezioni; sul telefono la barra con tre
-// posti e «Altro», oppure il ventaglio (Impostazioni, «Menu del telefono»). Le sezioni oltre le tre di oggi sono
-// finte, «Orto» e «Serra» (conSezioneFinta in aiuti.js): arriveranno Cucina e Spese.
+// posti (la Panoramica, fissa, più due scelti) e «Altro», oppure il ventaglio (Impostazioni, «Menu del telefono»).
+// Dati non c'è: sta in alto, accanto all'ingranaggio. Le sezioni oltre le tre di oggi sono finte, «Orto» e «Serra»
+// (conSezioneFinta in aiuti.js): arriveranno Cucina e Spese.
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import { creaSeme } from '../strumenti/seme.js';
-import { apri, apriMenu, caricaDati, chiudiMenu, conSezioneFinta, telefono, vaiA } from './aiuti.js';
+import { apri, apriMenu, caricaDati, chiudiMenu, conSezioneFinta, ricarica, telefono, vaiA } from './aiuti.js';
 
 const FINTE = [['orto', 'Orto'], ['serra', 'Serra']];
 const inBarra = (p) => p.locator('#sezioni .sezione-voce[data-sezione]:visible')
@@ -13,7 +14,7 @@ const apriTelefono = async (browser, finte = FINTE) => apri(await conSezioneFint
 
 test('telefono: con cinque sezioni la barra ne tiene tre e «Altro» le altre; aperta da lì, «Altro» lo dice', async ({ browser }) => {
   const p = await apriTelefono(browser);
-  expect(await inBarra(p)).toEqual(['settimana', 'casa', 'dati']);
+  expect(await inBarra(p)).toEqual(['panoramica', 'settimana', 'casa']);
   await expect(p.locator('#voce-altro')).toBeVisible();
   await expect(p.locator('#voce-altro')).not.toHaveAttribute('data-attiva');
 
@@ -38,7 +39,7 @@ test('telefono: con cinque sezioni la barra ne tiene tre e «Altro» le altre; a
 
 test('con quattro sezioni o meno «Altro» non c’è; spegnendone una, quella che era in Altro torna nella barra', async ({ browser }) => {
   const quattro = await apriTelefono(browser, [['orto', 'Orto']]);
-  expect(await inBarra(quattro)).toEqual(['settimana', 'casa', 'dati', 'orto']);
+  expect(await inBarra(quattro)).toEqual(['panoramica', 'settimana', 'casa', 'orto']);
   await expect(quattro.locator('#voce-altro')).toBeHidden();
 
   const p = await apriTelefono(browser);
@@ -47,29 +48,32 @@ test('con quattro sezioni o meno «Altro» non c’è; spegnendone una, quella c
   await p.locator('#scelte-sezioni input[data-sezione="orto"]').uncheck();   // quattro accese: ci stanno tutte
   await expect(p.locator('#scelte-barra')).toBeHidden();
   await chiudiMenu(p);
-  expect(await inBarra(p)).toEqual(['settimana', 'casa', 'dati', 'serra']);
+  expect(await inBarra(p)).toEqual(['panoramica', 'settimana', 'casa', 'serra']);
   await expect(p.locator('#voce-altro')).toBeHidden();
   expect([quattro.errori, p.errori]).toEqual([[], []]);
 });
 
-test('Impostazioni: le tre sezioni della barra si scelgono, valgono per questo dispositivo e restano', async ({ browser }) => {
+test('Impostazioni: le due sezioni accanto alla Panoramica si scelgono, valgono per questo dispositivo e restano', async ({ browser }) => {
   const p = await apriTelefono(browser);
   await apriMenu(p);
   const casella = (nome) => p.locator(`#scelte-barra input[data-barra="${nome}"]`);
-  await expect(casella('orto')).toBeDisabled();                       // tre già scelte: prima se ne toglie una
-  await casella('dati').uncheck();
+  // la Panoramica c'è sempre e non si sceglie; Dati sta in alto
+  expect(await p.locator('#scelte-barra input[data-barra]').evaluateAll((cc) => cc.map((c) => c.dataset.barra)))
+    .toEqual(['settimana', 'casa', 'orto', 'serra']);
+  await expect(casella('orto')).toBeDisabled();                       // due già scelte: prima se ne toglie una
+  await casella('casa').uncheck();
   await expect(casella('orto')).toBeEnabled();
   await casella('orto').check();
   await expect(casella('serra')).toBeDisabled();
   await chiudiMenu(p);
-  expect(await inBarra(p)).toEqual(['settimana', 'casa', 'orto']);   // sempre nell'ordine delle sezioni
+  expect(await inBarra(p)).toEqual(['panoramica', 'settimana', 'orto']);   // sempre nell'ordine delle sezioni
   await p.click('#voce-altro');
   expect(await p.locator('#lista-altro [data-sezione]').evaluateAll((bb) => bb.map((b) => b.dataset.sezione)))
-    .toEqual(['dati', 'serra']);
+    .toEqual(['casa', 'serra']);
   await p.keyboard.press('Escape');
 
   await p.reload();
-  expect(await inBarra(p)).toEqual(['settimana', 'casa', 'orto']);
+  expect(await inBarra(p)).toEqual(['panoramica', 'settimana', 'orto']);
   // un altro dispositivo non ne sa niente: la scelta non sta nel registro
   expect(await p.evaluate(() => localStorage.getItem('settimana:registro') ?? '')).not.toContain('barra');
   expect(p.errori).toEqual([]);
@@ -77,28 +81,43 @@ test('Impostazioni: le tre sezioni della barra si scelgono, valgono per questo d
 
 test('una sezione scelta per la barra e poi spenta lascia il posto alla prima che manca', async ({ browser }) => {
   const p = await apriTelefono(browser);
-  await p.evaluate(() => localStorage.setItem('settimana:barra', JSON.stringify(['settimana', 'orto', 'serra'])));
+  await p.evaluate(() => localStorage.setItem('settimana:barra', JSON.stringify(['orto', 'serra'])));
   await p.reload();
-  expect(await inBarra(p)).toEqual(['settimana', 'orto', 'serra']);
+  expect(await inBarra(p)).toEqual(['panoramica', 'orto', 'serra']);
   await apriMenu(p);
   await p.locator('#scelte-sezioni input[data-sezione="serra"]').uncheck();
   await p.locator('#scelte-sezioni input[data-sezione="orto"]').uncheck();
   await chiudiMenu(p);
-  expect(await inBarra(p)).toEqual(['settimana', 'casa', 'dati']);
+  expect(await inBarra(p)).toEqual(['panoramica', 'settimana', 'casa']);
   expect(p.errori).toEqual([]);
 });
 
-test('il puntino di Dati si vede su «Altro» quando Dati sta lì dentro', async ({ browser }) => {
+test('la scelta salvata prima della Panoramica (tre posti, con Dati) vale ancora: restano le due sezioni', async ({ browser }) => {
+  const p = await apriTelefono(browser);
+  await p.evaluate(() => localStorage.setItem('settimana:barra', JSON.stringify(['settimana', 'orto', 'dati'])));
+  await p.reload();
+  expect(await inBarra(p)).toEqual(['panoramica', 'settimana', 'orto']);
+  expect(p.errori).toEqual([]);
+});
+
+test('Dati sta in alto, con il puntino, con la barra e con il ventaglio; non è in «Altro» né tra i petali', async ({ browser }) => {
   const p = await apriTelefono(browser);
   await caricaDati(p, creaSeme());                                     // in uso da più di 30 giorni, mai salvato
+  await expect(p.locator('#apri-dati')).toBeVisible();
   await expect(p.locator('#puntino-dati')).toBeVisible();
-  await expect(p.locator('#voce-altro .puntino-altro')).toBeHidden();   // Dati è nella barra
-  await p.evaluate(() => localStorage.setItem('settimana:barra', JSON.stringify(['settimana', 'casa', 'orto'])));
-  await p.reload();
-  await expect(p.locator('#voce-altro .puntino-altro')).toBeVisible();
+  await expect(p.locator('#apri-dati')).toHaveAccessibleName('Dati, nuova copia consigliata');
   await p.click('#voce-altro');
-  await expect(p.locator('#lista-altro [data-sezione="dati"] .puntino-dati')).toBeVisible();
+  await expect(p.locator('#lista-altro [data-sezione="dati"]')).toHaveCount(0);
   await expect(p.locator('#lista-altro [id]')).toHaveCount(0);        // le copie non ripetono gli id
+  await p.keyboard.press('Escape');
+
+  await usaVentaglio(p);
+  await p.click('#apri-ventaglio');
+  await expect(p.locator('#ventaglio .petalo[data-sezione="dati"]')).toHaveCount(0);
+  await p.keyboard.press('Escape');
+  await vaiA(p, 'dati');
+  await expect(sezioneAperta(p)).toHaveText('Dati');
+  await expect(p.locator('#apri-dati')).toHaveAttribute('aria-current', 'page');
   expect(p.errori).toEqual([]);
 });
 
@@ -128,16 +147,16 @@ test('ventaglio: il pulsante dice dove sei; aperto diventa «Chiudi», e il fuoc
   await expect(p.locator('.pulsante-ventaglio:visible')).toHaveCount(1);
   await expect(pulsante).toHaveText('Chiudi');
   await expect(pulsante).toHaveAttribute('aria-expanded', 'true');
-  expect(await petali(p)).toEqual(['settimana', 'casa', 'dati', 'orto', 'serra']);   // tutte, anche quelle fuori dalla barra
+  expect(await petali(p)).toEqual(['panoramica', 'settimana', 'casa', 'orto', 'serra']);   // tutte, anche quelle fuori dalla barra
   await expect(p.locator('#ventaglio .petalo[data-sezione="settimana"]')).toBeFocused();
   await expect(p.locator('#ventaglio .petalo[data-sezione="settimana"]')).toHaveAttribute('aria-current', 'page');
   expect(await p.evaluate(() => document.querySelector('main').inert)).toBe(true);   // la pagina dietro non risponde
 
-  // Tab gira tra i petali e il pulsante, senza uscire
-  for (let i = 0; i < 5; i++) await p.keyboard.press('Tab');
+  // Tab gira tra i petali e il pulsante, senza uscire: dalla Settimana, quattro passi fino al pulsante, poi da capo
+  for (let i = 0; i < 4; i++) await p.keyboard.press('Tab');
   await expect(pulsante).toBeFocused();
   await p.keyboard.press('Tab');
-  await expect(p.locator('#ventaglio .petalo[data-sezione="settimana"]')).toBeFocused();
+  await expect(p.locator('#ventaglio .petalo[data-sezione="panoramica"]')).toBeFocused();
 
   // Esc chiude, e il fuoco torna al pulsante (anche in Safari, che non dà il fuoco al tocco)
   await p.keyboard.press('Escape');
@@ -169,6 +188,7 @@ test('ventaglio: scegliendo un petalo si cambia sezione; il velo e «Chiudi» ch
 
   await p.reload();                                                   // vale per il dispositivo: resta il ventaglio
   await expect(pulsante).toBeVisible();
+  await expect(pulsante).toHaveText('Panoramica');                    // e si riparte dalla Panoramica
   await expect(p.locator('#sezioni')).toBeHidden();
   expect(p.errori).toEqual([]);
 });
@@ -180,7 +200,7 @@ test('ventaglio: su uno schermo stretto e con il carattere grande nessun petalo 
     localStorage.setItem('settimana:menu', 'ventaglio');
     document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '22px'; });
   });
-  const p = await apri(contesto);
+  const p = await apri(contesto, undefined, { panoramica: true });   // con il ventaglio la barra non c'è
   await p.click('#apri-ventaglio');
   await expect(p.locator('#ventaglio .petalo')).toHaveCount(5);
   // a fine animazione: i rettangoli dei petali, a confronto con lo schermo
@@ -194,8 +214,8 @@ test('ventaglio: su uno schermo stretto e con il carattere grande nessun petalo 
 test('computer: tutte le sezioni nella colonna, niente «Altro», niente ventaglio né «Menu del telefono»', async ({ browser }) => {
   const p = await apri(await conSezioneFinta(await browser.newContext(), FINTE));
   await p.evaluate(() => localStorage.setItem('settimana:menu', 'ventaglio'));   // scelto, ma qui non conta
-  await p.reload();
-  expect(await inBarra(p)).toEqual(['settimana', 'casa', 'dati', 'orto', 'serra']);
+  await ricarica(p);
+  expect(await inBarra(p)).toEqual(['panoramica', 'settimana', 'casa', 'orto', 'serra']);
   await expect(p.locator('#voce-altro')).toBeHidden();
   await expect(p.locator('#apri-ventaglio')).toBeHidden();
   await apriMenu(p);

@@ -24,7 +24,7 @@ async function nuovaFaccenda(p, { voce, nome, cadenza = 'Ogni 2 settimane', gior
   await expect(p.locator('#foglio-faccenda')).toBeHidden();
 }
 
-test('le sezioni: colonna a sinistra, titolo e sottotitolo cambiano, e l’app riapre dove l’avevi lasciata', async ({ browser }) => {
+test('le sezioni: colonna a sinistra, titolo e sottotitolo cambiano, e all’avvio l’app riparte dalla Panoramica', async ({ browser }) => {
   const p = await apri(await browser.newContext());
   const colonna = await p.locator('#sezioni').boundingBox();
   expect(colonna.x).toBe(0);
@@ -42,7 +42,8 @@ test('le sezioni: colonna a sinistra, titolo e sottotitolo cambiano, e l’app r
   await expect(p.locator('#casa-vuota')).toHaveText('Ancora nessuna faccenda.');
 
   await p.reload();
-  await expect(p.locator('#titolo-sezione')).toHaveText('Casa');              // riapre su Casa
+  await expect(p.locator('#titolo-sezione')).toHaveText('Panoramica');        // riparte sempre dalla Panoramica
+  await expect(p.locator('#sezione-casa')).toBeHidden();
   await vai(p, 'settimana');
   await expect(p.locator('#tabella')).toBeVisible();
   expect(p.errori).toEqual([]);

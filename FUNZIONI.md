@@ -11,7 +11,7 @@ ogni tocco, quali regole valgono. È il riferimento per dire se l'app fa la cosa
   dei dati; `LEGGIMI.md` dice come pubblicarla e installarla; `PIANO.md` è ciò che verrà; `CLAUDE.md` contiene le
   regole per chi ci lavora.
 
-Aggiornato alla versione `settimana-23` (novembre 2026), ricavato dal codice e dai test.
+Aggiornato alla versione `settimana-24` (novembre 2026), ricavato dal codice e dai test.
 
 ## Indice
 
@@ -50,19 +50,22 @@ non contano per riconoscere una voce («sviluppo » è «Sviluppo»).
 
 ## 2. Com'è fatta: sezioni, computer e telefono
 
-**Tre sezioni:** Settimana, Casa, Dati. Una sola è aperta alla volta. Il titolo in alto e il sottotitolo cambiano con
-la sezione:
+**Le sezioni:** Panoramica, Settimana, Casa, più **Dati**, che è uno strumento con il suo pulsante in alto (accanto
+all'ingranaggio) e non sta nella navigazione. Una sola è aperta alla volta. Il titolo in alto e il sottotitolo cambiano
+con la sezione:
 
 | Sezione | Titolo | Sottotitolo |
 |---|---|---|
+| Panoramica | Panoramica | la data di oggi: «Giovedì 12 novembre» (anche sul telefono, dove gli altri sottotitoli non ci sono) |
 | Settimana | La mia settimana | Le attività della settimana, giorno per giorno. |
 | Casa | Casa | Le faccende con una cadenza. |
 | Dati | Dati | Copie, altri dispositivi, CSV. |
 
-- **Computer** (schermo largo): tutte le sezioni accese sono in una colonna a sinistra.
+- **Computer** (schermo largo): tutte le sezioni accese sono in una colonna a sinistra, la Panoramica per prima.
 - **Telefono** (sotto i 40rem, circa 640 pixel), a scelta nelle Impostazioni («Menu del telefono», §7):
   - **Barra** (predefinita): una barra in basso, sempre visibile. Fino a quattro sezioni accese ci stanno tutte.
-    Oltre, la barra tiene **tre posti** (scelti nelle Impostazioni; di partenza Settimana, Casa, Dati) e una voce
+    Oltre, la barra tiene **tre posti** (la **Panoramica**, sempre, più **due scelti** nelle Impostazioni; di partenza
+    Settimana e Casa) e una voce
     **Altro**, che apre un foglio con le sezioni rimaste. Se la sezione aperta sta in Altro, Altro si mostra attivo
     («Altro, sezione aperta: …» per i lettori di schermo). Le sezioni restano sempre nello stesso ordine: la barra
     non si riordina mai da sola. Una sezione scelta per la barra e poi spenta lascia il posto alla prima che manca.
@@ -72,14 +75,31 @@ la sezione:
     velo; la pagina sotto non risponde. L'arco si adatta alla larghezza dello schermo: nessuna sezione esce dai lati,
     anche con il carattere grande. Esc, «Chiudi» o un tocco sul velo chiudono, e il fuoco torna al pulsante. Con il
     movimento ridotto del telefono le sezioni compaiono senza animazione.
-  - Il puntino di Dati (§8.2) si vede anche su Altro, se Dati è lì dentro, e sul pulsante del ventaglio.
-- L'app **riapre sulla sezione dell'ultima volta**, su quel dispositivo.
-- L'ingranaggio **Impostazioni** in alto a destra apre le Impostazioni (§7).
+- All'avvio l'app **si apre sempre sulla Panoramica** (§2.1).
+- In alto a destra, da ogni sezione: **Dati**, con il suo puntino (§8.2), e l'ingranaggio **Impostazioni** (§7). Sul
+  computer con il nome accanto all'icona, sul telefono due tondi con la sola icona.
 - I messaggi brevi («Salvato», gli errori) compaiono in sovrimpressione, sopra a tutto, e spariscono da soli: dopo
   1,5 secondi, gli errori dopo 6.
 - Le domande che chiedono conferma usano una finestra con **Annulla** e un pulsante che dice l'azione («Togli»,
   «Unisci»…). Esc o un tocco fuori equivalgono ad Annulla.
 - Ruotando il telefono o stringendo la finestra oltre la soglia, si passa da una vista all'altra senza perdere niente.
+
+### 2.1 La Panoramica
+
+La prima sezione, quella che si apre all'avvio. **Una card per sezione accesa** (oggi Settimana e Casa; Dati no), in
+una colonna anche sul computer, nell'ordine fisso delle sezioni: non si riordina con l'uso. Una sezione spenta non ha
+card.
+
+- Ogni card: l'icona e il nome breve della sezione (quelli della barra), una freccia, e sotto da quando non la apri
+  **su questo dispositivo**: «aperta oggi», «aperta ieri», «aperta lunedì» (entro sei giorni), «aperta il 31 ottobre»,
+  «aperta l'8 settembre», «mai aperta su questo dispositivo». Le righe di riepilogo di ogni sezione arrivano una card
+  alla volta (`PIANO.md` §3.5.3): oggi le card di Settimana e Casa non ne hanno.
+- **La card non ha azioni**: si tocca in qualunque punto e si apre la sezione. Per la tastiera e i lettori di schermo
+  c'è un solo controllo, il nome nel titolo (un titolo di secondo livello per card), che il lettore legge insieme alle
+  righe e ad «aperta…».
+- Tornando alla Panoramica da una sezione, il fuoco va sulla card di quella sezione.
+- La Panoramica si ridisegna ogni volta che la apri, quando cambiano i dati (anche con un file unito) e a cambio di
+  giorno con la pagina aperta (la data e «aperta…» si aggiornano). Nessun aggiornamento a orario.
 
 ## 3. Settimana
 
@@ -301,12 +321,12 @@ telefono sale dal basso. Si chiude con ×, Esc o un tocco fuori.
 | **Tema** | Automatico (segue il sistema), Chiaro, Scuro | questo dispositivo |
 | **Colore delle faccende** | Nessuno («Solo il testo.»), Morbido («Toni sabbia, leggeri.», predefinito), Deciso («Dal giallo all'arancio.»), con tre campioni ciascuno | tutti i dispositivi (viaggia con il file) |
 | **Sezioni** | una casella per ogni sezione che si può spegnere: segnata = accesa. «Una sezione spenta sparisce dal menu; i suoi dati restano. Vale su tutti i dispositivi.» | tutti i dispositivi (viaggia con il file) |
-| **Menu del telefono** | solo sul telefono: **Barra** o **Ventaglio**; con la barra e più di quattro sezioni accese, «Nella barra (tre)»: una casella per sezione, con tre segnate le altre si spengono finché non ne togli una | questo dispositivo |
-| **Versione** | «Versione: settimana-23», oppure «non installata (senza uso offline)» | — |
+| **Menu del telefono** | solo sul telefono: **Barra** o **Ventaglio**; con la barra e più di quattro sezioni accese, «Nella barra, oltre alla Panoramica (due)»: una casella per sezione (la Panoramica c'è sempre e non si sceglie), con due segnate le altre si spengono finché non ne togli una | questo dispositivo |
+| **Versione** | «Versione: settimana-24», oppure «non installata (senza uso offline)» | — |
 
-**Le sezioni spente.** Settimana, Casa e Dati non si spengono: oggi non c'è nessuna sezione da spegnere, e la parte
+**Le sezioni spente.** Panoramica, Settimana, Casa e Dati non si spengono: oggi non c'è nessuna sezione da spegnere, e la parte
 «Sezioni» non si vede. Comparirà con Cucina e Spese. Una sezione spenta perde il suo pulsante nella navigazione e non
-si apre; se era quella aperta, o se l'app si riapre su di lei, si va sulla prima sezione accesa. I suoi dati restano
+si apre, e non ha card nella Panoramica; se era quella aperta si va sulla prima sezione accesa, la Panoramica. I suoi dati restano
 nel registro, viaggiano con il file e ritornano com'erano riaccendendola. Spenta su un dispositivo, è spenta anche
 sull'altro dopo aver unito il file.
 
@@ -320,7 +340,8 @@ da qui** e **Ultima unione su questo dispositivo**, come «14 ottobre 2026 (ieri
 ### 8.2 L'invito alla copia
 
 Se l'ultima copia salvata ha **più di 30 giorni** (o, se non ce n'è mai stata una, se usi l'app da più di 30 giorni):
-un puntino sulla voce **Dati** della barra (per i lettori di schermo: «Dati, nuova copia consigliata») e in cima alla
+un puntino sul pulsante **Dati** in alto, visibile da ogni sezione (per i lettori di schermo: «Dati, nuova copia
+consigliata») e in cima alla
 sezione «L'ultima copia dei dati è di N giorni fa.» / «Non c'è ancora una copia dei dati.», «Conviene salvarne una
 nuova, per sicurezza.», con **Salva il file**. Niente altro: nessuna notifica, nessun numero sul puntino. Salvando
 spariscono.

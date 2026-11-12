@@ -21,8 +21,9 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
 ## Regole dei moduli
 
 - **Livelli e gruppi** (README §4, controllati da `test/struttura.test.js`). Comuni: `core.js` 0 · `base.js` 1 ·
-  `testi.js`, `pezzi.js`, `sezioni.js`, `rinomina.js` 2 · `navigazione.js` 3. Settimana: `promemoria.js`,
-  `libreria.js` 3 · `settimana.js` 4 · `azioni.js` 5. Casa: `casa.js` 5. Dati: `file.js` 5. Avvio: `guscio.js` 6.
+  `testi.js`, `pezzi.js`, `sezioni.js`, `rinomina.js` 2 · `navigazione.js` 3. Panoramica: `panoramica.js` 3.
+  Settimana: `promemoria.js`, `libreria.js` 3 · `settimana.js` 4 · `azioni.js` 5. Casa: `casa.js` 5. Dati: `file.js`
+  5. Avvio: `guscio.js` 6.
   Un file importa solo livelli più bassi (niente giri), e **una sezione non importa niente da un'altra sezione**:
   solo dai comuni e dai suoi file. Ciò che serve a due sezioni scende nei comuni.
 - **Gli elementi si costruiscono con `el()`** (`js/pezzi.js`), mai con `innerHTML` né con stringhe di HTML: il
@@ -31,14 +32,16 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
   usati da più sezioni in `pezzi.js`; «oggi», la settimana mostrata e le letture dei dati (`lunediCorrente`,
   `riposoOggi`, `visualizzata`, `voce`, `attivitaDi`…) in `base.js`.
 - **Una sezione nuova**: si descrive nel suo file con un oggetto `{ nome, titolo, sottotitolo, elemento, disegna,
-  quandoSiApre?, spegnibile? }` esportato (`spegnibile: true` per le sezioni che si spengono dalle Impostazioni:
-  Cucina e Spese sì, Settimana, Casa e Dati no); `guscio.js` la aggiunge a `registraSezioni(...)`; in `index.html` il
+  quandoSiApre?, dopoApertura?, scheda?, spegnibile?, strumento? }` esportato (`spegnibile: true` per le sezioni che si
+  spengono dalle Impostazioni: Cucina e Spese sì, Panoramica, Settimana, Casa e Dati no; `scheda` è la sua card nella
+  Panoramica, una funzione che restituisce solo testo, da zero a tre righe; `strumento: true` solo per Dati, che sta
+  in alto e non nella navigazione); `guscio.js` la aggiunge a `registraSezioni(...)`; in `index.html` il
   suo pulsante (`data-sezione`, prima di `#voce-altro`) e il suo blocco. Dove si vede il pulsante (colonna, barra,
   Altro, ventaglio) lo decide `navigazione.js`: la sezione nuova non deve fare altro. Il suo `disegna` si chiama solo
   quando è aperta. Chi deve sapere quando si cambia sezione si iscrive con `quandoCambiaSezione` (sezioni.js), non si
   fa chiamare da un'altra sezione.
 - **Il disegno è un elenco.** Chi cambia qualcosa chiama `disegna()` di `base.js`; le parti le elenca `guscio.js`
-  con `disegnaAnche(...)`: la sezione aperta, il puntino sulla voce Dati, la navigazione (che guarda il puntino).
+  con `disegnaAnche(...)`: la sezione aperta, il puntino sul pulsante Dati in alto, la navigazione.
   Ciò che sta dentro una sezione (la libreria nella Settimana) lo disegna la sezione stessa. Ciò che vale per tutta
   la pagina (l'intensità del colore) lo imposta `disegna()` stesso.
 - **Un valore che cambia lo cambia solo il suo file**, con una funzione: `rileggi()`, `cambiaOggi()`,
@@ -131,6 +134,9 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 - Un test che fallisce ogni tanto va **capito**, non rilanciato. Niente `retries` nella configurazione.
 - Orologio fermo: `apri()` installa `page.clock` a **mercoledì 14 ottobre 2026** (`MERCOLEDI`). Per due
   "dispositivi" con orari diversi si passa un'ora di partenza diversa ad `apri()`, non `clock.fastForward`.
+- **L'app parte dalla Panoramica**: `apri()` di `aiuti.js` va subito alla Settimana (come una persona che la tocca),
+  e `ricarica()` fa lo stesso dopo un reload; con `{ panoramica: true }` restano sulla Panoramica. Un `p.reload()`
+  nudo lascia sulla Panoramica: un controllo su un elemento della Settimana, che lì è nascosto, passerebbe per finta.
 - Telefono: usare `telefono()` di `aiuti.js` per le opzioni del contesto (Firefox non supporta `isMobile`;
   il progetto `iphone` usa il profilo di iPhone 15). Il progetto `iphone` esegue solo `telefono|ios` spec.
 - **`test` ed `expect` si prendono da `./aiuti.js`, mai da `'@playwright/test'`**: il `test` di `aiuti.js` chiude alla
@@ -149,9 +155,9 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 `.github/workflows/test.yml`: a ogni push, nucleo e browser nei tre motori su Ubuntu. L'installazione dei browser
 ha tentativi ripetuti e cache, perché i mirror apt a volte si bloccano. GitHub Pages ha un suo workflow separato.
 Limiti: 45 minuti il job, 30 lo step dei test nel browser (ottobre 2026: circa 6 minuti in tutto, WebKit il più
-lento). Il test di accessibilità è diviso in gruppi di viste (Settimana, Casa, Dati e Impostazioni), ognuno da una
-pagina appena aperta: un test unico per tutte le viste superava i 30 secondi in Firefox (novembre 2026). Una sezione
-nuova porta il suo gruppo. Quando arrivano i moduli della Fase 2: un job per motore (in parallelo).
+lento). Il test di accessibilità è diviso in gruppi di viste (Panoramica, Settimana, Casa, Dati e Impostazioni),
+ognuno da una pagina appena aperta: un test unico per tutte le viste superava i 30 secondi in Firefox (novembre 2026).
+Una sezione nuova porta il suo gruppo. Quando arrivano i moduli della Fase 2: un job per motore (in parallelo).
 **Il sistema della CI è fissato a `ubuntu-24.04`**, non `ubuntu-latest`: tra ottobre e novembre 2026 GitHub ha
 spostato `ubuntu-latest` su Ubuntu 26.04, e WebKit di Playwright non partiva più (gli mancava `libicudata.so.74`,
 una libreria di Ubuntu 24.04). Anche la chiave della cache dei browser contiene `ubuntu-24.04`: i browser sono
@@ -177,13 +183,15 @@ Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push 
 Debiti della 2.0 chiusi. Poi, dall'uso vero, un ritocco della Fase 1: **la settimana giorno per giorno** (attività per
 giorno, faccende coperte dalle spunte vicine, «Riprendi la lista» tolto; `settimana-19`). Il piano della Fase 2
 è scritto (`PIANO.md`), e il comportamento attuale è in `FUNZIONI.md`; il piano è stato rivisto (novembre 2026). La 2.1
-(Impostazioni, navigazione, Libreria) è finita (`settimana-23`, con il ventaglio rifatto sull'anteprima). Prossimo
-passo: la **Home**, prima della 2.2: prima le sue regole (`PIANO.md` §3.5.2).
+(Impostazioni, navigazione, Libreria) è finita (`settimana-23`, con il ventaglio rifatto sull'anteprima). Poi la
+**Panoramica** (la Home), prima della 2.2: regole decise, **struttura fatta** (`settimana-24`: si apre all'avvio,
+card dal registro, Dati in alto, barra con la Panoramica fissa più due posti scelti). Prossimo passo: **la card della
+Settimana** (`PIANO.md` §3.5.3), poi quella di Casa, poi la 2.2.
 
 Decisioni per la Fase 2 (ottobre 2026):
 - **Menu del telefono:** predefinita la barra di oggi più una voce «Altro» per le sezioni che non ci stanno; il menu
-  a ventaglio (radiale) resta selezionabile nelle Impostazioni. Le sezioni nella barra sono **fisse**, mai riordinate
-  dall'uso (con la Home non si scelgono più: vedi sotto).
+  a ventaglio (radiale) resta selezionabile nelle Impostazioni. Le sezioni nella barra **le sceglie il proprietario**,
+  mai riordinate dall'uso; scelta per dispositivo (predefinite con la Home: vedi sotto).
 - **Sezioni accese o spente** (Cucina, Spese): valgono su tutti i dispositivi, chiave `i/spenta/<nome>`.
 - **Cucina:** cinque momenti al giorno (colazione, metà mattina, pranzo, merenda del pomeriggio, cena), nessuno
   obbligatorio. Ordine delle fasi invariato: 2.1, 2.2, 2.3, 2.4.
@@ -201,11 +209,15 @@ Decisioni per la Fase 2 (ottobre 2026):
   degli alimenti si dicono con cinque parole (Finito · Poco · Metà · Una confezione · Due o più); «È ancora così» ha
   la sua chiave, `p/<id>/visto`.
 - **La Home** (decisa a novembre 2026, prima della 2.2): una sezione in più, **la prima**, che si apre sempre
-  all'avvio. Card in **ordine fisso**, lo stesso ovunque, con la riga «aperta ieri». **Barra del telefono fissa**: Home,
-  Settimana, Casa (la Cucina al posto di Casa dalla 2.4), poi «Altro»; la scelta dei posti della 2.1 si toglie. **Dati
+  all'avvio. Card in **ordine fisso**, lo stesso ovunque, con la riga «aperta ieri», **in una colonna** anche sul
+  computer. **Barra del telefono:** tre posti scelti più «Altro», predefiniti Panoramica, Settimana, Cucina (Casa fino
+  alla 2.4): le sezioni lavorano insieme, una barra fissa direbbe che l'app gira intorno a due. **Dati
   va in alto** accanto all'ingranaggio, con il puntino, e non ha card. Si lavora così: prima le regole agnostiche
   (`PIANO.md` §3.5.2), poi la struttura nel codice, poi **una card alla volta** (analisi della sezione, candidati,
-  decisione, codice). **Ogni sezione nuova chiude la sua fase con la sua card.** Nome ancora da scegliere.
+  decisione, codice). **Ogni sezione nuova chiude la sua fase con la sua card.** Si chiama **Panoramica**. Le card
+  non hanno azioni (solo il tocco che apre la sezione) e restituiscono solo testo; la Panoramica è l'unico altrove
+  ammesso per gli avvisi; «aperta ieri» si tiene nel browser. **Panoramica fissa** al primo posto della barra; si
+  scelgono le altre due.
 - **Le sezioni spente e la navigazione si provano con sezioni finte** («Orto», «Serra»: `conSezioneFinta` in
   `aiuti.js`), che il test aggiunge a `guscio.js` mentre il browser lo scarica: niente agganci per i test nel codice
   dell'app.

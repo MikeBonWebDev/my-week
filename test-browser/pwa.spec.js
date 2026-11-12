@@ -1,7 +1,7 @@
 // Test nel browser della parte "app": installabilità e funzionamento senza rete.
 import fs from 'node:fs';
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
-import { aggiungi, nomi } from './aiuti.js';
+import { aggiungi, nomi, ricarica, vaiA } from './aiuti.js';
 
 // Qui il service worker serve: lo riattivo (nel resto dei test è bloccato, vedi playwright.config.js)
 test.use({ serviceWorkers: 'allow' });
@@ -53,12 +53,13 @@ test('installabile, e senza rete si apre con i dati', async ({ page, context, br
   await expect(page.locator('#versione-app')).toHaveText(`Versione: ${versione}`);
   await page.click('#chiudi-menu');
 
+  await vaiA(page, 'settimana');                                   // l'app parte dalla Panoramica
   await aggiungi(page, 'Sviluppo');
   await context.setOffline(true);
-  await page.reload();
+  await ricarica(page);
   expect(await nomi(page)).toContain('Sviluppo');                  // senza rete: pagina e dati ci sono
   await aggiungi(page, 'Leggere');                                 // e si continua a lavorare
   await context.setOffline(false);
-  await page.reload();
+  await ricarica(page);
   expect(await nomi(page)).toEqual(['Sviluppo', 'Leggere']);
 });

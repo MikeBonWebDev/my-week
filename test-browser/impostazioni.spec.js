@@ -29,14 +29,14 @@ test('una sezione spenta sparisce dalla barra, non si riapre, e riaccesa torna c
   await casella(p, 'orto').uncheck();                                   // spenta mentre era aperta
   await chiudiMenu(p);
   await expect(voce(p, 'orto')).toBeHidden();
-  await expect(voce(p, 'settimana')).toHaveAttribute('aria-current', 'page');   // si passa alla prima accesa
+  await expect(voce(p, 'panoramica')).toHaveAttribute('aria-current', 'page');   // si passa alla prima accesa
   await expect(p.locator('#sezione-orto')).toBeHidden();
+  await expect(p.locator('#card-sezioni [data-sezione="orto"]')).toHaveCount(0);   // e non ha più la sua card
 
-  // riaprendo l'app resta spenta, e non si riapre su di lei anche se era l'ultima aperta
-  await p.evaluate(() => localStorage.setItem('settimana:sezione', 'orto'));
+  // riaprendo l'app resta spenta
   await p.reload();
   await expect(voce(p, 'orto')).toBeHidden();
-  await expect(voce(p, 'settimana')).toHaveAttribute('aria-current', 'page');
+  await expect(voce(p, 'panoramica')).toHaveAttribute('aria-current', 'page');
 
   await apriMenu(p);
   await casella(p, 'orto').check();                                     // riaccesa

@@ -20,6 +20,8 @@ export const sezioneCasa = {
   disegna: disegnaCasa,
   // l'ordine di Casa si decide quando la apri, e poi non si muove mentre la guardi
   quandoSiApre: () => { ordineCasa = Core.faccende(db.registro, oggiK).map((f) => f.id); },
+  // la card nella Panoramica: per ora solo il titolo e «aperta…»; cosa dice si decide nel passo della sua card
+  scheda: () => [],
 };
 
 const inQuestaSettimana = (id) => Boolean(state.weeks[lunediCorrente()]?.activities.some((a) => a.id === id));
