@@ -177,8 +177,34 @@ function foto(p) {
   }));
 }
 
+/**
+ * Una sezione finta, «Orto», che si può spegnere: per provare le Impostazioni prima che arrivino Cucina e Spese.
+ * Nessun aggancio nel codice dell'app: il test cambia guscio.js mentre il browser lo scarica (contesto.route), e
+ * aggiunge la sezione alla riga che registra le altre. Se quella riga cambia, il test lo dice invece di passare.
+ */
+async function conSezioneFinta(contesto) {
+  const riga = 'registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);';
+  const finta = `{
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'sezione-voce'; b.dataset.sezione = 'orto';
+    b.append(Object.assign(document.createElement('span'), { textContent: 'Orto' }));
+    document.querySelector('#sezioni').append(b);
+    const elemento = Object.assign(document.createElement('section'), { id: 'sezione-orto', hidden: true, textContent: 'Le piante.' });
+    document.querySelector('#stato').before(elemento);
+    registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati,
+      { nome: 'orto', titolo: 'Orto', sottotitolo: 'Una sezione di prova.', elemento, disegna() {}, spegnibile: true });
+  }`;
+  await contesto.route(/\/js\/guscio\.js/, async (route) => {
+    const risposta = await route.fetch();
+    const testo = await risposta.text();
+    const corpo = testo.includes(riga) ? testo.replace(riga, finta) : 'throw new Error("sezione finta: riga di registraSezioni non trovata");';
+    await route.fulfill({ response: risposta, body: corpo });
+  });
+  return contesto;
+}
+
 export {
-  test, expect, telefono,
+  test, expect, telefono, conSezioneFinta,
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
   dettaglio, spunta, togli, apriMenu, chiudiMenu, apriLibreria, vaiA, salvaFile, unisciFile, foto,
 };

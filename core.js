@@ -20,6 +20,7 @@
      "v/bagno/cad"                    → { v: 14,            t: …, d: … }         faccenda: ogni 14 giorni
      "v/bagno/salto"                  → { v: "2026-10-22",  t: …, d: … }         ultimo «salto questo giro»
      "i/intensita"                    → { v: "morbida",     t: …, d: … }         colore delle faccende
+     "i/spenta/cucina"                → { v: true,          t: …, d: … }         sezione spenta (false = accesa)
 
    La tabella che vedi si ricostruisce da qui (vista).
 
@@ -117,6 +118,7 @@ const SCHEMI = [
   [new RegExp(`^v/${ID}/cad$`), (v) => v === false || cadenzaValida(v)],
   [new RegExp(`^v/${ID}/salto$`), (v) => v === '' || eData(v)],
   [/^i\/intensita$/, (v) => INTENSITA.includes(v)],
+  [/^i\/spenta\/[a-z]+$/, isBool],
 ];
 
 // Tiene solo le informazioni ben formate. Le chiavi che questa versione non conosce
@@ -242,7 +244,10 @@ function vista(reg) {
     .filter((id) => cancellate[id] !== true || usate.has(id))
     .map((id) => ({ id, name: nomi[id] }));
   const intensita = INTENSITA.includes(reg['i/intensita']?.v) ? reg['i/intensita'].v : 'morbida';
-  return { libreria, weeks, intensita };
+  // le sezioni spente (Impostazioni): una chiave assente o false vuol dire accesa, così una sezione nuova parte accesa
+  const spente = Object.keys(reg).filter((k) => /^i\/spenta\/[a-z]+$/.test(k) && reg[k].v === true)
+    .map((k) => k.slice('i/spenta/'.length)).sort();
+  return { libreria, weeks, intensita, spente };
 }
 
 /* ───────── Faccende: da quanto tempo non fai cosa ─────────
@@ -491,6 +496,14 @@ function crea({ dispositivo, registro = {}, ora = () => Date.now() }) {
     intensita(livello) {
       if (!INTENSITA.includes(livello)) return errore('valore');
       scrivi('i/intensita', livello);
+      return { ok: true };
+    },
+
+    // Spegne (true) o riaccende (false) una sezione: vale su tutti i dispositivi. Il nucleo non sa quali sezioni
+    // esistano né quali si possano spegnere (lo sa la pagina): controlla solo che il nome sia ben fatto.
+    spegni(nome, spenta) {
+      if (typeof nome !== 'string' || !/^[a-z]+$/.test(nome) || !isBool(spenta)) return errore('valore');
+      scrivi(`i/spenta/${nome}`, spenta);
       return { ok: true };
     },
   };

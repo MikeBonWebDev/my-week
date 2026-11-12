@@ -11,7 +11,7 @@ ogni tocco, quali regole valgono. È il riferimento per dire se l'app fa la cosa
   dei dati; `LEGGIMI.md` dice come pubblicarla e installarla; `PIANO.md` è ciò che verrà; `CLAUDE.md` contiene le
   regole per chi ci lavora.
 
-Aggiornato alla versione `settimana-20` (novembre 2026), ricavato dal codice e dai test.
+Aggiornato alla versione `settimana-21` (novembre 2026), ricavato dal codice e dai test.
 
 ## Indice
 
@@ -21,7 +21,7 @@ Aggiornato alla versione `settimana-20` (novembre 2026), ricavato dal codice e d
 4. [Il promemoria delle faccende](#4-il-promemoria-delle-faccende)
 5. [Casa](#5-casa)
 6. [Rinominare e la Libreria](#6-rinominare-e-la-libreria)
-7. [Il menu](#7-il-menu)
+7. [Le Impostazioni](#7-le-impostazioni)
 8. [Dati](#8-dati)
 9. [Più dispositivi, più schede](#9-più-dispositivi-più-schede)
 10. [App installabile e senza rete](#10-app-installabile-e-senza-rete)
@@ -62,7 +62,7 @@ la sezione:
 - **Computer** (schermo largo): le sezioni sono in una colonna a sinistra. **Telefono** (sotto i 40rem, circa 640
   pixel): sono in una barra in basso, sempre visibile.
 - L'app **riapre sulla sezione dell'ultima volta**, su quel dispositivo.
-- Il pulsante **Menu** in alto a destra apre il menu (§7).
+- L'ingranaggio **Impostazioni** in alto a destra apre le Impostazioni (§7).
 - I messaggi brevi («Salvato», gli errori) compaiono in sovrimpressione, sopra a tutto, e spariscono da soli: dopo
   1,5 secondi, gli errori dopo 6.
 - Le domande che chiedono conferma usano una finestra con **Annulla** e un pulsante che dice l'azione («Togli»,
@@ -224,7 +224,7 @@ aperto dal 20 ottobre».
 ### 5.3 Il calore
 
 Entro la cadenza, niente. Oltre, la scheda **si scalda**: da 0 appena superata a 1 dopo un'altra cadenza intera, e
-lì si ferma. L'intensità del colore si sceglie nel menu (§7). **Mai il rosso.**
+lì si ferma. L'intensità del colore si sceglie nelle Impostazioni (§7). **Mai il rosso.**
 
 Precedenze: una scheda **fatta** quel giorno è verde e basta; in un **giorno di riposo** le schede prendono la tinta
 quieta del riposo, senza calore (il conteggio non cambia: il riposo descrive te, non la casa). In Casa, nel
@@ -279,16 +279,23 @@ voce, in ordine alfabetico, il nome, modificabile sul posto, e una riga:
 - Libreria vuota: «La libreria è vuota: si riempie da sola quando aggiungi un'attività alla settimana.»
 - Le voci nascono da sole quando le aggiungi a una settimana o crei una faccenda.
 
-## 7. Il menu
+## 7. Le Impostazioni
 
-Il pulsante **Menu** in alto a destra. Sul computer un pannello al centro, sul telefono sale dal basso. Si chiude con
-×, Esc o un tocco fuori.
+L'ingranaggio **Impostazioni** in alto a destra (sul telefono solo l'icona). Sul computer un pannello al centro, sul
+telefono sale dal basso. Si chiude con ×, Esc o un tocco fuori.
 
 | Parte | Scelte | Vale per |
 |---|---|---|
 | **Tema** | Automatico (segue il sistema), Chiaro, Scuro | questo dispositivo |
 | **Colore delle faccende** | Nessuno («Solo il testo.»), Morbido («Toni sabbia, leggeri.», predefinito), Deciso («Dal giallo all'arancio.»), con tre campioni ciascuno | tutti i dispositivi (viaggia con il file) |
-| **Versione** | «Versione: settimana-20», oppure «non installata (senza uso offline)» | — |
+| **Sezioni** | una casella per ogni sezione che si può spegnere: segnata = accesa. «Una sezione spenta sparisce dal menu; i suoi dati restano. Vale su tutti i dispositivi.» | tutti i dispositivi (viaggia con il file) |
+| **Versione** | «Versione: settimana-21», oppure «non installata (senza uso offline)» | — |
+
+**Le sezioni spente.** Settimana, Casa e Dati non si spengono: oggi non c'è nessuna sezione da spegnere, e la parte
+«Sezioni» non si vede. Comparirà con Cucina e Spese. Una sezione spenta perde il suo pulsante nella navigazione e non
+si apre; se era quella aperta, o se l'app si riapre su di lei, si va sulla prima sezione accesa. I suoi dati restano
+nel registro, viaggiano con il file e ritornano com'erano riaccendendola. Spenta su un dispositivo, è spenta anche
+sull'altro dopo aver unito il file.
 
 ## 8. Dati
 

@@ -99,6 +99,9 @@ e il foglio indica quale sezione è aperta.
 
 ### 3.4 Impostazioni
 
+**Fatto in parte** (`settimana-21`): l'ingranaggio, il titolo, Tema, Colore delle faccende, Sezioni e Versione ci
+sono (`FUNZIONI.md` §7). Resta da fare, con il passo 3 della 2.1, la parte «Menu del telefono».
+
 Il pulsante in alto a destra diventa un ingranaggio, con etichetta «Impostazioni». Il foglio contiene, in ordine:
 
 | Parte | Che cosa | Vale per |
@@ -391,8 +394,9 @@ Una fase per volta: test verdi e push tra l'una e l'altra, `CLAUDE.md` e `DATI.m
 
 **2.1 Impostazioni, navigazione, Libreria**, in tre passi (test verdi e push tra l'uno e l'altro):
 1. ~~Libreria nella Settimana (§4)~~: fatto, `settimana-20`.
-2. Il Menu diventa Impostazioni (§3.4), con le sezioni accese o spente (`i/spenta/<nome>`, nel nucleo e in
-   `DATI.md`), anche se all'inizio non c'è ancora niente da spegnere (si prova con sezioni finte nei test).
+2. ~~Il Menu diventa Impostazioni (§3.4), con le sezioni accese o spente~~: fatto, `settimana-21`. Comportamento in
+   `FUNZIONI.md` §7; la chiave `i/spenta/<nome>` in `DATI.md`. Si prova con una sezione finta, «Orto»
+   (`conSezioneFinta` in `aiuti.js`). Manca la parte «Menu del telefono», che arriva con il passo 3.
 3. La navigazione: barra con tre posti e Altro, la scelta dei tre posti, il ventaglio (§3.3).
 - Test: navigazione con Altro e con il ventaglio, tastiera e lettore di schermo (axe), riapertura su una sezione
   spenta.

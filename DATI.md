@@ -60,7 +60,7 @@ Una chiave è fatta di segmenti. Il **primo** dice di che cosa parla:
 |---|---|---|
 | `v` | una **voce** della libreria (vale in tutte le settimane) | `v/<id>/<campo>` |
 | `s` | una **settimana** | `s/<lunedì>/…` |
-| `i` | un’**impostazione** che vale su tutti i dispositivi | `i/<nome>` |
+| `i` | un’**impostazione** che vale su tutti i dispositivi | `i/<nome>`, `i/spenta/<sezione>` |
 
 I pezzi che si ripetono:
 
@@ -197,6 +197,17 @@ controlla `valida()` (l’elenco `SCHEMI` in `core.js`): un record con un valore
   `<html data-intensita>`, e `stile.css` fa il resto. Sta nel registro perché vale su **tutti** i dispositivi; il tema
   chiaro/scuro invece no (§10).
 
+#### `i/spenta/<sezione>` — una sezione spenta dalle Impostazioni
+- **Valore:** `true` (spenta) oppure `false` (riaccesa). Una chiave assente vuol dire **accesa**: una sezione nuova
+  parte accesa senza scrivere niente. `<sezione>` è il nome della sezione nel registro delle sezioni (`cucina`,
+  `spese`): solo lettere minuscole.
+- **Scrive:** `spegni(sezione, spenta)`, dalle Impostazioni (la parte «Sezioni», `guscio.js`). Il nucleo non sa quali
+  sezioni esistano: controlla solo che il nome sia ben fatto e il valore un booleano. Quali sezioni si possono
+  spegnere lo decide la pagina (`spegnibile` nel registro delle sezioni, `sezioni.js`): Settimana, Casa e Dati no.
+- **Legge:** `vista()` (`spente`: i nomi delle sezioni spente, in ordine). `sezioni.js`: una sezione spenta non ha
+  il suo pulsante nella navigazione e non si apre; se era aperta, si passa alla prima accesa. **I dati di una sezione
+  spenta restano** e viaggiano con il file. Vale su tutti i dispositivi.
+
 ## 5. Vuoto, togliere, cancellare
 
 - **Un valore vuoto equivale a una chiave assente.** `false`, `''` e `null` sono "vuoti": `scrivi()` non registra un
@@ -230,7 +241,7 @@ l’ora sbagliata, ciò che fai *dopo* un’unione vince su ciò che hai appena 
 
 **Chi può scrivere.** Solo le operazioni del nucleo restituite da `Core.crea()` (`aggiungi`, `togli`, `togliGiorno`,
 `spunta`, `dettaglio`, `riposo`, `energia`, `rinomina`, `cancella`, `nuovaFaccenda`, `cadenza`, `salta`,
-`intensita`). La pagina non scrive mai una chiave a mano: così le regole (nomi riservati, doppioni, voci usate) valgono
+`intensita`, `spegni`). La pagina non scrive mai una chiave a mano: così le regole (nomi riservati, doppioni, voci usate) valgono
 sempre, da qualunque punto arrivi la richiesta.
 
 ## 7. Come si legge: dal registro allo schermo
@@ -244,11 +255,11 @@ sempre, da qualunque punto arrivi la richiesta.
  db = Core.crea({ dispositivo, registro })
       │
       ├─► Core.vista(registro)       → state: libreria, settimane (attività, tipo, giorni, spunte, riposo, energia),
-      │                                intensità. Ricalcolata a ogni modifica (rileggi), mai salvata.
+      │                                intensità, sezioni spente. Ricalcolata a ogni modifica (rileggi), mai salvata.
       ├─► Core.faccende(reg, oggi)   → ultima volta, prossimo giro, calore: Casa, promemoria, schede, tabella
       └─► Core.primoUso(reg)         → da quando usi l’app: la sezione Dati, per l’invito alla copia
       ▼
- disegna() in base.js → la sezione aperta, la libreria del menu, il puntino su Dati
+ disegna() in base.js → la navigazione e la sezione aperta (con la sua libreria, se è la Settimana), il puntino su Dati
 ```
 
 **I giorni in cui si vede un’attività** (`activities[].giorni` nella vista) si calcolano qui, a ogni lettura:

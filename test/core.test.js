@@ -48,7 +48,7 @@ function modificaCasuale(r, db) {
   const id = presenti.length ? scegli(r, presenti).id : null;
   const giorno = Math.floor(r() * 7);
   const voce = vis.libreria.length ? scegli(r, vis.libreria) : null;
-  switch (Math.floor(r() * 13)) {
+  switch (Math.floor(r() * 14)) {
     case 0: return db.aggiungi(sett, scegli(r, NOMI));
     case 1: return db.aggiungi(sett, scegli(r, NOMI), giorno);   // per un giorno solo
     case 2: return id && db.togli(sett, id);
@@ -61,6 +61,7 @@ function modificaCasuale(r, db) {
     case 9: return r() < 0.3 ? db.nuovaFaccenda(scegli(r, NOMI), scegli(r, [7, 14])) : voce && db.cadenza(voce.id, scegli(r, [null, 1, 7, 14, 15, 30]));
     case 10: return voce && db.salta(voce.id, scegli(r, [null, '2026-10-01', '2026-10-14', '2026-10-20']));
     case 11: return db.intensita(scegli(r, ['nessuna', 'morbida', 'decisa']));
+    case 12: return db.spegni(scegli(r, ['cucina', 'spese']), r() < 0.5);   // Impostazioni: sezioni accese o spente
     default: return id && db.togliGiorno(sett, id, giorno);
   }
 }
@@ -514,6 +515,32 @@ test('intensità: predefinita «morbida», si sincronizza, rifiuta valori sconos
   tel.intensita('decisa');
   pc.unisci(copia(tel.registro));
   assert.equal(pc.vista().intensita, 'decisa');
+});
+
+test('sezioni spente: si spengono e si riaccendono, viaggiano tra dispositivi, nomi malformati rifiutati', () => {
+  const tel = dispositivo('telefono');
+  const pc = dispositivo('pc');
+  assert.deepEqual(tel.vista().spente, []);                                  // di partenza tutte accese
+  const prima = JSON.stringify(tel.registro);
+  tel.spegni('cucina', false);                                               // già accesa: niente da scrivere
+  assert.equal(JSON.stringify(tel.registro), prima);
+  tel.spegni('spese', true);
+  tel.spegni('cucina', true);
+  assert.deepEqual(tel.vista().spente, ['cucina', 'spese']);
+  for (const [nome, v] of [['Cucina', true], ['cu/cina', true], ['', true], ['cucina', 'sì'], [7, true]]) {
+    assert.equal(tel.spegni(nome, v).errore, 'valore');
+  }
+  pc.unisci(copia(tel.registro));
+  assert.deepEqual(pc.vista().spente, ['cucina', 'spese']);
+  pc.avanza(1000);
+  pc.spegni('cucina', false);                                                // riaccesa sul computer, dopo
+  tel.unisci(copia(pc.registro));
+  assert.deepEqual(tel.vista().spente, ['spese']);                           // vince l'ultima modifica
+  // validazione: solo booleani, solo nomi di lettere minuscole
+  const e = (v) => ({ v, t: 1, d: 'pc' });
+  const reg = Core.valida({ 'i/spenta/orto': e(true), 'i/spenta/garage': e('sì'), 'i/spenta/Orto': e(true) });
+  assert.deepEqual(Object.keys(reg).sort(), ['i/spenta/Orto', 'i/spenta/orto']);   // «Orto»: chiave sconosciuta, resta
+  assert.deepEqual(Core.vista(reg).spente, ['orto']);                                 // ma non spegne niente
 });
 
 test('cadenza e salto viaggiano tra dispositivi, e vince l’ultima modifica', () => {

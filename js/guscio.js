@@ -1,9 +1,9 @@
-// js/guscio.js — il punto di partenza: carica gli altri moduli, il menu, l’avvio, l’app installabile.
+// js/guscio.js — il punto di partenza: carica gli altri moduli, le Impostazioni, l’avvio, l’app installabile.
 import {
   $, avvisoIniziale, db, disegna, disegnaAnche, esito, menu, mostraStato, rigaIntestazione, state, telefono
 } from './base.js';
 import { el } from './pezzi.js';
-import { disegnaSezioneAperta, mostraSezione, registraSezioni, sezioneIniziale } from './sezioni.js';
+import { disegnaSezioneAperta, mostraSezione, registraSezioni, sezioneIniziale, sezioniSpegnibili } from './sezioni.js';
 import { sezioneSettimana } from './settimana.js';
 import { aggiornaPuntinoDati, sezioneDati } from './file.js';
 import { sezioneCasa } from './casa.js';
@@ -18,9 +18,10 @@ import './rinomina.js'; // il foglio «Rinomina», da qualunque sezione: anche l
 registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);
 disegnaAnche(disegnaSezioneAperta, aggiornaPuntinoDati);
 
-/* ───────── Il menu ─────────
-   Un <dialog> aperto con showModal(): sta sopra alla pagina, che intanto non risponde ai tocchi.
-   Si chiude con la ×, con Esc o con un tocco fuori (sullo sfondo). Dentro: tema, colore delle faccende, versione. */
+/* ───────── Le Impostazioni ─────────
+   Un <dialog> (nel codice si chiama ancora «menu») aperto con showModal(): sta sopra alla pagina, che intanto non
+   risponde ai tocchi. Si chiude con la ×, con Esc o con un tocco fuori (sullo sfondo). Dentro: tema, colore delle
+   faccende, sezioni accese o spente, versione. */
 $('#apri-menu').addEventListener('click', () => {
   disegnaScelteMenu();
   mostraVersione();
@@ -61,6 +62,7 @@ const SCELTE_INTENSITA = [
 ];
 
 function disegnaScelteMenu() {
+  disegnaSceltaSezioni();
   const tema = leggiTema();
   $('#scelte-tema').replaceChildren(...TEMI.map(([valore, nome]) => el('button', {
     type: 'button', class: 'scelta', dataset: { tema: valore }, testo: nome, aria: { pressed: tema === valore },
@@ -78,6 +80,27 @@ function disegnaScelteMenu() {
       ? el('span', { class: 'campione' })
       : el('span', { class: 'campione', dataset: { calore: true }, stile: { '--calore': calore } })))))));
 }
+
+/* ───────── Sezioni: accese o spente ─────────
+   Solo le sezioni che si possono spegnere (spegnibile nel registro, sezioni.js). Vale su tutti i dispositivi: sta nel
+   registro (i/spenta/<nome>). Una sezione spenta sparisce dalla navigazione; i suoi dati restano. Se non c'è nessuna
+   sezione spegnibile, questa parte delle Impostazioni non si mostra. */
+function disegnaSceltaSezioni() {
+  const sezioni = sezioniSpegnibili();
+  $('#parte-sezioni').hidden = !sezioni.length;
+  $('#scelte-sezioni').replaceChildren(...sezioni.map(({ nome, titolo, accesa }) => el('label', { class: 'interruttore' },
+    el('input', { type: 'checkbox', checked: accesa, dataset: { sezione: nome } }),
+    el('span', { testo: titolo }))));
+}
+
+$('#scelte-sezioni').addEventListener('change', (e) => {
+  const casella = e.target.closest('input[data-sezione]');
+  if (!casella) return;
+  if (esito(db.spegni(casella.dataset.sezione, !casella.checked))) {
+    disegnaSceltaSezioni();
+    $(`#scelte-sezioni [data-sezione="${casella.dataset.sezione}"]`).focus();
+  }
+});
 
 $('#scelte-tema').addEventListener('click', (e) => {
   const b = e.target.closest('.scelta');

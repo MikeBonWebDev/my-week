@@ -31,11 +31,12 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
   usati da più sezioni in `pezzi.js`; «oggi», la settimana mostrata e le letture dei dati (`lunediCorrente`,
   `riposoOggi`, `visualizzata`, `voce`, `attivitaDi`…) in `base.js`.
 - **Una sezione nuova**: si descrive nel suo file con un oggetto `{ nome, titolo, sottotitolo, elemento, disegna,
-  quandoSiApre? }` esportato; `guscio.js` la aggiunge a `registraSezioni(...)`; in `index.html` il suo pulsante
+  quandoSiApre?, spegnibile? }` esportato (`spegnibile: true` per le sezioni che si spengono dalle Impostazioni:
+  Cucina e Spese sì, Settimana, Casa e Dati no); `guscio.js` la aggiunge a `registraSezioni(...)`; in `index.html` il suo pulsante
   (`data-sezione`) e il suo blocco. Il suo `disegna` si chiama solo quando è aperta. Chi deve sapere quando si cambia
   sezione si iscrive con `quandoCambiaSezione` (sezioni.js), non si fa chiamare da un'altra sezione.
 - **Il disegno è un elenco.** Chi cambia qualcosa chiama `disegna()` di `base.js`; le parti le elenca `guscio.js`
-  con `disegnaAnche(...)`: la sezione aperta e il puntino sulla voce Dati. Ciò che sta dentro una sezione (la
+  con `disegnaAnche(...)`: la navigazione con la sezione aperta, e il puntino sulla voce Dati. Ciò che sta dentro una sezione (la
   libreria nella Settimana) lo disegna la sezione stessa. Ciò che vale per tutta la pagina (l'intensità del
   colore) lo imposta `disegna()` stesso.
 - **Un valore che cambia lo cambia solo il suo file**, con una funzione: `rileggi()`, `cambiaOggi()`,
@@ -125,6 +126,10 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 - **`test` ed `expect` si prendono da `./aiuti.js`, mai da `'@playwright/test'`**: il `test` di `aiuti.js` chiude alla
   fine di ogni test i contesti creati con `browser.newContext()`, che Playwright lascerebbe aperti (in WebKit, in CI,
   rallentavano ogni test più del precedente). `regole.spec.js` lo controlla.
+- **In locale su Windows: modalità risparmio energia su «Prestazioni migliori»** (novembre 2026). In «Bilanciata»,
+  con VS Code in secondo piano, Windows rallentava i processi e Firefox falliva per tempo scaduto in test sempre
+  diversi, quasi sempre il primo (accessibilità). Con «Prestazioni migliori» passano anche con VS Code in secondo
+  piano. La CI resta il riferimento: se lo stesso test fallisce anche lì, il problema è nostro e va capito.
 - Un test lento non si cura con `test.slow()` o timeout più lunghi prima di aver capito dove va il tempo.
 - In CI, un test fallito lascia la traccia nel rapporto (`trace: 'retain-on-failure'`): si apre trascinando
   `trace.zip` su trace.playwright.dev.
@@ -134,8 +139,9 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 `.github/workflows/test.yml`: a ogni push, nucleo e browser nei tre motori su Ubuntu. L'installazione dei browser
 ha tentativi ripetuti e cache, perché i mirror apt a volte si bloccano. GitHub Pages ha un suo workflow separato.
 Limiti: 45 minuti il job, 30 lo step dei test nel browser (ottobre 2026: circa 6 minuti in tutto, WebKit il più
-lento). Quando arrivano i moduli della Fase 2: un job per motore (in parallelo) e il test di accessibilità diviso
-per sezione, perché oggi visita tutte le viste in un solo test e con altre sezioni supererebbe i 30 secondi.
+lento). Il test di accessibilità è diviso in gruppi di viste (Settimana, Casa, Dati e Impostazioni), ognuno da una
+pagina appena aperta: un test unico per tutte le viste superava i 30 secondi in Firefox (novembre 2026). Una sezione
+nuova porta il suo gruppo. Quando arrivano i moduli della Fase 2: un job per motore (in parallelo).
 **Il sistema della CI è fissato a `ubuntu-24.04`**, non `ubuntu-latest`: tra ottobre e novembre 2026 GitHub ha
 spostato `ubuntu-latest` su Ubuntu 26.04, e WebKit di Playwright non partiva più (gli mancava `libicudata.so.74`,
 una libreria di Ubuntu 24.04). Anche la chiave della cache dei browser contiene `ubuntu-24.04`: i browser sono
@@ -175,8 +181,11 @@ Decisioni per la Fase 2 (ottobre 2026):
   numero di fase nel nome); il comportamento attuale in un documento vivo (`FUNZIONI.md`), che riceve ogni fase finita.
 - **Libreria:** nella sezione Settimana (un pannello in fondo), non più nel menu, con il «mai usata» corretto per
   le voci con spunte. Fatto: primo passo della 2.1 (`settimana-20`).
-- **La 2.1 in tre passi**, ognuno con i suoi test e il push prima del successivo: 1. Libreria (fatto); 2. il Menu
-  diventa Impostazioni, con le sezioni accese o spente; 3. la navigazione (barra con Altro, ventaglio).
+- **La 2.1 in tre passi**, ognuno con i suoi test e il push prima del successivo: 1. Libreria (fatto,
+  `settimana-20`); 2. il Menu diventa Impostazioni, con le sezioni accese o spente (fatto, `settimana-21`; nel codice
+  il foglio si chiama ancora `menu`); 3. la navigazione (barra con Altro, ventaglio, «Menu del telefono»).
+- **Le sezioni spente si provano con una sezione finta** («Orto», `conSezioneFinta` in `aiuti.js`), che il test
+  aggiunge a `guscio.js` mentre il browser lo scarica: niente agganci per i test nel codice dell'app.
 
 Il piano è `PIANO.md`: si verifica prima del codice e si segue durante; se il codice deve allontanarsene, si cambia
 prima il piano. I punti ancora aperti sono nel suo §13: si chiudono prima della fase che li usa.

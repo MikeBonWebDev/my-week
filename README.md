@@ -74,7 +74,8 @@ settimana-pwa/
 ├── test-browser/         test nel browser vero (Playwright)
 │   ├── aiuti.js          azioni comuni: aggiungi, spunta, salva file, unisci…
 │   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
-│   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, menu dal basso
+│   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, impostazioni dal basso
+│   ├── impostazioni.spec.js   le Impostazioni e le sezioni accese o spente (con una sezione finta)
 │   ├── giorni.spec.js    le attività per giorno e le faccende coperte dalle spunte vicine
 │   ├── casa.spec.js      le sezioni e la sezione Casa: faccende, cadenza, «Aggiungi a questa settimana»
 │   ├── colore.spec.js    calore delle faccende, intensità, tema, riposo, «Salto questo giro», parole vietate
@@ -240,6 +241,7 @@ e dispositivo (`d`).
 | `v/bagno/cad` | `14` / `false` | la voce `bagno` è una faccenda, da fare ogni 14 giorni (`false`: nessuna cadenza) |
 | `v/bagno/salto` | `"2026-10-22"` / `''` | il giorno dell’ultimo «salto questo giro» |
 | `i/intensita` | `"nessuna"` / `"morbida"` / `"decisa"` | quanto si colorano le faccende oltre la cadenza |
+| `i/spenta/cucina` | `true` / `false` | la sezione Cucina è spenta dalle Impostazioni (assente o `false`: accesa) |
 
 `v` sta per *voce*, `s` per *settimana*, `m` per *membro* (della lista), `a` per *attività*, `f` per *fatto*,
 `r` per *riposo*, `e` per *energia*, `cad` per *cadenza*, `i` per *impostazione* (una scelta che vale su tutti i
@@ -275,7 +277,7 @@ c’è già. Così il registro contiene solo ciò che hai davvero fatto.
 ```
 
 La vista non si salva mai: si ricalcola ogni volta (bastano pochi millisecondi). Contiene anche `intensita`
-(`'morbida'` se nessuno l’ha mai scelta).
+(`'morbida'` se nessuno l’ha mai scelta) e `spente`, i nomi delle sezioni spente.
 
 ### I giorni: dove si vede un’attività
 
@@ -541,9 +543,10 @@ In Casa, «Salto questo giro» scrive `v/<id>/salto = oggi`: il conteggio (e il 
 volta mostrata resta quella vera. Il salto resta scritto finché non segni di nuovo la faccenda («Giro saltato ieri»,
 poi la data), e «Annulla» lo toglie. Non si può saltare una faccenda fatta oggi: il conteggio parte già da oggi.
 
-### Il menu: tema, colore
+### Le Impostazioni: tema, colore, sezioni
 
-Un `<dialog id="menu">`, aperto dal pulsante in alto a destra con `showModal()`: sta sopra alla pagina, che intanto
+Un `<dialog id="menu">` (nel codice si chiama ancora «menu»), aperto dall’ingranaggio «Impostazioni» in alto a destra
+con `showModal()`: sta sopra alla pagina, che intanto
 non risponde ai tocchi. Su computer è un pannello al centro, su telefono sale dal basso (stesso elemento, CSS
 diverso). Si chiude con la ×, con Esc o con un tocco fuori.
 
@@ -553,6 +556,12 @@ diverso). Si chiude con la ×, con Esc o con un tocco fuori.
   che la pagina si disegni, altrimenti all’avvio si vedrebbe un lampo del tema sbagliato.
 - **Colore delle faccende**: vale **su tutti i dispositivi**, quindi sta nel registro (`i/intensita`) e viaggia
   con il file.
+- **Sezioni**: le sezioni che si possono spegnere (`spegnibile` nel loro descrittore, `sezioni.js`), una casella per
+  sezione. Vale **su tutti i dispositivi** (`i/spenta/<sezione>`). Una sezione spenta perde il suo pulsante nella
+  navigazione e non si apre più (se era aperta, o se l’app si riapre su di lei, si va sulla prima accesa); i suoi dati
+  restano. Settimana, Casa e Dati non si spengono: finché non arrivano le sezioni della Fase 2 questa parte non si
+  vede. I test la provano con una sezione finta, «Orto», aggiunta a `guscio.js` mentre il browser lo scarica
+  (`conSezioneFinta` in `aiuti.js`): nessun aggancio per i test nel codice dell’app.
 - In fondo, la versione installata. La **Libreria delle attività** non sta più qui: è in fondo alla Settimana (§9).
 
 ### La sezione Dati
@@ -798,6 +807,8 @@ si leggono come una storia.
   sezione e ogni foglio, su computer e telefono, in chiaro e in scuro, con il colore delle faccende Morbido e Deciso:
   nessuna violazione delle regole WCAG 2.1 di livello A e AA, contrasto dei colori compreso. Gira con il *movimento
   ridotto*: altrimenti axe misurerebbe un colore a metà di una transizione e segnalerebbe un contrasto che non c’è.
+  Le viste sono divise in gruppi (Settimana, Casa, Dati e Impostazioni), un test per gruppo, ognuno da una pagina
+  appena aperta: un test unico per tutte superava i 30 secondi in Firefox. Una sezione nuova porta il suo gruppo.
   Prova a schiarire `--tenue` in `stile.css`: il test se ne accorge.
 
 ### I test su GitHub (CI)

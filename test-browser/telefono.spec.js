@@ -156,7 +156,7 @@ test('settimane passate: si consultano e correggono, senza aggiungere né toglie
   await expect(p.locator('#titolo-giorno')).toContainText('Lunedì 19 ottobre');
 });
 
-test('il menu si apre dal basso, con tema e colore; la libreria sta sotto le schede; il CSV nella sezione Dati', async ({ browser }) => {
+test('le impostazioni si aprono dal basso, con tema e colore; la libreria sta sotto le schede; il CSV nella sezione Dati', async ({ browser }) => {
   const p = await apriTelefono(browser);
   await aggiungi(p, 'Sviluppo');
   await vaiA(p, 'dati');
@@ -165,7 +165,7 @@ test('il menu si apre dal basso, con tema e colore; la libreria sta sotto le sch
   await apriMenu(p);
   const menu = await p.locator('#menu').boundingBox();
   expect(Math.round(menu.y + menu.height)).toBe(p.viewportSize().height);         // appoggiato al fondo dello schermo
-  expect(await p.locator('#menu h3').allTextContents()).toEqual(['Tema', 'Colore delle faccende']);
+  expect(await p.locator('#menu h3:visible').allTextContents()).toEqual(['Tema', 'Colore delle faccende']);
   await expect(p.locator('#menu #pannello-libreria')).toHaveCount(0);
   await chiudiMenu(p);
   await vaiA(p, 'settimana');

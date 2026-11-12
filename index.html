@@ -18,8 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- ?v=20: vedi la nota sugli script in fondo -->
-  <link rel="stylesheet" href="stile.css?v=20">
+  <!-- ?v=21: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=21">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -57,10 +57,9 @@
     <header class="intestazione">
       <div class="testata">
         <h1 id="titolo-sezione">La mia settimana</h1>
-        <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog"
-                aria-label="Menu: tema e colore delle faccende">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-          <span class="lungo">Menu</span>
+        <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog" aria-label="Impostazioni">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5l1.5 2.4 2.7-.8.7 2.7 2.4 1.5-1.4 2.7 1.4 2.7-2.4 1.5-.7 2.7-2.7-.8-1.5 2.4-1.5-2.4-2.7.8-.7-2.7-2.4-1.5 1.4-2.7-1.4-2.7 2.4-1.5.7-2.7 2.7.8z"/></svg>
+          <span class="lungo">Impostazioni</span>
         </button>
       </div>
       <p class="sottotitolo" id="sottotitolo">Le attività della settimana, giorno per giorno.</p>
@@ -238,11 +237,12 @@
     <p class="stato" id="stato" role="status" aria-live="polite" popover="manual"></p>
   </main>
 
-  <!-- Il menu: tema e colore delle faccende. Si apre dal pulsante in alto a destra. -->
+  <!-- Le Impostazioni: tema, colore delle faccende, sezioni accese o spente. Si aprono dall'ingranaggio in alto a
+       destra. Nel codice si chiamano ancora «menu» (id="menu"): è lo stesso foglio di prima, con un nome nuovo. -->
   <dialog id="menu" class="foglio" aria-labelledby="titolo-menu">
     <div class="foglio-testa">
-      <h2 id="titolo-menu">Menu</h2>
-      <button type="button" class="chiudi" id="chiudi-menu" aria-label="Chiudi il menu">×</button>
+      <h2 id="titolo-menu">Impostazioni</h2>
+      <button type="button" class="chiudi" id="chiudi-menu" aria-label="Chiudi le impostazioni">×</button>
     </div>
 
     <section class="sezione" aria-labelledby="titolo-tema">
@@ -254,6 +254,13 @@
     <section class="sezione" aria-labelledby="titolo-intensita">
       <h3 id="titolo-intensita">Colore delle faccende</h3>
       <div class="opzioni" id="scelte-intensita" role="group" aria-labelledby="titolo-intensita"></div>
+    </section>
+
+    <!-- Le sezioni che si possono spegnere (js/guscio.js). Senza sezioni spegnibili questa parte non c'è. -->
+    <section class="sezione" id="parte-sezioni" aria-labelledby="titolo-sezioni" hidden>
+      <h3 id="titolo-sezioni">Sezioni</h3>
+      <div class="scelte-sezioni" id="scelte-sezioni" role="group" aria-labelledby="titolo-sezioni"></div>
+      <p class="nota-foglio">Una sezione spenta sparisce dal menu; i suoi dati restano. Vale su tutti i dispositivi.</p>
     </section>
 
 
@@ -325,30 +332,30 @@
        divisa per argomento in js/. Si carica solo guscio.js, che avvia l'app: i file che gli servono li chiede lui,
        con import, e così via a cascata (vedi la nota MODULI in js/base.js).
 
-       Il «?v=20» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       Il «?v=21» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
        può mescolare la pagina nuova con file vecchi che ha in memoria. Un import dentro un modulo scrive solo
        './base.js', senza numero: l'elenco qui sotto (import map) dice al browser che './base.js' è
-       'js/base.js?v=20'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
+       'js/base.js?v=21'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
        Ogni file di codice deve comparire qui: un test controlla che ci siano tutti, con il numero giusto. -->
   <script type="importmap">
     {
       "imports": {
-        "./core.js": "./core.js?v=20",
-        "./js/base.js": "./js/base.js?v=20",
-        "./js/testi.js": "./js/testi.js?v=20",
-        "./js/pezzi.js": "./js/pezzi.js?v=20",
-        "./js/sezioni.js": "./js/sezioni.js?v=20",
-        "./js/settimana.js": "./js/settimana.js?v=20",
-        "./js/promemoria.js": "./js/promemoria.js?v=20",
-        "./js/libreria.js": "./js/libreria.js?v=20",
-        "./js/rinomina.js": "./js/rinomina.js?v=20",
-        "./js/azioni.js": "./js/azioni.js?v=20",
-        "./js/file.js": "./js/file.js?v=20",
-        "./js/casa.js": "./js/casa.js?v=20",
-        "./js/guscio.js": "./js/guscio.js?v=20"
+        "./core.js": "./core.js?v=21",
+        "./js/base.js": "./js/base.js?v=21",
+        "./js/testi.js": "./js/testi.js?v=21",
+        "./js/pezzi.js": "./js/pezzi.js?v=21",
+        "./js/sezioni.js": "./js/sezioni.js?v=21",
+        "./js/settimana.js": "./js/settimana.js?v=21",
+        "./js/promemoria.js": "./js/promemoria.js?v=21",
+        "./js/libreria.js": "./js/libreria.js?v=21",
+        "./js/rinomina.js": "./js/rinomina.js?v=21",
+        "./js/azioni.js": "./js/azioni.js?v=21",
+        "./js/file.js": "./js/file.js?v=21",
+        "./js/casa.js": "./js/casa.js?v=21",
+        "./js/guscio.js": "./js/guscio.js?v=21"
       }
     }
   </script>
-  <script type="module" src="js/guscio.js?v=20"></script>
+  <script type="module" src="js/guscio.js?v=21"></script>
 </body>
 </html>

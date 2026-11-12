@@ -626,6 +626,7 @@ dialog.foglio {
 .sezione { padding: 1rem 0 1.1rem; border-top: 1px solid var(--linea); }
 .sezione h3 { margin: 0 0 .35rem; font-size: 1rem; }
 .sezione > p { margin: 0 0 .8rem; font-size: .9rem; color: var(--tenue); }
+.scelte-sezioni { display: grid; gap: .1rem; }
 .versione { margin: .6rem 0 0; font-size: .8rem; color: var(--tenue); text-align: center; }
 
 /* ───────── Vista a un giorno (telefono) ─────────
@@ -726,7 +727,7 @@ dialog.foglio {
 .segmento[data-livello="leggero"] { --c: var(--en-leggero); }
 .segmento[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #1d2521; }
 .segmento:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
-.interruttore-riposo {
+.interruttore-riposo, .interruttore {
   display: flex;
   align-items: center;
   gap: .7rem;
