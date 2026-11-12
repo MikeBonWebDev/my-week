@@ -118,6 +118,11 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
 - **Un pezzo d'interfaccia nuovo passa prima da un'anteprima** (un artefatto da provare sul telefono), e il codice la
   segue. Se esiste già un disegno nell'anteprima della Fase 2, si parte da quello. Lezione del ventaglio (novembre
   2026): fatto senza anteprima, sul telefono vero usciva dallo schermo e mostrava due pulsanti.
+- **Il codice si confronta con l'anteprima prima di consegnarlo.** Si aprono l'artefatto approvato e l'app nello
+  stesso browser, alle stesse larghezze (telefono 360 e 412 px, computer), in chiaro e in scuro; si misurano le
+  posizioni degli elementi principali e si mettono gli screenshot affiancati. Le differenze si correggono, o si
+  dichiarano al proprietario se sono volute. Come si fa: uno script Playwright con due contesti, uno per l'app
+  (`npm start`) e uno per il file dell'artefatto, che fa le stesse azioni e prende le stesse misure su tutti e due.
 
 ## Test nel browser: le lezioni già pagate
 
@@ -172,12 +177,13 @@ Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push 
 Debiti della 2.0 chiusi. Poi, dall'uso vero, un ritocco della Fase 1: **la settimana giorno per giorno** (attività per
 giorno, faccende coperte dalle spunte vicine, «Riprendi la lista» tolto; `settimana-19`). Il piano della Fase 2
 è scritto (`PIANO.md`), e il comportamento attuale è in `FUNZIONI.md`; il piano è stato rivisto (novembre 2026). La 2.1
-(Impostazioni, navigazione, Libreria) è finita (`settimana-22`).
+(Impostazioni, navigazione, Libreria) è finita (`settimana-23`, con il ventaglio rifatto sull'anteprima). Prossimo
+passo: la **Home**, prima della 2.2: prima le sue regole (`PIANO.md` §3.5.2).
 
 Decisioni per la Fase 2 (ottobre 2026):
 - **Menu del telefono:** predefinita la barra di oggi più una voce «Altro» per le sezioni che non ci stanno; il menu
-  a ventaglio (radiale) resta selezionabile nelle Impostazioni. Le tre sezioni nella barra sono **fisse e le sceglie
-  il proprietario** (predefinite Settimana, Casa, Dati), mai riordinate dall'uso; scelta per dispositivo.
+  a ventaglio (radiale) resta selezionabile nelle Impostazioni. Le sezioni nella barra sono **fisse**, mai riordinate
+  dall'uso (con la Home non si scelgono più: vedi sotto).
 - **Sezioni accese o spente** (Cucina, Spese): valgono su tutti i dispositivi, chiave `i/spenta/<nome>`.
 - **Cucina:** cinque momenti al giorno (colazione, metà mattina, pranzo, merenda del pomeriggio, cena), nessuno
   obbligatorio. Ordine delle fasi invariato: 2.1, 2.2, 2.3, 2.4.
@@ -190,10 +196,16 @@ Decisioni per la Fase 2 (ottobre 2026):
 - **La 2.1 in tre passi**, ognuno con i suoi test e il push prima del successivo: 1. Libreria (fatto,
   `settimana-20`); 2. il Menu diventa Impostazioni, con le sezioni accese o spente (fatto, `settimana-21`; nel codice
   il foglio si chiama ancora `menu`); 3. la navigazione (barra con Altro, ventaglio, «Menu del telefono»; fatto,
-  `settimana-22`). **La 2.1 è finita**: prossimo passo la 2.2 (Alimenti e Scorte).
+  `settimana-22`). **La 2.1 è finita**: prossimo passo la Home, poi la 2.2 (Alimenti e Scorte).
 - **Per la 2.2** (novembre 2026): la sezione Spese nasce già qui, con le sole schede Alimenti e Scorte; le quantità
   degli alimenti si dicono con cinque parole (Finito · Poco · Metà · Una confezione · Due o più); «È ancora così» ha
   la sua chiave, `p/<id>/visto`.
+- **La Home** (decisa a novembre 2026, prima della 2.2): una sezione in più, **la prima**, che si apre sempre
+  all'avvio. Card in **ordine fisso**, lo stesso ovunque, con la riga «aperta ieri». **Barra del telefono fissa**: Home,
+  Settimana, Casa (la Cucina al posto di Casa dalla 2.4), poi «Altro»; la scelta dei posti della 2.1 si toglie. **Dati
+  va in alto** accanto all'ingranaggio, con il puntino, e non ha card. Si lavora così: prima le regole agnostiche
+  (`PIANO.md` §3.5.2), poi la struttura nel codice, poi **una card alla volta** (analisi della sezione, candidati,
+  decisione, codice). **Ogni sezione nuova chiude la sua fase con la sua card.** Nome ancora da scegliere.
 - **Le sezioni spente e la navigazione si provano con sezioni finte** («Orto», «Serra»: `conSezioneFinta` in
   `aiuti.js`), che il test aggiunge a `guscio.js` mentre il browser lo scarica: niente agganci per i test nel codice
   dell'app.

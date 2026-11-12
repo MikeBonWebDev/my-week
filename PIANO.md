@@ -79,12 +79,76 @@ Al primo avvio dopo l'aggiornamento non cambia niente di ciò che c'era: l'app r
 
 **Fatto** (`settimana-20`, `-21`, `-22`, novembre 2026): la colonna sul computer con tutte le sezioni; sul telefono la
 barra con tre posti scelti nelle Impostazioni (predefiniti Settimana, Casa, Dati) e «Altro» oltre le quattro sezioni,
-oppure il ventaglio; le Impostazioni con Tema, Colore delle faccende, Sezioni accese o spente (`i/spenta/<nome>`),
+oppure il ventaglio (la barra diventa fissa e Dati va in alto con la Home: §3.5.1); le Impostazioni con Tema, Colore delle faccende, Sezioni accese o spente (`i/spenta/<nome>`),
 Menu del telefono e Versione. Il comportamento è descritto in `FUNZIONI.md` §2 e §7; le chiavi in `DATI.md`.
 
 Resta da fare qui, quando arrivano: **Colori** e **Stile** nelle Impostazioni (dopo i moduli, §12). **Punteggio:** non
 c'è; se mai arriverà, partirà spento e starà nelle Impostazioni. Spegnere Spese non spegne gli Alimenti dentro Cucina,
 e viceversa: i prodotti sono di tutte e due (§5).
+
+## 3.5 La Home
+
+Decisa a novembre 2026, **prima della 2.2**: è struttura, e ogni sezione nuova nasce con la sua card. Anteprima:
+artefatto «Home della settimana» (novembre 2026). **[da decidere] Il nome**: «Home» collide con «Casa»; alternative
+«Oggi», «Panoramica», «Inizio». Nel testo resta «Home» finché non si sceglie.
+
+### 3.5.1 Decisioni (novembre 2026)
+
+- Una sezione in più, **la prima**: si apre **sempre all'avvio** (oggi l'app riapre sull'ultima sezione).
+- **Card in ordine fisso**, lo stesso ordine ovunque (card, barra, «Altro», ventaglio, colonna del computer): quello
+  del §3.1. Ogni card ha una riga «aperta oggi / ieri / lunedì / il 31 ottobre». Niente riordino dall'uso: la
+  posizione non cambia sotto il pollice.
+- **La barra del telefono è fissa**: Home, Settimana, Casa, poi «Altro». Quando arriva la Cucina (2.4) prende il posto
+  di Casa, che passa in «Altro»: le due «settimane», attività e pasti, stanno in barra. Al massimo tre sezioni più
+  «Altro». La scelta dei posti nelle Impostazioni e la chiave `settimana:barra` (2.1) **si tolgono**.
+- **Dati esce dalla navigazione** e va **in alto**, nell'intestazione accanto all'ingranaggio, con il suo puntino:
+  si vede da ogni sezione. È uno strumento come le Impostazioni, non una sezione: **non ha card**.
+
+### 3.5.2 Regole agnostiche [proposta, da decidere insieme punto per punto]
+
+Valgono per la Home e per ogni card, qualunque sia la sezione. Si decidono prima del codice della struttura.
+
+**Struttura**
+- H1. Una colonna di card sul telefono; sul computer [da decidere] una colonna larga o una griglia a due colonne,
+  come nell'anteprima. Nessun carosello, nessuna card nascosta: tutte visibili scorrendo.
+- H2. Una card per sezione **accesa** che dichiara una card; una sezione spenta non ha card. Nessuna card «aggiungi».
+- H3. La Home non ha dati propri nel registro: ogni card legge i dati della sua sezione. L'unico dato nuovo è
+  quando una sezione è stata aperta, [da decidere] nel browser (`settimana:aperta`, per dispositivo) o nel registro.
+
+**Il contratto di una card**
+- C1. Il descrittore di sezione ha un campo facoltativo `scheda(db, oggi)` che restituisce **solo testo**: un titolo
+  breve e da zero a tre righe. Niente HTML: il disegno è della Home, uguale per tutte. Così la card si prova in Node.
+- C2. **La card non ha azioni**: si legge e si tocca per aprire la sezione. Nessuna spunta dalla Home.
+  (Tesi contraria più forte: una spunta dalla Home risparmia due tocchi. Contro: una card con controlli dentro ha più
+  bersagli, più errori di tocco e un ordine del fuoco più lungo; e la Home diventa una seconda copia della sezione.)
+- C3. Al massimo tre righe; il testo va a capo, non si tronca con «…».
+- C4. Stato vuoto calmo: se non c'è niente da dire, una riga neutra («Niente in programma oggi»), mai una card vuota
+  e mai un invito a fare.
+- C5. Il linguaggio della sezione: date esplicite, niente pagelle, niente conteggi di ciò che manca, niente rosso.
+  La prova di sempre: *se la ignoro per tre settimane, cosa mi dice?* (Il §2 dice che gli avvisi stanno nella loro
+  sezione, «non altrove»: la card è l'unico altrove ammesso, e solo con lo stesso tono neutro della sezione.)
+
+**Frequenza**
+- F1. Le card si ricalcolano **quando si disegna la Home**: all'avvio, al ritorno da una sezione, quando la pagina
+  torna visibile (anche a cambio di giorno), quando arrivano dati da un altro dispositivo. **Nessun timer.**
+- F2. Il conto è quello che fa la sezione (stesse funzioni del nucleo): la card non ricalcola a modo suo.
+
+**Accessibilità**
+- A1. Un `h1` per la Home, un `h2` per ogni card; ogni card è un `article` con **un solo controllo**, il titolo come
+  pulsante, che con un velo trasparente rende toccabile tutta la card. Lo screen reader legge titolo e righe.
+- A2. Ordine del fuoco: le card nell'ordine in cui si vedono; tornando alla Home dalla sezione, il fuoco va sulla card
+  da cui si era partiti.
+- A3. Bersaglio di tocco: tutta la card, almeno 48 px di altezza. Contrasto come il resto dell'app, in chiaro e scuro;
+  carattere a 200 % senza scorrimento orizzontale (prova a 320 px, come per la navigazione).
+
+### 3.5.3 Come si lavora
+
+1. Si decidono le regole del §3.5.2.
+2. **La struttura nel codice**: la sezione, `scheda` nel descrittore, la barra fissa, Dati in alto, le card con il solo
+   titolo e la riga «aperta…». Poi il confronto con l'anteprima (`CLAUDE.md`).
+3. **Una card alla volta**: Settimana, poi Casa. Per ognuna: analisi della sezione, i candidati (cosa mostrare, come,
+   perché), la decisione, il codice, il confronto con l'anteprima. Poi la successiva.
+4. Spese (2.2) e Cucina (2.4) **chiudono con la propria card**, con lo stesso procedimento.
 
 ## 4. La Libreria nella sezione Settimana
 
@@ -355,12 +419,17 @@ Una fase per volta: test verdi e push tra l'una e l'altra, `CLAUDE.md` e `DATI.m
 la Libreria nella Settimana; il Menu diventa Impostazioni, con le sezioni accese o spente; la navigazione (barra con
 Altro, ventaglio, Menu del telefono). Si prova con sezioni finte, «Orto» e «Serra» (`conSezioneFinta` in `aiuti.js`).
 
+**Home** (prima della 2.2): regole, struttura, poi una card alla volta (§3.5.3).
+- Test: la Home si apre all'avvio; le card seguono l'ordine del §3.1 e saltano le sezioni spente; una card per sezione
+  finta; Dati dall'intestazione con il puntino; le funzioni `scheda` provate in Node.
+
 **2.2 Prodotti: Alimenti e Scorte**
 - Nucleo: chiavi `p/…`, movimenti, correzione, calcolo della quantità, stati delle scorte.
 - Dove si vedono prima che esistano Spese e Cucina: la sezione **Spese** nasce qui con le sole schede Alimenti e
   Scorte (deciso a novembre 2026); la scheda Spese arriva nella 2.3, gli Alimenti dentro Cucina nella 2.4.
 - Test di proprietà: movimenti da più dispositivi uniti in ordine qualunque danno sempre la stessa quantità; una
   correzione conta solo i movimenti nati dopo; nessuna quantità negativa a schermo.
+- Chiude con la card della sezione Spese nella Home (§3.5.3).
 
 **2.3 Spese**
 - Spese con prodotti, il mese, i totali per categoria, il CSV «Spese del mese».
@@ -369,6 +438,7 @@ Altro, ventaglio, Menu del telefono). Si prova con sezioni finte, «Orto» e «S
 **2.4 Cucina**
 - Pasti, ingredienti, piatti già fatti, mangiato, costo; CSV «Alimenti e scorte».
 - Prima del codice, un'anteprima della vista sul computer (§9.3).
+- Chiude con la card della Cucina, che in barra prende il posto di Casa (§3.5.1).
 - Test: mangiato e non mangiato muovono gli alimenti; ingredienti cambiati dopo non li toccano; costo con un prezzo
   mancante.
 
@@ -387,7 +457,9 @@ Si chiudono prima della fase che li usa, non tutti insieme.
 
 | Punto | Decisione | Dove |
 |---|---|---|
-| Quali sezioni stanno nella barra del telefono | fisse, scelte nelle Impostazioni; predefinite Settimana, Casa, Dati | §3.3 |
+| Quali sezioni stanno nella barra del telefono | fisse: Home, Settimana, Casa (Cucina dalla 2.4), poi «Altro»; non si scelgono più | §3.5.1 |
+| Ordine delle card della Home | fisso, lo stesso ovunque, con «aperta ieri» | §3.5.1 |
+| Dati | in alto, accanto all'ingranaggio, con il puntino; niente card | §3.5.1 |
 | Sezioni accese/spente | valgono su tutti i dispositivi (`i/spenta/<nome>`) | §3.4 |
 | I momenti dei pasti | cinque: colazione, metà mattina, pranzo, merenda del pomeriggio, cena | §9 |
 | Ordine delle fasi | quello del §12; la Cucina non serve prima | §12 |
@@ -400,6 +472,8 @@ Si chiudono prima della fase che li usa, non tutti insieme.
 
 | # | Punto | Proposta | Si decide prima di | Dove |
 |---|---|---|---|---|
+| 0a | Il nome della Home | «Oggi», «Panoramica», «Inizio» (collide con «Casa») | struttura della Home | §3.5 |
+| 0b | Le regole agnostiche della Home | quelle del §3.5.2 | struttura della Home | §3.5.2 |
 | 1 | Categorie di spesa proprie | no nella 2.3, si rivede dopo l'uso | 2.3 | §8.1 |
 | 2 | Il CSV di una sezione spenta | resta | 2.3 | §11 |
 | 3 | Un piatto o più per pasto | uno per momento nella 2.4 | 2.4 | §9.1 |
