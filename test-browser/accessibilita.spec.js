@@ -73,7 +73,7 @@ const gruppi = {
       await p.click('#scelte-menu-telefono [data-menu="ventaglio"]');
       await chiudiMenu(p);
       await p.click('#apri-ventaglio');
-      await expect(p.locator('#ventaglio')).toBeVisible();
+      await expect(p.locator('#velo-ventaglio')).toBeVisible();
     }],
   ],
 };

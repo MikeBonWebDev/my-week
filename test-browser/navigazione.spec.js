@@ -102,7 +102,14 @@ test('il puntino di Dati si vede su «Altro» quando Dati sta lì dentro', async
   expect(p.errori).toEqual([]);
 });
 
-test('ventaglio: il pulsante dice dove sei; si apre sulla sezione aperta, Esc chiude, scegliendo si cambia sezione', async ({ browser }) => {
+const petali = (p) => p.locator('#ventaglio .petalo').evaluateAll((bb) => bb.map((b) => b.dataset.sezione));
+async function usaVentaglio(p) {
+  await apriMenu(p);
+  await p.click('#scelte-menu-telefono [data-menu="ventaglio"]');
+  await chiudiMenu(p);
+}
+
+test('ventaglio: il pulsante dice dove sei; aperto diventa «Chiudi», e il fuoco va sulla sezione aperta', async ({ browser }) => {
   const p = await apriTelefono(browser);
   await apriMenu(p);
   await p.click('#scelte-menu-telefono [data-menu="ventaglio"]');
@@ -111,29 +118,76 @@ test('ventaglio: il pulsante dice dove sei; si apre sulla sezione aperta, Esc ch
   await chiudiMenu(p);
   await expect(p.locator('#sezioni')).toBeHidden();
   const pulsante = p.locator('#apri-ventaglio');
-  await expect(pulsante).toBeVisible();
   await expect(pulsante).toHaveText('Settimana');
   await expect(pulsante).toHaveAccessibleName('Sezioni, sezione aperta: Settimana');
+  await expect(pulsante).toHaveAttribute('aria-expanded', 'false');
 
   await pulsante.click();
-  await expect(p.locator('#ventaglio')).toBeVisible();
-  expect(await p.locator('#voci-ventaglio [data-sezione]').evaluateAll((bb) => bb.map((b) => b.dataset.sezione)))
-    .toEqual(['settimana', 'casa', 'dati', 'orto', 'serra']);           // tutte, anche quelle fuori dalla barra
-  await expect(p.locator('#voci-ventaglio [data-sezione="settimana"]')).toBeFocused();
-  await p.keyboard.press('Escape');
-  await expect(p.locator('#ventaglio')).toBeHidden();
+  await expect(p.locator('#velo-ventaglio')).toBeVisible();
+  // un solo pulsante: lo stesso, che ora dice «Chiudi»
+  await expect(p.locator('.pulsante-ventaglio:visible')).toHaveCount(1);
+  await expect(pulsante).toHaveText('Chiudi');
+  await expect(pulsante).toHaveAttribute('aria-expanded', 'true');
+  expect(await petali(p)).toEqual(['settimana', 'casa', 'dati', 'orto', 'serra']);   // tutte, anche quelle fuori dalla barra
+  await expect(p.locator('#ventaglio .petalo[data-sezione="settimana"]')).toBeFocused();
+  await expect(p.locator('#ventaglio .petalo[data-sezione="settimana"]')).toHaveAttribute('aria-current', 'page');
+  expect(await p.evaluate(() => document.querySelector('main').inert)).toBe(true);   // la pagina dietro non risponde
+
+  // Tab gira tra i petali e il pulsante, senza uscire
+  for (let i = 0; i < 5; i++) await p.keyboard.press('Tab');
   await expect(pulsante).toBeFocused();
+  await p.keyboard.press('Tab');
+  await expect(p.locator('#ventaglio .petalo[data-sezione="settimana"]')).toBeFocused();
 
+  // Esc chiude, e il fuoco torna al pulsante (anche in Safari, che non dà il fuoco al tocco)
+  await p.keyboard.press('Escape');
+  await expect(p.locator('#velo-ventaglio')).toBeHidden();
+  await expect(pulsante).toBeFocused();
+  await expect(pulsante).toHaveText('Settimana');
+  expect(await p.evaluate(() => document.querySelector('main').inert)).toBe(false);
+  expect(p.errori).toEqual([]);
+});
+
+test('ventaglio: scegliendo un petalo si cambia sezione; il velo e «Chiudi» chiudono; la scelta resta', async ({ browser }) => {
+  const p = await apriTelefono(browser);
+  await usaVentaglio(p);
+  const pulsante = p.locator('#apri-ventaglio');
   await pulsante.click();
-  await p.locator('#voci-ventaglio [data-sezione="orto"]').click();
-  await expect(p.locator('#ventaglio')).toBeHidden();
+  await p.locator('#ventaglio .petalo[data-sezione="orto"]').click();
+  await expect(p.locator('#velo-ventaglio')).toBeHidden();
   await expect(sezioneAperta(p)).toHaveText('Orto');
   await expect(pulsante).toHaveText('Orto');
 
-  // vale per il dispositivo: riaprendo resta il ventaglio
-  await p.reload();
-  await expect(p.locator('#apri-ventaglio')).toBeVisible();
+  await pulsante.click();                                             // «Chiudi»
+  await expect(p.locator('#velo-ventaglio')).toBeVisible();
+  await pulsante.click();
+  await expect(p.locator('#velo-ventaglio')).toBeHidden();
+  await pulsante.click();
+  await p.mouse.click(20, 120);                                       // un tocco sul velo, lontano dai petali
+  await expect(p.locator('#velo-ventaglio')).toBeHidden();
+  await expect(sezioneAperta(p)).toHaveText('Orto');
+
+  await p.reload();                                                   // vale per il dispositivo: resta il ventaglio
+  await expect(pulsante).toBeVisible();
   await expect(p.locator('#sezioni')).toBeHidden();
+  expect(p.errori).toEqual([]);
+});
+
+test('ventaglio: su uno schermo stretto e con il carattere grande nessun petalo esce dallo schermo', async ({ browser }) => {
+  // 320 px di larghezza (il telefono più stretto da considerare) e il carattere ingrandito come in Android
+  const contesto = await conSezioneFinta(await browser.newContext({ ...telefono(), viewport: { width: 320, height: 640 } }), FINTE);
+  await contesto.addInitScript(() => {
+    localStorage.setItem('settimana:menu', 'ventaglio');
+    document.addEventListener('DOMContentLoaded', () => { document.documentElement.style.fontSize = '22px'; });
+  });
+  const p = await apri(contesto);
+  await p.click('#apri-ventaglio');
+  await expect(p.locator('#ventaglio .petalo')).toHaveCount(5);
+  // a fine animazione: i rettangoli dei petali, a confronto con lo schermo
+  await p.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
+  const fuori = await p.locator('#ventaglio .petalo').evaluateAll((bb) => bb.map((b) => b.getBoundingClientRect())
+    .filter((r) => r.left < 0 || r.right > innerWidth || r.top < 0).length);
+  expect(fuori).toBe(0);
   expect(p.errori).toEqual([]);
 });
 

@@ -115,6 +115,9 @@ Il proprietario lavora su Windows (PowerShell, VS Code). I file di testo sono LF
   guardi, sul computer oggi); una faccenda resta sulla settimana, ma una spunta copre i giorni a meno di una cadenza,
   prima e dopo. Una casella vuota resta solo dove l'attività era in programma (README §6, «I giorni»).
 - Prima di cambiare parole dell'interfaccia, proporre le alternative al proprietario: le scelte di lessico sono sue.
+- **Un pezzo d'interfaccia nuovo passa prima da un'anteprima** (un artefatto da provare sul telefono), e il codice la
+  segue. Se esiste già un disegno nell'anteprima della Fase 2, si parte da quello. Lezione del ventaglio (novembre
+  2026): fatto senza anteprima, sul telefono vero usciva dallo schermo e mostrava due pulsanti.
 
 ## Test nel browser: le lezioni già pagate
 
@@ -178,7 +181,8 @@ Decisioni per la Fase 2 (ottobre 2026):
 - **Sezioni accese o spente** (Cucina, Spese): valgono su tutti i dispositivi, chiave `i/spenta/<nome>`.
 - **Cucina:** cinque momenti al giorno (colazione, metà mattina, pranzo, merenda del pomeriggio, cena), nessuno
   obbligatorio. Ordine delle fasi invariato: 2.1, 2.2, 2.3, 2.4.
-- **Colori** (le cinque palette e la predefinita): dopo che i moduli sono completi, così si fanno una volta sola.
+- **Colori** (le cinque palette e la predefinita) **e lo stile Grezzo/Quieto**: dopo che i moduli sono completi,
+  insieme, così l'aspetto si decide una volta sola (stile confermato con i colori: novembre 2026).
 - **Documenti:** il piano per intero, prima del codice, come riferimento da verificare e seguire (`PIANO.md`, senza
   numero di fase nel nome); il comportamento attuale in un documento vivo (`FUNZIONI.md`), che riceve ogni fase finita.
 - **Libreria:** nella sezione Settimana (un pannello in fondo), non più nel menu, con il «mai usata» corretto per
@@ -186,8 +190,10 @@ Decisioni per la Fase 2 (ottobre 2026):
 - **La 2.1 in tre passi**, ognuno con i suoi test e il push prima del successivo: 1. Libreria (fatto,
   `settimana-20`); 2. il Menu diventa Impostazioni, con le sezioni accese o spente (fatto, `settimana-21`; nel codice
   il foglio si chiama ancora `menu`); 3. la navigazione (barra con Altro, ventaglio, «Menu del telefono»; fatto,
-  `settimana-22`). **La 2.1 è finita**: prossimo passo la 2.2 (Alimenti e Scorte), dopo i suoi punti aperti in
-  `PIANO.md` §13.
+  `settimana-22`). **La 2.1 è finita**: prossimo passo la 2.2 (Alimenti e Scorte).
+- **Per la 2.2** (novembre 2026): la sezione Spese nasce già qui, con le sole schede Alimenti e Scorte; le quantità
+  degli alimenti si dicono con cinque parole (Finito · Poco · Metà · Una confezione · Due o più); «È ancora così» ha
+  la sua chiave, `p/<id>/visto`.
 - **Le sezioni spente e la navigazione si provano con sezioni finte** («Orto», «Serra»: `conSezioneFinta` in
   `aiuti.js`), che il test aggiunge a `guscio.js` mentre il browser lo scarica: niente agganci per i test nel codice
   dell'app.

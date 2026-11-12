@@ -1097,64 +1097,103 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
 }
 .lista-altro .puntino-dati { top: .7rem; left: 2.1rem; }
 
-/* il pulsante del ventaglio: in basso al centro, dice dove sei */
+/* ───────── Il ventaglio (telefono) ─────────
+   Come nell'anteprima approvata (novembre 2026). Il pulsante in basso al centro dice dove sei; aperto, lo stesso
+   pulsante diventa «Chiudi» e resta sopra al velo. I petali stanno su un arco sopra di lui: le posizioni (--x, --y in
+   px, calcolate sulla larghezza dello schermo) e l'ordine (--i) li mette navigazione.js. */
 .pulsante-ventaglio {
   position: fixed;
   left: 50%;
   bottom: calc(1rem + env(safe-area-inset-bottom));
   translate: -50% 0;
-  z-index: 31;
+  z-index: 32;
   display: flex;
   align-items: center;
-  gap: .55rem;
-  min-height: 3.4rem;
-  padding: 0 1.4rem;
+  gap: .5rem;
+  min-height: 3.5rem;
+  padding: 0 1.4rem 0 1.15rem;
   font: inherit;
   font-weight: 600;
   color: var(--bottone-testo);
   background: var(--bottone);
-  border: 0;
+  border: 1px solid var(--bottone);
   border-radius: 999px;
-  box-shadow: var(--ombra);
+  box-shadow: 0 10px 28px -10px rgb(30 36 32 / .55);
   cursor: pointer;
+  transition: background-color .18s ease, color .18s ease;
 }
-.pulsante-ventaglio svg { width: 1.3rem; height: 1.3rem; fill: none; stroke: currentColor; stroke-width: 2; }
+.pulsante-ventaglio[aria-expanded="true"] { color: var(--inchiostro); background: var(--scheda); border-color: var(--scheda-bordo); }
+.pulsante-ventaglio svg { width: 1.375rem; height: 1.375rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pulsante-ventaglio[aria-expanded="true"] .icona-chiuso, .pulsante-ventaglio[aria-expanded="false"] .icona-aperto { display: none; }
 .pulsante-ventaglio:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
-.pulsante-ventaglio .puntino-altro { top: .4rem; left: 2.2rem; }
-/* il ventaglio aperto: un <dialog> a tutto schermo, con il velo; le sezioni su un arco sopra il pulsante */
-dialog.ventaglio {
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  max-height: none;
-  margin: 0;
+.pulsante-ventaglio .puntino-altro { top: .45rem; left: 2.1rem; }
+
+.aperto-ventaglio .velo {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
   padding: 0;
+  border: 0;
+  background: light-dark(rgb(56 66 61 / .34), rgb(8 12 10 / .55));   /* nel buio il velo scurisce, non schiarisce */
+  cursor: default;
+  animation: velo-appare .18s ease-out both;
+}
+/* il centro dell'arco: il centro del pulsante (1rem dal fondo, alto 3,5rem) */
+.ventaglio { position: fixed; z-index: 31; left: 50%; bottom: calc(2.75rem + env(safe-area-inset-bottom)); width: 0; height: 0; }
+.petalo {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 76px;
+  margin: -24px 0 0 -38px;
+  padding: 0;
+  font: inherit;
+  color: var(--inchiostro);
   background: transparent;
   border: 0;
-  overflow: visible;
+  cursor: pointer;
+  translate: var(--x) var(--y);
+  animation: sboccia .24s cubic-bezier(.2, .8, .3, 1.15) both;
+  animation-delay: calc(var(--i) * 28ms);
 }
-dialog.ventaglio::backdrop { background: color-mix(in srgb, var(--inchiostro) 30%, transparent); }
-.chiudi-ventaglio { z-index: 1; }
-.ventaglio .sezione-voce {
-  position: absolute;
-  left: 50%;
-  bottom: calc(2.7rem + env(safe-area-inset-bottom));
-  translate: calc(-50% + var(--x)) calc(50% + var(--y));
-  flex-direction: column;
-  justify-content: center;
-  gap: .15rem;
-  width: 4.6rem;
-  min-height: 4.6rem;
-  padding: .3rem;
-  font-size: .78rem;
-  text-align: center;
+.petalo .cerchio {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   background: var(--scheda);
   border: 1px solid var(--scheda-bordo);
-  border-radius: 50%;
   box-shadow: var(--ombra);
 }
-.ventaglio .sezione-voce[aria-current="page"] { background: var(--bottone); border-color: var(--bottone); }
-.ventaglio .puntino-dati { top: .55rem; left: calc(50% + .45rem); }
+.petalo .cerchio svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.petalo .nome {
+  max-width: 76px;
+  padding: 1px 8px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--scheda);
+  border-radius: 999px;
+}
+.petalo[aria-current="page"] .cerchio { color: var(--bottone-testo); background: var(--bottone); border-color: var(--bottone); }
+.petalo:focus-visible { outline: none; }
+.petalo:focus-visible .cerchio { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+.petalo .puntino-dati { top: 2px; left: auto; right: 2px; }
+/* dal pulsante verso il suo posto sull'arco, uno dopo l'altro; chiudendo rientrano tutti insieme */
+@keyframes sboccia { from { translate: 0 0; scale: .4; opacity: 0; } to { translate: var(--x) var(--y); scale: 1; opacity: 1; } }
+@keyframes velo-appare { from { opacity: 0; } }
+.aperto-ventaglio.chiusura .petalo { animation: rientra .14s ease-in both; }
+.aperto-ventaglio.chiusura .velo { animation: velo-scompare .14s ease-in both; }
+@keyframes rientra { to { translate: 0 0; scale: .4; opacity: 0; } }
+@keyframes velo-scompare { to { opacity: 0; } }
 
 /* ───────── Schermi stretti: telefono ───────── */
 @media (max-width: 40rem) {
@@ -1214,4 +1253,5 @@ dialog.ventaglio::backdrop { background: color-mix(in srgb, var(--inchiostro) 30
 /* ───────── Chi preferisce meno movimento ───────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  .petalo, .aperto-ventaglio .velo { animation: none !important; }   /* il ventaglio compare subito, senza ritardi */
 }

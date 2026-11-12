@@ -18,8 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- ?v=22: vedi la nota sugli script in fondo -->
-  <link rel="stylesheet" href="stile.css?v=22">
+  <!-- ?v=23: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=23">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -60,19 +60,17 @@
   </nav>
 
   <!-- Telefono, con il menu a ventaglio scelto nelle Impostazioni: un solo pulsante in basso; toccandolo le sezioni si
-       aprono a ventaglio sopra di lui (js/navigazione.js) -->
-  <button type="button" class="pulsante-ventaglio" id="apri-ventaglio" aria-haspopup="dialog" hidden>
-    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>
+       aprono a ventaglio sopra di lui, e lo stesso pulsante diventa «Chiudi» (js/navigazione.js) -->
+  <div class="aperto-ventaglio" id="aperto-ventaglio" hidden>
+    <button type="button" class="velo" id="velo-ventaglio" tabindex="-1" aria-label="Chiudi le sezioni"></button>
+    <nav class="ventaglio" id="ventaglio" aria-label="Sezioni"></nav>
+  </div>
+  <button type="button" class="pulsante-ventaglio" id="apri-ventaglio" aria-expanded="false" aria-controls="ventaglio" hidden>
+    <svg class="icona-chiuso" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg>
+    <svg class="icona-aperto" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
     <span id="testo-ventaglio"></span>
     <span class="puntino-dati puntino-altro" aria-hidden="true" hidden></span>
   </button>
-  <dialog class="ventaglio" id="ventaglio" aria-label="Sezioni">
-    <div id="voci-ventaglio"></div>
-    <button type="button" class="pulsante-ventaglio chiudi-ventaglio" id="chiudi-ventaglio">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      <span>Chiudi</span>
-    </button>
-  </dialog>
 
   <main>
     <header class="intestazione">
@@ -372,31 +370,31 @@
        divisa per argomento in js/. Si carica solo guscio.js, che avvia l'app: i file che gli servono li chiede lui,
        con import, e così via a cascata (vedi la nota MODULI in js/base.js).
 
-       Il «?v=22» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       Il «?v=23» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
        può mescolare la pagina nuova con file vecchi che ha in memoria. Un import dentro un modulo scrive solo
        './base.js', senza numero: l'elenco qui sotto (import map) dice al browser che './base.js' è
-       'js/base.js?v=22'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
+       'js/base.js?v=23'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
        Ogni file di codice deve comparire qui: un test controlla che ci siano tutti, con il numero giusto. -->
   <script type="importmap">
     {
       "imports": {
-        "./core.js": "./core.js?v=22",
-        "./js/base.js": "./js/base.js?v=22",
-        "./js/testi.js": "./js/testi.js?v=22",
-        "./js/pezzi.js": "./js/pezzi.js?v=22",
-        "./js/sezioni.js": "./js/sezioni.js?v=22",
-        "./js/navigazione.js": "./js/navigazione.js?v=22",
-        "./js/settimana.js": "./js/settimana.js?v=22",
-        "./js/promemoria.js": "./js/promemoria.js?v=22",
-        "./js/libreria.js": "./js/libreria.js?v=22",
-        "./js/rinomina.js": "./js/rinomina.js?v=22",
-        "./js/azioni.js": "./js/azioni.js?v=22",
-        "./js/file.js": "./js/file.js?v=22",
-        "./js/casa.js": "./js/casa.js?v=22",
-        "./js/guscio.js": "./js/guscio.js?v=22"
+        "./core.js": "./core.js?v=23",
+        "./js/base.js": "./js/base.js?v=23",
+        "./js/testi.js": "./js/testi.js?v=23",
+        "./js/pezzi.js": "./js/pezzi.js?v=23",
+        "./js/sezioni.js": "./js/sezioni.js?v=23",
+        "./js/navigazione.js": "./js/navigazione.js?v=23",
+        "./js/settimana.js": "./js/settimana.js?v=23",
+        "./js/promemoria.js": "./js/promemoria.js?v=23",
+        "./js/libreria.js": "./js/libreria.js?v=23",
+        "./js/rinomina.js": "./js/rinomina.js?v=23",
+        "./js/azioni.js": "./js/azioni.js?v=23",
+        "./js/file.js": "./js/file.js?v=23",
+        "./js/casa.js": "./js/casa.js?v=23",
+        "./js/guscio.js": "./js/guscio.js?v=23"
       }
     }
   </script>
-  <script type="module" src="js/guscio.js?v=22"></script>
+  <script type="module" src="js/guscio.js?v=23"></script>
 </body>
 </html>

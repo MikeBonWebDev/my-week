@@ -46,6 +46,7 @@ const nav = $('#sezioni');
 const voceAltro = $('#voce-altro');
 const pulsanteVentaglio = $('#apri-ventaglio');
 const ventaglio = $('#ventaglio');
+const apertoVentaglio = $('#aperto-ventaglio');
 const foglioAltro = $('#foglio-altro');
 
 // Il nome breve di una sezione, come lo scrive il suo pulsante nella barra («Settimana», non «La mia settimana»)
@@ -75,12 +76,11 @@ export function disegnaNavigazione() {
   }
   voceAltro.querySelector('.puntino-altro').hidden = !(fuori.includes('dati') && puntinoDati());
 
-  // il pulsante del ventaglio dice dove sei
+  // il pulsante del ventaglio dice dove sei (o «Chiudi», se è aperto)
   pulsanteVentaglio.hidden = !aVentaglio;
-  $('#testo-ventaglio').textContent = etichetta(aperta);
-  pulsanteVentaglio.setAttribute('aria-label', `Sezioni, sezione aperta: ${etichetta(aperta)}`);
-  pulsanteVentaglio.querySelector('.puntino-altro').hidden = !puntinoDati();
-  if (!aVentaglio && ventaglio.open) ventaglio.close();
+  disegnaPulsanteVentaglio();
+  pulsanteVentaglio.querySelector('.puntino-altro').hidden = !puntinoDati() || ventaglioAperto();
+  if (!aVentaglio && ventaglioAperto()) chiudiVentaglio({ fuoco: false, subito: true });
 }
 
 /* ───────── Le voci di Altro e del ventaglio ─────────
@@ -116,31 +116,95 @@ foglioAltro.addEventListener('click', (e) => { if (e.target === foglioAltro) fog
 foglioAltro.addEventListener('close', () => { if (!voceAltro.hidden) voceAltro.focus(); });
 
 /* ───────── Il ventaglio ─────────
-   Il pulsante in basso apre un <dialog> a tutto schermo: un velo, le sezioni su un arco, e al posto del pulsante
-   «Chiudi». Come gli altri fogli: il fuoco resta dentro finché è aperto, Esc chiude, e il fuoco torna al pulsante.
-   All'apertura il fuoco va sulla sezione aperta. Le posizioni sull'arco le calcolo qui (--x, --y in rem): da
-   sinistra a destra, nell'ordine del registro. */
-const RAGGIO = 9;   // rem, dal centro del pulsante: con cinque sezioni, tra l'una e l'altra resta spazio
-pulsanteVentaglio.addEventListener('click', () => {
+   Come nell'anteprima approvata (novembre 2026). Il pulsante in basso apre le sezioni su un arco sopra di lui, e lo
+   stesso pulsante diventa «Chiudi»: non ce ne sono due. Dietro, un velo; un tocco sul velo chiude. Finché è aperto,
+   il resto della pagina è inerte (attributo inert: né tocchi né fuoco né lettori di schermo), Tab gira tra i petali
+   e il pulsante, Esc chiude, e il fuoco torna al pulsante. All'apertura il fuoco va sulla sezione aperta.
+
+   L'arco si calcola in pixel sulla larghezza vera dello schermo: un petalo (76 px con il nome) non esce mai dai lati,
+   qualunque sia la dimensione del carattere del telefono. Con più sezioni l'arco è più ampio (3: 120°, da 4: 144°).
+   I petali escono dal pulsante uno dopo l'altro (CSS, «sboccia») e rientrano chiudendo; con il movimento ridotto no. */
+const PETALO = 76;          // px: la larghezza di un petalo, con il nome
+const RESPIRO = 10;         // px: lo spazio minimo tra un petalo e il bordo dello schermo
+const RAGGIO_MASSIMO = 150; // px
+const ventaglioAperto = () => pulsanteVentaglio.getAttribute('aria-expanded') === 'true';
+const fuoriVentaglio = () => [$('main'), nav];   // ciò che diventa inerte mentre il ventaglio è aperto
+
+function disegnaPulsanteVentaglio() {
+  const aperto = ventaglioAperto();
+  $('#testo-ventaglio').textContent = aperto ? 'Chiudi' : etichetta(sezioneAperta());
+  pulsanteVentaglio.setAttribute('aria-label', aperto ? 'Chiudi le sezioni' : `Sezioni, sezione aperta: ${etichetta(sezioneAperta())}`);
+}
+
+function geometria(n) {
+  const ampiezza = Math.min(144, 60 * (n - 1));
+  const margine = (180 - ampiezza) / 2;
+  const spazio = window.innerWidth / 2 - PETALO / 2 - RESPIRO;
+  return { ampiezza, margine, raggio: Math.min(RAGGIO_MASSIMO, spazio / Math.cos((margine * Math.PI) / 180)) };
+}
+
+// Un petalo: il cerchio con l'icona della sezione (copiata dal suo pulsante nella barra), e il nome sotto
+function petalo(nome, i, n, { ampiezza, margine, raggio }) {
+  const gradi = 180 - margine - (n === 1 ? ampiezza / 2 : (ampiezza * i) / (n - 1));
+  const a = (gradi * Math.PI) / 180;
+  const voce = nav.querySelector(`.sezione-voce[data-sezione="${nome}"]`);
+  const icona = voce.querySelector('svg')?.cloneNode(true);
+  const puntino = nome === 'dati' && puntinoDati();
+  const b = el('button', {
+    type: 'button', class: 'petalo', dataset: { sezione: nome },
+    aria: { current: nome === sezioneAperta() ? 'page' : null, label: voce.getAttribute('aria-label') ?? null },
+    stile: { '--x': `${(Math.cos(a) * raggio).toFixed(1)}px`, '--y': `${(-Math.sin(a) * raggio).toFixed(1)}px`, '--i': i },
+  },
+  el('span', { class: 'cerchio' }, icona ?? null, puntino && el('span', { class: 'puntino-dati', aria: { hidden: 'true' } })),
+  el('span', { class: 'nome', testo: etichetta(nome) }));
+  return b;
+}
+
+function apriVentaglio() {
   const accese = sezioniAccese().map((s) => s.nome);
-  const n = accese.length;
-  $('#voci-ventaglio').replaceChildren(...accese.map((nome, i) => {
-    const angolo = Math.PI * (n === 1 ? 0.5 : 0.92 - (0.84 * i) / (n - 1));   // da 166° a 14°
-    const voce = copiaVoce(nome);
-    voce.style.setProperty('--x', `${(Math.cos(angolo) * RAGGIO).toFixed(2)}rem`);
-    voce.style.setProperty('--y', `${(-Math.sin(angolo) * RAGGIO).toFixed(2)}rem`);
-    return voce;
-  }));
-  ventaglio.showModal();
-  ($('#voci-ventaglio [aria-current="page"]') ?? $('#voci-ventaglio .sezione-voce'))?.focus();
-});
-// Chiuso, il fuoco torna al pulsante del ventaglio: come per «Altro», in Safari il browser non lo farebbe da solo
-ventaglio.addEventListener('close', () => { if (!pulsanteVentaglio.hidden) pulsanteVentaglio.focus(); });
+  const g = geometria(accese.length);
+  ventaglio.replaceChildren(...accese.map((nome, i) => petalo(nome, i, accese.length, g)));
+  apertoVentaglio.classList.remove('chiusura');
+  apertoVentaglio.hidden = false;
+  for (const x of fuoriVentaglio()) x.inert = true;
+  pulsanteVentaglio.setAttribute('aria-expanded', 'true');
+  disegnaPulsanteVentaglio();
+  pulsanteVentaglio.querySelector('.puntino-altro').hidden = true;
+  (ventaglio.querySelector('[aria-current="page"]') ?? ventaglio.querySelector('.petalo'))?.focus();
+}
+
+let attesaChiusura = null;
+function chiudiVentaglio({ fuoco = true, subito = false } = {}) {
+  pulsanteVentaglio.setAttribute('aria-expanded', 'false');
+  for (const x of fuoriVentaglio()) x.inert = false;
+  disegnaPulsanteVentaglio();
+  pulsanteVentaglio.querySelector('.puntino-altro').hidden = !puntinoDati();
+  if (fuoco && !pulsanteVentaglio.hidden) pulsanteVentaglio.focus();
+  clearTimeout(attesaChiusura);
+  if (subito || matchMedia('(prefers-reduced-motion: reduce)').matches) { apertoVentaglio.hidden = true; return; }
+  apertoVentaglio.classList.add('chiusura');   // i petali rientrano (stile.css), poi il blocco sparisce
+  attesaChiusura = setTimeout(() => { if (!ventaglioAperto()) apertoVentaglio.hidden = true; }, 160);
+}
+
+pulsanteVentaglio.addEventListener('click', () => { if (ventaglioAperto()) chiudiVentaglio(); else apriVentaglio(); });
+$('#velo-ventaglio').addEventListener('click', () => chiudiVentaglio());
 ventaglio.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-sezione]');
-  ventaglio.close();                        // una sezione, «Chiudi» o un tocco sul velo: si chiude comunque
-  if (b) mostraSezione(b.dataset.sezione);
+  const b = e.target.closest('.petalo');
+  if (!b) return;
+  chiudiVentaglio();
+  mostraSezione(b.dataset.sezione);
 });
+document.addEventListener('keydown', (e) => {
+  if (!ventaglioAperto()) return;
+  if (e.key === 'Escape') { e.preventDefault(); chiudiVentaglio(); return; }
+  if (e.key !== 'Tab') return;
+  const giro = [...ventaglio.querySelectorAll('.petalo'), pulsanteVentaglio];
+  const i = giro.indexOf(document.activeElement);
+  e.preventDefault();
+  giro[(i + (e.shiftKey ? -1 : 1) + giro.length) % giro.length].focus();
+});
+// Ruoti il telefono o stringi la finestra: l'arco calcolato non vale più, il ventaglio si chiude
+window.addEventListener('resize', () => { if (ventaglioAperto()) chiudiVentaglio({ fuoco: false, subito: true }); });
 
 /* ───────── Le Impostazioni: «Menu del telefono» ─────────
    Solo sul telefono (sul computer la colonna mostra tutto). Barra o ventaglio; con la barra, se le sezioni accese

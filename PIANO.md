@@ -134,7 +134,7 @@ Sotto c'è un numero (in sessantesimi di confezione, §10.2), ricavato così:
 
 Non si va mai sotto zero: una quantità negativa si mostra «Finito».
 
-**[da decidere] Le soglie tra le parole.** Proposta, in confezioni: Finito = 0; Poco = più di 0 e fino a un terzo;
+**Le parole e le soglie** (decise a novembre 2026: cinque parole). In confezioni: Finito = 0; Poco = più di 0 e fino a un terzo;
 Metà = oltre un terzo e meno di tre quarti; Una confezione = da tre quarti a meno di una e mezza; Due o più = da una e
 mezza in su. Una correzione scrive il valore centrale della parola scelta: Finito 0, Poco ¼, Metà ½, Una 1, Due 2.
 
@@ -324,10 +324,9 @@ Come si collegano:
 - **Riga di spesa di una scorta:** nessun movimento, scrive `p/<pid>/stato` = `"c"`.
 - **Riga con prezzo:** scrive anche `p/<pid>/prezzo` (vince l'ultima, come sempre).
 
-**[da decidere] `p/<id>/visto`** potrebbe non servire: il «quando l'hai guardato» si può ricavare dal `t` della
-correzione e dai movimenti. Serve solo per «È ancora così», che non cambia la quantità. Alternativa: «È ancora così»
-riscrive la stessa correzione (`q` con lo stesso valore) — ma allora azzera i movimenti, che è sbagliato se nel
-frattempo la stima si era spostata. Proposta: tenere `visto`.
+**`p/<id>/visto` resta** (deciso a novembre 2026). Serve a «È ancora così», che dice «l'ho guardato oggi» senza
+cambiare la quantità. L'alternativa scartata: riscrivere la stessa correzione (`q` con lo stesso valore), che però
+azzera i movimenti, ed è sbagliato se nel frattempo la stima si era spostata.
 
 ### 10.4 Quanto cresce il registro
 
@@ -359,7 +358,7 @@ Altro, ventaglio, Menu del telefono). Si prova con sezioni finte, «Orto» e «S
 **2.2 Prodotti: Alimenti e Scorte**
 - Nucleo: chiavi `p/…`, movimenti, correzione, calcolo della quantità, stati delle scorte.
 - Dove si vedono prima che esistano Spese e Cucina: la sezione **Spese** nasce qui con le sole schede Alimenti e
-  Scorte; la scheda Spese arriva nella 2.3 **[da decidere: o una sezione provvisoria]**.
+  Scorte (deciso a novembre 2026); la scheda Spese arriva nella 2.3, gli Alimenti dentro Cucina nella 2.4.
 - Test di proprietà: movimenti da più dispositivi uniti in ordine qualunque danno sempre la stessa quantità; una
   correzione conta solo i movimenti nati dopo; nessuna quantità negativa a schermo.
 
@@ -373,8 +372,10 @@ Altro, ventaglio, Menu del telefono). Si prova con sezioni finte, «Orto» e «S
 - Test: mangiato e non mangiato muovono gli alimenti; ingredienti cambiati dopo non li toccano; costo con un prezzo
   mancante.
 
-**Poi: i colori.** Le palette (Brace predefinita, Pesca, Salvia, Nebbia, Grafite, Contrasto a 7:1) e lo stile, una
-volta sola sui moduli completi. I motivi decorativi dopo ancora.
+**Poi: i colori e lo stile.** Le palette (Brace predefinita, Pesca, Salvia, Nebbia, Grafite, Contrasto a 7:1) e lo
+stile **Grezzo/Quieto** (dall'anteprima: Grezzo = bordi netti, titoli in maiuscolo, una frase per sezione, le frasi
+del §1; Quieto = angoli morbidi, ombre leggere, nessuna frase), insieme e una volta sola sui moduli completi (confermato
+a novembre 2026). Prima del codice, un'anteprima. I motivi decorativi dopo ancora.
 
 **CI**, quando arrivano i moduli: un job per motore in parallelo, e il test di accessibilità diviso per sezione.
 
@@ -391,19 +392,19 @@ Si chiudono prima della fase che li usa, non tutti insieme.
 | I momenti dei pasti | cinque: colazione, metà mattina, pranzo, merenda del pomeriggio, cena | §9 |
 | Ordine delle fasi | quello del §12; la Cucina non serve prima | §12 |
 | La Libreria che dice «mai usata» per una voce con spunte | si corregge dentro la 2.1: «tolta dalle settimane · ultima spunta: 12 ott» | §4 |
+| Dove si vedono Alimenti e Scorte nella 2.2 | la sezione Spese nasce con quelle due schede | §12 |
+| Le parole di quantità | cinque: Finito · Poco · Metà · Una confezione · Due o più, con le soglie del §6.1 | §6.1 |
+| `p/<id>/visto` | resta: «È ancora così» non tocca la quantità | §10.3 |
 
 **Aperti:**
 
 | # | Punto | Proposta | Si decide prima di | Dove |
 |---|---|---|---|---|
-| 1 | Dove si vedono Alimenti e Scorte nella 2.2 | la sezione Spese nasce con quelle due schede | 2.2 | §12 |
-| 2 | Soglie delle parole di quantità | quelle del §6.1 | 2.2 | §6.1 |
-| 3 | `p/<id>/visto` | tenerlo | 2.2 | §10.3 |
-| 4 | Categorie di spesa proprie | no nella 2.3, si rivede dopo l'uso | 2.3 | §8.1 |
-| 5 | Il CSV di una sezione spenta | resta | 2.3 | §11 |
-| 6 | Un piatto o più per pasto | uno per momento nella 2.4 | 2.4 | §9.1 |
-| 7 | Cucina sul computer | anteprima prima della 2.4 | 2.4 | §9.3 |
-| 8 | Le etichette dei cinque momenti | Colazione, Metà mattina, Pranzo, Merenda, Cena | 2.4 | §9 |
+| 1 | Categorie di spesa proprie | no nella 2.3, si rivede dopo l'uso | 2.3 | §8.1 |
+| 2 | Il CSV di una sezione spenta | resta | 2.3 | §11 |
+| 3 | Un piatto o più per pasto | uno per momento nella 2.4 | 2.4 | §9.1 |
+| 4 | Cucina sul computer | anteprima prima della 2.4 | 2.4 | §9.3 |
+| 5 | Le etichette dei cinque momenti | Colazione, Metà mattina, Pranzo, Merenda, Cena | 2.4 | §9 |
 
 ## 14. Fuori dalla Fase 2
 

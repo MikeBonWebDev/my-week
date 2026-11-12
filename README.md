@@ -500,12 +500,17 @@ tutte le sezioni accese. Sul telefono, a scelta (Impostazioni, «Menu del telefo
 - **la barra in basso** (`position: fixed`), sempre visibile. Fino a quattro sezioni ci stanno tutte; oltre, tre
   posti scelti e «Altro», un `<dialog>` con le sezioni rimaste. La barra non si riordina mai da sola: la posizione di
   un pulsante cambia solo se lo decidi tu.
-- **il ventaglio**: un pulsante in basso con il nome della sezione aperta; apre un `<dialog>` a tutto schermo con le
-  sezioni su un arco (le posizioni le calcola `navigazione.js`, `--x` e `--y`). Essendo un `<dialog>`, il fuoco resta
-  dentro ed Esc chiude, come gli altri fogli.
+- **il ventaglio**: un pulsante in basso con il nome della sezione aperta. Toccandolo, le sezioni escono a petali su
+  un arco sopra di lui (animazione CSS `sboccia`), e lo stesso pulsante diventa «Chiudi». Non è un `<dialog>`: un
+  `<dialog>` sta nello strato più alto della pagina e avrebbe coperto il pulsante, costringendo a un secondo «Chiudi»
+  sopra il primo. Il velo e i petali stanno sotto il pulsante; il resto della pagina diventa `inert` (né tocchi, né
+  fuoco, né lettori di schermo), Tab gira tra i petali e il pulsante, Esc chiude. L'arco si calcola **in pixel sulla
+  larghezza dello schermo** (`geometria()` in `navigazione.js`): in rem cresceva con il carattere del telefono e
+  usciva dai lati. Il disegno viene dall'anteprima approvata, e un test controlla i petali su 320 pixel con il
+  carattere ingrandito.
 
-Le voci di Altro e del ventaglio sono **copie** dei pulsanti della barra (`cloneNode`, senza gli id): la barra resta
-l’unico posto in cui una sezione dichiara il suo pulsante, con icona, nome e puntino di Dati.
+Le voci di Altro sono **copie** dei pulsanti della barra (`cloneNode`, senza gli id), e i petali del ventaglio ne
+copiano l’icona e il nome: la barra resta l’unico posto in cui una sezione dichiara il suo pulsante.
 
 Con la colonna accanto la tabella ha meno spazio: quando la sua scheda è più stretta di 56rem i giorni si abbreviano
 ("Mer"). Lo decide una *container query* (`@container`), che guarda la larghezza della scheda e non quella della
