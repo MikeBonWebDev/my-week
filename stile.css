@@ -1081,6 +1081,81 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
   box-shadow: 0 0 0 2px var(--scheda);
 }
 
+/* ───────── Altro e ventaglio (telefono, js/navigazione.js) ───────── */
+/* «Altro» quando la sezione aperta sta lì dentro: lo stesso colore della voce aperta */
+.voce-altro[data-attiva] { color: var(--bottone-testo); background: var(--bottone); }
+.puntino-altro { left: calc(50% + .45rem); top: .35rem; }
+
+/* il foglio «Altro»: le sezioni in colonna, una per riga, grandi da toccare */
+.lista-altro { display: grid; gap: .45rem; }
+.lista-altro .sezione-voce {
+  flex-direction: row;
+  justify-content: flex-start;
+  min-height: 3.4rem;
+  font-size: 1rem;
+  border: 1px solid var(--scheda-bordo);
+}
+.lista-altro .puntino-dati { top: .7rem; left: 2.1rem; }
+
+/* il pulsante del ventaglio: in basso al centro, dice dove sei */
+.pulsante-ventaglio {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  translate: -50% 0;
+  z-index: 31;
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 3.4rem;
+  padding: 0 1.4rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--bottone-testo);
+  background: var(--bottone);
+  border: 0;
+  border-radius: 999px;
+  box-shadow: var(--ombra);
+  cursor: pointer;
+}
+.pulsante-ventaglio svg { width: 1.3rem; height: 1.3rem; fill: none; stroke: currentColor; stroke-width: 2; }
+.pulsante-ventaglio:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
+.pulsante-ventaglio .puntino-altro { top: .4rem; left: 2.2rem; }
+/* il ventaglio aperto: un <dialog> a tutto schermo, con il velo; le sezioni su un arco sopra il pulsante */
+dialog.ventaglio {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  overflow: visible;
+}
+dialog.ventaglio::backdrop { background: color-mix(in srgb, var(--inchiostro) 30%, transparent); }
+.chiudi-ventaglio { z-index: 1; }
+.ventaglio .sezione-voce {
+  position: absolute;
+  left: 50%;
+  bottom: calc(2.7rem + env(safe-area-inset-bottom));
+  translate: calc(-50% + var(--x)) calc(50% + var(--y));
+  flex-direction: column;
+  justify-content: center;
+  gap: .15rem;
+  width: 4.6rem;
+  min-height: 4.6rem;
+  padding: .3rem;
+  font-size: .78rem;
+  text-align: center;
+  background: var(--scheda);
+  border: 1px solid var(--scheda-bordo);
+  border-radius: 50%;
+  box-shadow: var(--ombra);
+}
+.ventaglio .sezione-voce[aria-current="page"] { background: var(--bottone); border-color: var(--bottone); }
+.ventaglio .puntino-dati { top: .55rem; left: calc(50% + .45rem); }
+
 /* ───────── Schermi stretti: telefono ───────── */
 @media (max-width: 40rem) {
   main { padding-block: calc(1rem + env(safe-area-inset-top)) calc(6.5rem + env(safe-area-inset-bottom)); }
@@ -1099,6 +1174,8 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
     border-top: 1px solid var(--scheda-bordo);
   }
   .marchio { display: none; }
+  /* con il ventaglio la barra non c'è: c'è il suo pulsante (html[data-menu], js/navigazione.js) */
+  [data-menu="ventaglio"] .sezioni { display: none; }
   .sezione-voce { flex: 1; flex-direction: column; justify-content: center; gap: .1rem; min-height: 3.4rem; font-size: .82rem; }
   .stato { bottom: calc(5.4rem + env(safe-area-inset-bottom)); }
   .puntino-dati { top: .35rem; left: calc(50% + .45rem); }

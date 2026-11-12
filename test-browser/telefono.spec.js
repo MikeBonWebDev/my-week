@@ -165,7 +165,7 @@ test('le impostazioni si aprono dal basso, con tema e colore; la libreria sta so
   await apriMenu(p);
   const menu = await p.locator('#menu').boundingBox();
   expect(Math.round(menu.y + menu.height)).toBe(p.viewportSize().height);         // appoggiato al fondo dello schermo
-  expect(await p.locator('#menu h3:visible').allTextContents()).toEqual(['Tema', 'Colore delle faccende']);
+  expect(await p.locator('#menu h3:visible').allTextContents()).toEqual(['Tema', 'Colore delle faccende', 'Menu del telefono']);
   await expect(p.locator('#menu #pannello-libreria')).toHaveCount(0);
   await chiudiMenu(p);
   await vaiA(p, 'settimana');

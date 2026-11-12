@@ -27,6 +27,9 @@ export function registraSezioni(...sezioni) {
 const accesa = (s) => Boolean(s) && !(s.spegnibile && state.spente.includes(s.nome));
 const primaAccesa = () => [...registro.values()].find(accesa)?.nome;
 
+// Le sezioni accese, nell'ordine del registro: per la navigazione (navigazione.js)
+export const sezioniAccese = () => [...registro.values()].filter(accesa).map((s) => ({ nome: s.nome, titolo: s.titolo }));
+
 // Le sezioni che si possono spegnere, nell'ordine del registro, con il loro stato: per le Impostazioni (guscio.js)
 export const sezioniSpegnibili = () => [...registro.values()].filter((s) => s.spegnibile)
   .map((s) => ({ nome: s.nome, titolo: s.titolo, accesa: accesa(s) }));
@@ -37,6 +40,8 @@ export const sezioniSpegnibili = () => [...registro.values()].filter((s) => s.sp
 const CHIAVE_SEZIONE = 'settimana:sezione';
 const navSezioni = $('#sezioni');
 let aperta = null;
+// La sezione aperta adesso (il nome): per la navigazione. Cambia solo da qui, con mostraSezione.
+export const sezioneAperta = () => aperta;
 
 // La sezione da aprire all'avvio: quella dell'ultima volta, se esiste ancora ed è accesa; altrimenti la prima accesa.
 export function sezioneIniziale() {
@@ -71,10 +76,9 @@ export function mostraSezione(nome) {
 }
 
 // Una delle parti di disegna() (base.js): ridisegna solo la sezione aperta. Le altre si ridisegnano quando le apri.
-// Prima aggiorna la navigazione: una sezione spenta (anche da un altro dispositivo, con un file unito) non ha più il
-// suo pulsante; se era quella aperta, si passa alla prima accesa.
+// Se la sezione aperta è stata spenta (anche da un altro dispositivo, con un file unito), si passa alla prima accesa.
+// Quali pulsanti si vedono lo decide la navigazione (navigazione.js), che si disegna dopo.
 export function disegnaSezioneAperta() {
-  for (const b of navSezioni.querySelectorAll('[data-sezione]')) b.hidden = !accesa(registro.get(b.dataset.sezione));
   if (aperta && !accesa(registro.get(aperta))) { mostraSezione(primaAccesa()); return; }
   registro.get(aperta)?.disegna();
 }

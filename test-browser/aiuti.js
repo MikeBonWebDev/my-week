@@ -178,26 +178,29 @@ function foto(p) {
 }
 
 /**
- * Una sezione finta, «Orto», che si può spegnere: per provare le Impostazioni prima che arrivino Cucina e Spese.
- * Nessun aggancio nel codice dell'app: il test cambia guscio.js mentre il browser lo scarica (contesto.route), e
- * aggiunge la sezione alla riga che registra le altre. Se quella riga cambia, il test lo dice invece di passare.
+ * Sezioni finte che si possono spegnere (di partenza una, «Orto»): per provare le Impostazioni e la navigazione prima
+ * che arrivino Cucina e Spese. Nessun aggancio nel codice dell'app: il test cambia guscio.js mentre il browser lo
+ * scarica (contesto.route), e aggiunge le sezioni alla riga che registra le altre. Se quella riga cambia, il test lo
+ * dice invece di passare. Ogni sezione finta ha il suo pulsante nella barra e un paragrafo «Le piante.» come contenuto.
  */
-async function conSezioneFinta(contesto) {
+async function conSezioneFinta(contesto, finte = [['orto', 'Orto']]) {
   const riga = 'registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);';
-  const finta = `{
-    const b = document.createElement('button');
-    b.type = 'button'; b.className = 'sezione-voce'; b.dataset.sezione = 'orto';
-    b.append(Object.assign(document.createElement('span'), { textContent: 'Orto' }));
-    document.querySelector('#sezioni').append(b);
-    const elemento = Object.assign(document.createElement('section'), { id: 'sezione-orto', hidden: true, textContent: 'Le piante.' });
-    document.querySelector('#stato').before(elemento);
-    registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati,
-      { nome: 'orto', titolo: 'Orto', sottotitolo: 'Una sezione di prova.', elemento, disegna() {}, spegnibile: true });
+  const codice = `{
+    const finta = (nome, titolo) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'sezione-voce'; b.dataset.sezione = nome;
+      b.append(Object.assign(document.createElement('span'), { textContent: titolo }));
+      document.querySelector('#voce-altro').before(b);
+      const elemento = Object.assign(document.createElement('section'), { id: 'sezione-' + nome, hidden: true, textContent: 'Le piante.' });
+      document.querySelector('#stato').before(elemento);
+      return { nome, titolo, sottotitolo: 'Una sezione di prova.', elemento, disegna() {}, spegnibile: true };
+    };
+    registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati, ...${JSON.stringify(finte)}.map(([n, t]) => finta(n, t)));
   }`;
   await contesto.route(/\/js\/guscio\.js/, async (route) => {
     const risposta = await route.fetch();
     const testo = await risposta.text();
-    const corpo = testo.includes(riga) ? testo.replace(riga, finta) : 'throw new Error("sezione finta: riga di registraSezioni non trovata");';
+    const corpo = testo.includes(riga) ? testo.replace(riga, codice) : 'throw new Error("sezione finta: riga di registraSezioni non trovata");';
     await route.fulfill({ response: risposta, body: corpo });
   });
   return contesto;

@@ -4,6 +4,7 @@ import {
 } from './base.js';
 import { el } from './pezzi.js';
 import { disegnaSezioneAperta, mostraSezione, registraSezioni, sezioneIniziale, sezioniSpegnibili } from './sezioni.js';
+import { disegnaNavigazione, disegnaSceltaMenuTelefono } from './navigazione.js';
 import { sezioneSettimana } from './settimana.js';
 import { aggiornaPuntinoDati, sezioneDati } from './file.js';
 import { sezioneCasa } from './casa.js';
@@ -14,14 +15,15 @@ import './rinomina.js'; // il foglio «Rinomina», da qualunque sezione: anche l
    Le sezioni, nell'ordine della barra (sezioni.js). Una sezione nuova si descrive nel suo file e si aggiunge qui,
    insieme al suo pulsante e al suo contenuto in index.html.
    Poi le parti che disegna() (base.js) ridisegna, in quest'ordine: la sezione aperta, il puntino sulla voce Dati
-   (si vede da ogni sezione). La libreria fa parte della Settimana: la disegna lei. */
+   (si vede da ogni sezione), la navigazione (quali pulsanti, «Altro», il ventaglio: guarda anche il puntino, per
+   questo viene dopo). La libreria fa parte della Settimana: la disegna lei. */
 registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);
-disegnaAnche(disegnaSezioneAperta, aggiornaPuntinoDati);
+disegnaAnche(disegnaSezioneAperta, aggiornaPuntinoDati, disegnaNavigazione);
 
 /* ───────── Le Impostazioni ─────────
    Un <dialog> (nel codice si chiama ancora «menu») aperto con showModal(): sta sopra alla pagina, che intanto non
    risponde ai tocchi. Si chiude con la ×, con Esc o con un tocco fuori (sullo sfondo). Dentro: tema, colore delle
-   faccende, sezioni accese o spente, versione. */
+   faccende, sezioni accese o spente, menu del telefono (navigazione.js), versione. */
 $('#apri-menu').addEventListener('click', () => {
   disegnaScelteMenu();
   mostraVersione();
@@ -63,6 +65,7 @@ const SCELTE_INTENSITA = [
 
 function disegnaScelteMenu() {
   disegnaSceltaSezioni();
+  disegnaSceltaMenuTelefono();
   const tema = leggiTema();
   $('#scelte-tema').replaceChildren(...TEMI.map(([valore, nome]) => el('button', {
     type: 'button', class: 'scelta', dataset: { tema: valore }, testo: nome, aria: { pressed: tema === valore },
@@ -98,6 +101,7 @@ $('#scelte-sezioni').addEventListener('change', (e) => {
   if (!casella) return;
   if (esito(db.spegni(casella.dataset.sezione, !casella.checked))) {
     disegnaSceltaSezioni();
+    disegnaSceltaMenuTelefono();   // con una sezione in più o in meno può servire, o no, la scelta della barra
     $(`#scelte-sezioni [data-sezione="${casella.dataset.sezione}"]`).focus();
   }
 });

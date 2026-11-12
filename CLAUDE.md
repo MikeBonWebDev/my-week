@@ -21,8 +21,8 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
 ## Regole dei moduli
 
 - **Livelli e gruppi** (README §4, controllati da `test/struttura.test.js`). Comuni: `core.js` 0 · `base.js` 1 ·
-  `testi.js`, `pezzi.js`, `sezioni.js`, `rinomina.js` 2. Settimana: `promemoria.js`, `libreria.js` 3 ·
-  `settimana.js` 4 · `azioni.js` 5. Casa: `casa.js` 5. Dati: `file.js` 5. Avvio: `guscio.js` 6.
+  `testi.js`, `pezzi.js`, `sezioni.js`, `rinomina.js` 2 · `navigazione.js` 3. Settimana: `promemoria.js`,
+  `libreria.js` 3 · `settimana.js` 4 · `azioni.js` 5. Casa: `casa.js` 5. Dati: `file.js` 5. Avvio: `guscio.js` 6.
   Un file importa solo livelli più bassi (niente giri), e **una sezione non importa niente da un'altra sezione**:
   solo dai comuni e dai suoi file. Ciò che serve a due sezioni scende nei comuni.
 - **Gli elementi si costruiscono con `el()`** (`js/pezzi.js`), mai con `innerHTML` né con stringhe di HTML: il
@@ -32,13 +32,15 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
   `riposoOggi`, `visualizzata`, `voce`, `attivitaDi`…) in `base.js`.
 - **Una sezione nuova**: si descrive nel suo file con un oggetto `{ nome, titolo, sottotitolo, elemento, disegna,
   quandoSiApre?, spegnibile? }` esportato (`spegnibile: true` per le sezioni che si spengono dalle Impostazioni:
-  Cucina e Spese sì, Settimana, Casa e Dati no); `guscio.js` la aggiunge a `registraSezioni(...)`; in `index.html` il suo pulsante
-  (`data-sezione`) e il suo blocco. Il suo `disegna` si chiama solo quando è aperta. Chi deve sapere quando si cambia
-  sezione si iscrive con `quandoCambiaSezione` (sezioni.js), non si fa chiamare da un'altra sezione.
+  Cucina e Spese sì, Settimana, Casa e Dati no); `guscio.js` la aggiunge a `registraSezioni(...)`; in `index.html` il
+  suo pulsante (`data-sezione`, prima di `#voce-altro`) e il suo blocco. Dove si vede il pulsante (colonna, barra,
+  Altro, ventaglio) lo decide `navigazione.js`: la sezione nuova non deve fare altro. Il suo `disegna` si chiama solo
+  quando è aperta. Chi deve sapere quando si cambia sezione si iscrive con `quandoCambiaSezione` (sezioni.js), non si
+  fa chiamare da un'altra sezione.
 - **Il disegno è un elenco.** Chi cambia qualcosa chiama `disegna()` di `base.js`; le parti le elenca `guscio.js`
-  con `disegnaAnche(...)`: la navigazione con la sezione aperta, e il puntino sulla voce Dati. Ciò che sta dentro una sezione (la
-  libreria nella Settimana) lo disegna la sezione stessa. Ciò che vale per tutta la pagina (l'intensità del
-  colore) lo imposta `disegna()` stesso.
+  con `disegnaAnche(...)`: la sezione aperta, il puntino sulla voce Dati, la navigazione (che guarda il puntino).
+  Ciò che sta dentro una sezione (la libreria nella Settimana) lo disegna la sezione stessa. Ciò che vale per tutta
+  la pagina (l'intensità del colore) lo imposta `disegna()` stesso.
 - **Un valore che cambia lo cambia solo il suo file**, con una funzione: `rileggi()`, `cambiaOggi()`,
   `mostraSettimana()` in `base.js`, `scegliGiorno()` in `settimana.js`. Gli altri leggono il valore importato (è
   un collegamento, vede sempre il valore attuale), ma non lo assegnano: un `import` non si può riassegnare.
@@ -166,8 +168,8 @@ Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push 
 
 Debiti della 2.0 chiusi. Poi, dall'uso vero, un ritocco della Fase 1: **la settimana giorno per giorno** (attività per
 giorno, faccende coperte dalle spunte vicine, «Riprendi la lista» tolto; `settimana-19`). Il piano della Fase 2
-è scritto (`PIANO.md`), e il comportamento attuale è in `FUNZIONI.md`; il piano è stato rivisto (novembre 2026), prossimo
-passo la 2.1 (Impostazioni, navigazione, Libreria).
+è scritto (`PIANO.md`), e il comportamento attuale è in `FUNZIONI.md`; il piano è stato rivisto (novembre 2026). La 2.1
+(Impostazioni, navigazione, Libreria) è finita (`settimana-22`).
 
 Decisioni per la Fase 2 (ottobre 2026):
 - **Menu del telefono:** predefinita la barra di oggi più una voce «Altro» per le sezioni che non ci stanno; il menu
@@ -183,9 +185,12 @@ Decisioni per la Fase 2 (ottobre 2026):
   le voci con spunte. Fatto: primo passo della 2.1 (`settimana-20`).
 - **La 2.1 in tre passi**, ognuno con i suoi test e il push prima del successivo: 1. Libreria (fatto,
   `settimana-20`); 2. il Menu diventa Impostazioni, con le sezioni accese o spente (fatto, `settimana-21`; nel codice
-  il foglio si chiama ancora `menu`); 3. la navigazione (barra con Altro, ventaglio, «Menu del telefono»).
-- **Le sezioni spente si provano con una sezione finta** («Orto», `conSezioneFinta` in `aiuti.js`), che il test
-  aggiunge a `guscio.js` mentre il browser lo scarica: niente agganci per i test nel codice dell'app.
+  il foglio si chiama ancora `menu`); 3. la navigazione (barra con Altro, ventaglio, «Menu del telefono»; fatto,
+  `settimana-22`). **La 2.1 è finita**: prossimo passo la 2.2 (Alimenti e Scorte), dopo i suoi punti aperti in
+  `PIANO.md` §13.
+- **Le sezioni spente e la navigazione si provano con sezioni finte** («Orto», «Serra»: `conSezioneFinta` in
+  `aiuti.js`), che il test aggiunge a `guscio.js` mentre il browser lo scarica: niente agganci per i test nel codice
+  dell'app.
 
 Il piano è `PIANO.md`: si verifica prima del codice e si segue durante; se il codice deve allontanarsene, si cambia
 prima il piano. I punti ancora aperti sono nel suo §13: si chiudono prima della fase che li usa.

@@ -17,6 +17,7 @@ const FILE = {
   'js/testi.js': [2, 'comune'],        // parole e date
   'js/pezzi.js': [2, 'comune'],        // pezzi di interfaccia
   'js/sezioni.js': [2, 'comune'],      // il registro delle sezioni e la navigazione
+  'js/navigazione.js': [3, 'comune'],  // come si arriva alle sezioni: colonna, barra con «Altro», ventaglio
   'js/rinomina.js': [2, 'comune'],     // il foglio «Rinomina», da qualunque sezione
   'js/promemoria.js': [3, 'settimana'],
   'js/libreria.js': [3, 'settimana'],  // il pannello in fondo alla Settimana

@@ -11,7 +11,7 @@ ogni tocco, quali regole valgono. È il riferimento per dire se l'app fa la cosa
   dei dati; `LEGGIMI.md` dice come pubblicarla e installarla; `PIANO.md` è ciò che verrà; `CLAUDE.md` contiene le
   regole per chi ci lavora.
 
-Aggiornato alla versione `settimana-21` (novembre 2026), ricavato dal codice e dai test.
+Aggiornato alla versione `settimana-22` (novembre 2026), ricavato dal codice e dai test.
 
 ## Indice
 
@@ -59,8 +59,17 @@ la sezione:
 | Casa | Casa | Le faccende con una cadenza. |
 | Dati | Dati | Copie, altri dispositivi, CSV. |
 
-- **Computer** (schermo largo): le sezioni sono in una colonna a sinistra. **Telefono** (sotto i 40rem, circa 640
-  pixel): sono in una barra in basso, sempre visibile.
+- **Computer** (schermo largo): tutte le sezioni accese sono in una colonna a sinistra.
+- **Telefono** (sotto i 40rem, circa 640 pixel), a scelta nelle Impostazioni («Menu del telefono», §7):
+  - **Barra** (predefinita): una barra in basso, sempre visibile. Fino a quattro sezioni accese ci stanno tutte.
+    Oltre, la barra tiene **tre posti** (scelti nelle Impostazioni; di partenza Settimana, Casa, Dati) e una voce
+    **Altro**, che apre un foglio con le sezioni rimaste. Se la sezione aperta sta in Altro, Altro si mostra attivo
+    («Altro, sezione aperta: …» per i lettori di schermo). Le sezioni restano sempre nello stesso ordine: la barra
+    non si riordina mai da sola. Una sezione scelta per la barra e poi spenta lascia il posto alla prima che manca.
+  - **Ventaglio**: al posto della barra, un solo pulsante in basso con il nome della sezione aperta. Toccandolo, le
+    sezioni si aprono su un arco sopra di lui, con il fuoco sulla sezione aperta; al posto del pulsante compare
+    «Chiudi». Esc, «Chiudi» o un tocco fuori lo chiudono.
+  - Il puntino di Dati (§8.2) si vede anche su Altro, se Dati è lì dentro, e sul pulsante del ventaglio.
 - L'app **riapre sulla sezione dell'ultima volta**, su quel dispositivo.
 - L'ingranaggio **Impostazioni** in alto a destra apre le Impostazioni (§7).
 - I messaggi brevi («Salvato», gli errori) compaiono in sovrimpressione, sopra a tutto, e spariscono da soli: dopo
@@ -289,7 +298,8 @@ telefono sale dal basso. Si chiude con ×, Esc o un tocco fuori.
 | **Tema** | Automatico (segue il sistema), Chiaro, Scuro | questo dispositivo |
 | **Colore delle faccende** | Nessuno («Solo il testo.»), Morbido («Toni sabbia, leggeri.», predefinito), Deciso («Dal giallo all'arancio.»), con tre campioni ciascuno | tutti i dispositivi (viaggia con il file) |
 | **Sezioni** | una casella per ogni sezione che si può spegnere: segnata = accesa. «Una sezione spenta sparisce dal menu; i suoi dati restano. Vale su tutti i dispositivi.» | tutti i dispositivi (viaggia con il file) |
-| **Versione** | «Versione: settimana-21», oppure «non installata (senza uso offline)» | — |
+| **Menu del telefono** | solo sul telefono: **Barra** o **Ventaglio**; con la barra e più di quattro sezioni accese, «Nella barra (tre)»: una casella per sezione, con tre segnate le altre si spengono finché non ne togli una | questo dispositivo |
+| **Versione** | «Versione: settimana-22», oppure «non installata (senza uso offline)» | — |
 
 **Le sezioni spente.** Settimana, Casa e Dati non si spengono: oggi non c'è nessuna sezione da spegnere, e la parte
 «Sezioni» non si vede. Comparirà con Cucina e Spese. Una sezione spenta perde il suo pulsante nella navigazione e non

@@ -56,7 +56,8 @@ settimana-pwa/
 │   ├── base.js           impostazioni, elementi, date e oggi, dati (caricare, salvare, esito), conferma, disegno
 │   ├── testi.js          le parole e le date: «Fatta il 23 settembre», «giro aperto dall’8 ottobre», formati
 │   ├── pezzi.js          pezzi di interfaccia comuni: el() per costruire elementi, il nome da rinominare, il calore
-│   ├── sezioni.js        il registro delle sezioni e la navigazione tra loro
+│   ├── sezioni.js        il registro delle sezioni e la sezione aperta
+│   ├── navigazione.js    come si arriva alle sezioni: colonna, barra del telefono con «Altro», ventaglio
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
 │   ├── promemoria.js     il promemoria delle faccende in cima alla settimana, con le sue scelte
 │   ├── libreria.js       il pannello «Libreria delle attività», in fondo alla Settimana
@@ -76,6 +77,7 @@ settimana-pwa/
 │   ├── pagina.spec.js    uso quotidiano su computer: primo avvio, suggerimenti, libreria, CSV
 │   ├── telefono.spec.js  la vista a un giorno: striscia, energia, schede, impostazioni dal basso
 │   ├── impostazioni.spec.js   le Impostazioni e le sezioni accese o spente (con una sezione finta)
+│   ├── navigazione.spec.js    barra con «Altro», tre posti scelti, ventaglio (con due sezioni finte)
 │   ├── giorni.spec.js    le attività per giorno e le faccende coperte dalle spunte vicine
 │   ├── casa.spec.js      le sezioni e la sezione Casa: faccende, cadenza, «Aggiungi a questa settimana»
 │   ├── colore.spec.js    calore delle faccende, intensità, tema, riposo, «Salto questo giro», parole vietate
@@ -150,7 +152,7 @@ chi sta sopra.
     6    guscio.js: il punto di partenza. Registra le sezioni, elenca le parti da disegnare, avvia
     5                                                  azioni.js                         casa.js   file.js
     4                                                  settimana.js
-    3                                                  promemoria.js  libreria.js
+    3    navigazione.js                              promemoria.js  libreria.js
     2    testi.js  pezzi.js  sezioni.js  rinomina.js
     1    base.js
     0    core.js
@@ -490,9 +492,20 @@ nel suo file (`sezioneSettimana`, `sezioneCasa`, `sezioneDati`: nome, titolo, so
 schermo "sei qui". La sezione scelta resta in `localStorage` (`settimana:sezione`): l’app riapre dove l’avevi
 lasciata. Non viaggia con il file di sincronizzazione: è una comodità di quel dispositivo, non un dato.
 
-I pulsanti delle sezioni sono sempre visibili: colonna a sinistra sul computer (`position: sticky`, alta quanto la
-finestra), barra in basso sul telefono (`position: fixed`). Niente menu a scomparsa: quello che non si vede si
-dimentica.
+I pulsanti delle sezioni stanno in `index.html`, uno per sezione; quali si vedono e dove lo decide `navigazione.js`,
+una delle parti di `disegna()`. Sul computer: la colonna a sinistra (`position: sticky`, alta quanto la finestra), con
+tutte le sezioni accese. Sul telefono, a scelta (Impostazioni, «Menu del telefono», per dispositivo:
+`settimana:menu`, `settimana:barra`):
+
+- **la barra in basso** (`position: fixed`), sempre visibile. Fino a quattro sezioni ci stanno tutte; oltre, tre
+  posti scelti e «Altro», un `<dialog>` con le sezioni rimaste. La barra non si riordina mai da sola: la posizione di
+  un pulsante cambia solo se lo decidi tu.
+- **il ventaglio**: un pulsante in basso con il nome della sezione aperta; apre un `<dialog>` a tutto schermo con le
+  sezioni su un arco (le posizioni le calcola `navigazione.js`, `--x` e `--y`). Essendo un `<dialog>`, il fuoco resta
+  dentro ed Esc chiude, come gli altri fogli.
+
+Le voci di Altro e del ventaglio sono **copie** dei pulsanti della barra (`cloneNode`, senza gli id): la barra resta
+l’unico posto in cui una sezione dichiara il suo pulsante, con icona, nome e puntino di Dati.
 
 Con la colonna accanto la tabella ha meno spazio: quando la sua scheda è più stretta di 56rem i giorni si abbreviano
 ("Mer"). Lo decide una *container query* (`@container`), che guarda la larghezza della scheda e non quella della

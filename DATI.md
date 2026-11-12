@@ -317,6 +317,8 @@ del singolo dispositivo.
 | `settimana:sync` | `{ salvato: 'AAAA-MM-GG', unito: 'AAAA-MM-GG' }` | `segnaSync()` / `leggiSync()` in `file.js` | quando *questo* dispositivo ha salvato o unito: l’invito alla copia è suo |
 | `settimana:tema` | `"chiaro"` / `"scuro"` (assente = automatico) | menu in `guscio.js`; letta anche da uno script in testa a `index.html` | si può volere il telefono scuro e il computer chiaro |
 | `settimana:sezione` | `"settimana"`, `"casa"`, `"dati"` | `sezioni.js` | l’app riapre dove l’avevi lasciata, su quel dispositivo |
+| `settimana:menu` | `"ventaglio"` (assente o altro = barra) | Impostazioni, `navigazione.js` | barra o ventaglio sul telefono: si può volere il ventaglio sul telefono e la barra sul tablet |
+| `settimana:barra` | i nomi delle tre sezioni nella barra, `["settimana","casa","dati"]` | Impostazioni, `navigazione.js` | come sopra: è il modo di tenere in mano *quel* dispositivo |
 
 ## 11. Chiavi sconosciute, e come aggiungerne una
 

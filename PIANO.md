@@ -71,60 +71,20 @@ Valgono quelli di `CLAUDE.md` (in particolare «Un vuoto non deve seguirti»). I
 ### 3.1 Le sezioni
 
 Ordine fisso: **Settimana, Casa, Cucina, Spese, Dati**. Il registro delle sezioni (`sezioni.js`) le riceve in
-quest'ordine; una sezione spenta (§3.4) non si registra nel menu.
+quest'ordine; una sezione spenta non compare nella navigazione (`FUNZIONI.md` §7).
 
 Al primo avvio dopo l'aggiornamento non cambia niente di ciò che c'era: l'app riapre sulla sezione dell'ultima volta.
 
-### 3.2 Il menu sul computer
+### 3.2–3.4 Navigazione e Impostazioni
 
-Sullo schermo largo la barra delle sezioni le mostra tutte (sono al massimo cinque): nessun «Altro».
+**Fatto** (`settimana-20`, `-21`, `-22`, novembre 2026): la colonna sul computer con tutte le sezioni; sul telefono la
+barra con tre posti scelti nelle Impostazioni (predefiniti Settimana, Casa, Dati) e «Altro» oltre le quattro sezioni,
+oppure il ventaglio; le Impostazioni con Tema, Colore delle faccende, Sezioni accese o spente (`i/spenta/<nome>`),
+Menu del telefono e Versione. Il comportamento è descritto in `FUNZIONI.md` §2 e §7; le chiavi in `DATI.md`.
 
-### 3.3 Il menu sul telefono
-
-**Predefinito: la barra di oggi più «Altro».** La barra in basso tiene tre sezioni e una voce **Altro**; Altro apre un
-foglio con le sezioni rimaste. Se le sezioni accese sono quattro o meno, Altro non c'è e la barra le mostra tutte.
-
-**Quali tre sezioni stanno nella barra: fisse, le scegli tu** (deciso a novembre 2026). Predefinite: Settimana, Casa,
-Dati (la barra di oggi, così chi aggiorna non trova niente spostato). Nelle Impostazioni si scelgono le tre; le altre
-vanno in Altro, nell'ordine fisso del §3.1. La posizione di un pulsante non cambia mai se non lo decidi tu. Scartata:
-la barra con le sezioni più usate (zero configurazione, ma una barra che si riordina da sola chiede attenzione). La
-scelta vale per il dispositivo, come il resto del menu: sta in `localStorage` (`settimana:barra`).
-
-**Il menu a ventaglio** (radiale) resta selezionabile nelle Impostazioni: un solo pulsante in basso che si apre a
-ventaglio su tutte le sezioni. La scelta barra/ventaglio vale per il dispositivo (non viaggia con il file: si può
-volere il ventaglio sul telefono e la barra sul tablet; `localStorage`, `settimana:menu`).
-
-La sezione aperta resta marcata (`aria-current="page"`) anche quando sta dentro Altro: la voce Altro si mostra attiva
-e il foglio indica quale sezione è aperta.
-
-### 3.4 Impostazioni
-
-**Fatto in parte** (`settimana-21`): l'ingranaggio, il titolo, Tema, Colore delle faccende, Sezioni e Versione ci
-sono (`FUNZIONI.md` §7). Resta da fare, con il passo 3 della 2.1, la parte «Menu del telefono».
-
-Il pulsante in alto a destra diventa un ingranaggio, con etichetta «Impostazioni». Il foglio contiene, in ordine:
-
-| Parte | Che cosa | Vale per |
-|---|---|---|
-| **Tema** | automatico / chiaro / scuro, come oggi (`FUNZIONI.md` §7) | questo dispositivo |
-| **Colore delle faccende** | nessuno / morbido / deciso, come oggi (`i/intensita`) | tutti i dispositivi |
-| **Menu del telefono** | barra con Altro / ventaglio; con la barra, quali tre sezioni (§3.3) | questo dispositivo |
-| **Sezioni** | Cucina e Spese: accesa / spenta. Settimana, Casa e Dati non si spengono | tutti i dispositivi (`i/spenta/<nome>`, viaggia con il file) |
-| **Colori** e **Stile** | le palette e lo stile; arrivano dopo i moduli (§12) | — |
-| **Versione** | come oggi, in fondo | — |
-
-La Libreria **esce** dalle Impostazioni e va nella sezione Settimana (§4).
-
-**Punteggio:** non c'è. Se mai arriverà, partirà spento e starà qui.
-
-**Sezione spenta:** sparisce dalla barra, da Altro e dal ventaglio. I suoi dati restano nel registro, viaggiano con il
-file, finiscono nei CSV. Riaccenderla la ritrova com'era. Se l'app si riapre su una sezione spenta, apre la prima.
-Spegnere Spese non spegne gli Alimenti dentro Cucina, e viceversa: i prodotti sono di tutte e due (§5).
-
-**Accesa o spenta vale su tutti i dispositivi** (deciso a novembre 2026): è una scelta su cosa usi, non sullo schermo.
-La chiave è `i/spenta/<nome>` (`true` = spenta; assente o `false` = accesa), così una sezione nuova parte accesa
-senza scrivere niente. Se una sezione è nella barra (§3.3) ed è spenta, il suo posto lo prende la prima sezione accesa
-che non c'è.
+Resta da fare qui, quando arrivano: **Colori** e **Stile** nelle Impostazioni (dopo i moduli, §12). **Punteggio:** non
+c'è; se mai arriverà, partirà spento e starà nelle Impostazioni. Spegnere Spese non spegne gli Alimenti dentro Cucina,
+e viceversa: i prodotti sono di tutte e due (§5).
 
 ## 4. La Libreria nella sezione Settimana
 
@@ -392,14 +352,9 @@ lontano. Non è prevista una compattazione; si misura alla fine della 2.4 e se n
 
 Una fase per volta: test verdi e push tra l'una e l'altra, `CLAUDE.md` e `DATI.md` aggiornati nella stessa fase.
 
-**2.1 Impostazioni, navigazione, Libreria**, in tre passi (test verdi e push tra l'uno e l'altro):
-1. ~~Libreria nella Settimana (§4)~~: fatto, `settimana-20`.
-2. ~~Il Menu diventa Impostazioni (§3.4), con le sezioni accese o spente~~: fatto, `settimana-21`. Comportamento in
-   `FUNZIONI.md` §7; la chiave `i/spenta/<nome>` in `DATI.md`. Si prova con una sezione finta, «Orto»
-   (`conSezioneFinta` in `aiuti.js`). Manca la parte «Menu del telefono», che arriva con il passo 3.
-3. La navigazione: barra con tre posti e Altro, la scelta dei tre posti, il ventaglio (§3.3).
-- Test: navigazione con Altro e con il ventaglio, tastiera e lettore di schermo (axe), riapertura su una sezione
-  spenta.
+**2.1 Impostazioni, navigazione, Libreria: fatta** (`settimana-20`, `-21`, `-22`, novembre 2026), in tre passi:
+la Libreria nella Settimana; il Menu diventa Impostazioni, con le sezioni accese o spente; la navigazione (barra con
+Altro, ventaglio, Menu del telefono). Si prova con sezioni finte, «Orto» e «Serra» (`conSezioneFinta` in `aiuti.js`).
 
 **2.2 Prodotti: Alimenti e Scorte**
 - Nucleo: chiavi `p/…`, movimenti, correzione, calcolo della quantità, stati delle scorte.

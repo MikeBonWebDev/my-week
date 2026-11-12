@@ -4,7 +4,7 @@
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import AxeBuilder from '@axe-core/playwright';
 import * as Core from '../core.js';
-import { apri, caricaDati, vaiA, apriMenu, telefono, conSezioneFinta } from './aiuti.js';
+import { apri, caricaDati, vaiA, apriMenu, chiudiMenu, telefono, conSezioneFinta } from './aiuti.js';
 
 // Dati che accendono tutto ciò che ha un colore: faccende oltre la cadenza, una saltata, una mai segnata,
 // il promemoria, spunte, energia, un giorno di riposo
@@ -64,10 +64,22 @@ const gruppi = {
     ['dati', async (p) => { await vaiA(p, 'dati'); }],
     ['impostazioni', async (p) => { await apriMenu(p); await expect(p.locator('#parte-sezioni')).toBeVisible(); }],
   ],
+  // solo sul telefono: «Altro» e il ventaglio esistono solo lì
+  navigazione: [
+    ['altro', async (p) => { await p.click('#voce-altro'); await expect(p.locator('#foglio-altro')).toBeVisible(); }],
+    ['ventaglio', async (p) => {
+      await p.keyboard.press('Escape');
+      await apriMenu(p);
+      await p.click('#scelte-menu-telefono [data-menu="ventaglio"]');
+      await chiudiMenu(p);
+      await p.click('#apri-ventaglio');
+      await expect(p.locator('#ventaglio')).toBeVisible();
+    }],
+  ],
 };
 
 for (const [gruppo, viste] of Object.entries(gruppi)) {
-  for (const dispositivo of ['computer', 'telefono']) {
+  for (const dispositivo of gruppo === 'navigazione' ? ['telefono'] : ['computer', 'telefono']) {
     for (const schema of ['light', 'dark']) {
       for (const intensita of ['morbida', 'decisa']) {
         test(`${gruppo}, ${dispositivo}, tema ${schema}, colore ${intensita}: nessuna violazione WCAG A/AA`, async ({ browser }) => {
@@ -76,8 +88,9 @@ for (const [gruppo, viste] of Object.entries(gruppi)) {
           const contesto = await browser.newContext({
             ...(dispositivo === 'telefono' ? telefono() : {}), colorScheme: schema, reducedMotion: 'reduce',
           });
-          // con una sezione finta da spegnere: così si controlla anche la parte «Sezioni» delle Impostazioni
-          const p = await apri(await conSezioneFinta(contesto));
+          // con due sezioni finte da spegnere: così si controllano anche la parte «Sezioni» delle Impostazioni e,
+          // con cinque sezioni, «Altro»
+          const p = await apri(await conSezioneFinta(contesto, [['orto', 'Orto'], ['serra', 'Serra']]));
           await caricaDati(p, dati(intensita));
           // Le transizioni spente del tutto: si controllano i colori finali, non i passaggi. In WebKit il movimento
           // ridotto non basta, e una transizione poteva non essere ancora partita quando axe guardava (testo del colore
