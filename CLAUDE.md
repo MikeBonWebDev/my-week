@@ -164,14 +164,19 @@ la 2.1 (Impostazioni, navigazione, Libreria).
 
 Decisioni per la Fase 2 (ottobre 2026):
 - **Menu del telefono:** predefinita la barra di oggi più una voce «Altro» per le sezioni che non ci stanno; il menu
-  a ventaglio (radiale) resta selezionabile nelle Impostazioni.
+  a ventaglio (radiale) resta selezionabile nelle Impostazioni. Le tre sezioni nella barra sono **fisse e le sceglie
+  il proprietario** (predefinite Settimana, Casa, Dati), mai riordinate dall'uso; scelta per dispositivo.
+- **Sezioni accese o spente** (Cucina, Spese): valgono su tutti i dispositivi, chiave `i/spenta/<nome>`.
 - **Colori** (le cinque palette e la predefinita): dopo che i moduli sono completi, così si fanno una volta sola.
 - **Documenti:** il piano per intero, prima del codice, come riferimento da verificare e seguire (`PIANO.md`, senza
   numero di fase nel nome); il comportamento attuale in un documento vivo (`FUNZIONI.md`), che riceve ogni fase finita.
-- **Libreria:** nella sezione Settimana (un pannello in fondo), non più nel menu.
+- **Libreria:** nella sezione Settimana (un pannello in fondo), non più nel menu. Nella 2.1 si corregge anche il
+  «mai usata» per le voci con spunte (`FUNZIONI.md` §12).
 
 Il piano è `PIANO.md`: si verifica prima del codice e si segue durante; se il codice deve allontanarsene, si cambia
-prima il piano. I punti ancora aperti sono nel suo §13.
+prima il piano. I punti ancora aperti sono nel suo §13: si chiudono prima della fase che li usa.
+- **Idee nuove** (per esempio le calorie, novembre 2026): si annotano in `PIANO.md` §14 e si discutono quando il
+  piano ci arriva, non prima.
 
 ## Comunicazione con il proprietario
 

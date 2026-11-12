@@ -84,18 +84,15 @@ Sullo schermo largo la barra delle sezioni le mostra tutte (sono al massimo cinq
 **Predefinito: la barra di oggi più «Altro».** La barra in basso tiene tre sezioni e una voce **Altro**; Altro apre un
 foglio con le sezioni rimaste. Se le sezioni accese sono quattro o meno, Altro non c'è e la barra le mostra tutte.
 
-**[da decidere] Quali tre sezioni stanno nella barra.** Due strade:
-
-- **Fisse, scelte da te (consigliata).** Predefinite: Settimana, Casa, Dati (la barra di oggi, così chi aggiorna non
-  trova niente spostato). Nelle Impostazioni si sceglie quali tre. Ragione: la posizione di un pulsante non cambia
-  mai se non lo decidi tu; la memoria del dito vale più dell'ottimizzazione.
-- **Le più usate.** Come nell'anteprima: la barra mostra le sezioni che apri più spesso, ricalcolate solo quando
-  riapri l'app, mai mentre la usi. Ragione più forte: zero configurazione, e Cucina sale da sola se la usi ogni giorno.
-  Contro: una barra che si riordina da sola, anche solo alla riapertura, è proprio ciò che chiede attenzione.
+**Quali tre sezioni stanno nella barra: fisse, le scegli tu** (deciso a novembre 2026). Predefinite: Settimana, Casa,
+Dati (la barra di oggi, così chi aggiorna non trova niente spostato). Nelle Impostazioni si scelgono le tre; le altre
+vanno in Altro, nell'ordine fisso del §3.1. La posizione di un pulsante non cambia mai se non lo decidi tu. Scartata:
+la barra con le sezioni più usate (zero configurazione, ma una barra che si riordina da sola chiede attenzione). La
+scelta vale per il dispositivo, come il resto del menu: sta in `localStorage` (`settimana:barra`).
 
 **Il menu a ventaglio** (radiale) resta selezionabile nelle Impostazioni: un solo pulsante in basso che si apre a
 ventaglio su tutte le sezioni. La scelta barra/ventaglio vale per il dispositivo (non viaggia con il file: si può
-volere il ventaglio sul telefono e la barra sul tablet).
+volere il ventaglio sul telefono e la barra sul tablet; `localStorage`, `settimana:menu`).
 
 La sezione aperta resta marcata (`aria-current="page"`) anche quando sta dentro Altro: la voce Altro si mostra attiva
 e il foglio indica quale sezione è aperta.
@@ -108,8 +105,8 @@ Il pulsante in alto a destra diventa un ingranaggio, con etichetta «Impostazion
 |---|---|---|
 | **Tema** | automatico / chiaro / scuro, come oggi (`FUNZIONI.md` §7) | questo dispositivo |
 | **Colore delle faccende** | nessuno / morbido / deciso, come oggi (`i/intensita`) | tutti i dispositivi |
-| **Menu del telefono** | barra con Altro / ventaglio; con la barra, quali tre sezioni (se si sceglie la strada «fisse», §3.3) | questo dispositivo |
-| **Sezioni** | Cucina e Spese: accesa / spenta. Settimana, Casa e Dati non si spengono | **[da decidere]** tutti i dispositivi o solo questo |
+| **Menu del telefono** | barra con Altro / ventaglio; con la barra, quali tre sezioni (§3.3) | questo dispositivo |
+| **Sezioni** | Cucina e Spese: accesa / spenta. Settimana, Casa e Dati non si spengono | tutti i dispositivi (`i/spenta/<nome>`, viaggia con il file) |
 | **Colori** e **Stile** | le palette e lo stile; arrivano dopo i moduli (§12) | — |
 | **Versione** | come oggi, in fondo | — |
 
@@ -121,6 +118,11 @@ La Libreria **esce** dalle Impostazioni e va nella sezione Settimana (§4).
 file, finiscono nei CSV. Riaccenderla la ritrova com'era. Se l'app si riapre su una sezione spenta, apre la prima.
 Spegnere Spese non spegne gli Alimenti dentro Cucina, e viceversa: i prodotti sono di tutte e due (§5).
 
+**Accesa o spenta vale su tutti i dispositivi** (deciso a novembre 2026): è una scelta su cosa usi, non sullo schermo.
+La chiave è `i/spenta/<nome>` (`true` = spenta; assente o `false` = accesa), così una sezione nuova parte accesa
+senza scrivere niente. Se una sezione è nella barra (§3.3) ed è spenta, il suo posto lo prende la prima sezione accesa
+che non c'è.
+
 ## 4. La Libreria nella sezione Settimana
 
 Decisione: la Libreria delle attività sta nella sezione **Settimana**, perché parla delle attività della settimana e
@@ -129,7 +131,11 @@ non del funzionamento dell'app.
 - **Dove:** un pannello richiudibile in fondo alla sezione Settimana, sotto la lista (o la tabella), chiuso di
   partenza: «Libreria delle attività (N)». Stesso contenuto di oggi: nome modificabile, in quante settimane compare,
   ultima volta usata, «Cancella» solo per le voci mai usate, lo stesso testo di spiegazione.
-- **Comportamento:** identico a oggi (`FUNZIONI.md` §6.2). Si sposta, non cambia.
+- **Comportamento:** identico a oggi (`FUNZIONI.md` §6.2), con una correzione: **«usata» segue la regola del nucleo**
+  (deciso a novembre 2026; `FUNZIONI.md` §12, punto 1). Oggi una voce segnata e poi tolta dalla settimana risulta «mai
+  usata», mostra «Cancella» e poi la cancellazione viene rifiutata. Dopo: una voce con delle spunte non mostra
+  «Cancella», e al posto di «mai usata» una scritta come «segnata, poi tolta» (**le parole le sceglie Michele**). Con
+  un test che parte proprio da quel caso.
 - **Codice:** `js/libreria.js` passa dal gruppo Menu al gruppo **Settimana** (livello 5, come `azioni.js`); la
   disegna `disegnaSettimana` invece di `disegnaAnche` in `guscio.js`. La regola «una sezione non importa un'altra
   sezione» resta: la libreria è parte della Settimana. Da aggiornare `test/struttura.test.js` (gruppi) e i test nel
@@ -316,6 +322,7 @@ dell'app (`lettera/segmenti`, valore semplice): un telefono non ancora aggiornat
 
 | Chiave | Valore | Che cosa |
 |---|---|---|
+| `i/spenta/<nome>` | `true` / `false` | **2.1:** la sezione `<nome>` (`cucina`, `spese`) è spenta (§3.4) |
 | `p/<id>/nome` | testo | il nome del prodotto |
 | `p/<id>/tipo` | `"alimento"` / `"scorta"` | in quale vista compare |
 | `p/<id>/dove` | `"dispensa"` `"frigo"` `"freezer"` / `"bagno"` `"pulizie"` `"altro"` | il gruppo |
@@ -407,19 +414,34 @@ volta sola sui moduli completi. I motivi decorativi dopo ancora.
 
 ## 13. Punti da decidere
 
-| # | Punto | Proposta | Dove |
-|---|---|---|---|
-| 1 | Quali sezioni stanno nella barra del telefono | fisse, scelte nelle Impostazioni; predefinite Settimana, Casa, Dati | §3.3 |
-| 2 | Sezioni accese/spente: per tutti i dispositivi o per questo | per tutti (`i/…`): è una scelta su cosa usi, non sullo schermo | §3.4 |
-| 3 | Soglie delle parole di quantità | quelle del §6.1 | §6.1 |
-| 4 | Categorie di spesa proprie | no nella 2.3, si rivede dopo l'uso | §8.1 |
-| 5 | Un piatto o più per pasto | uno nella 2.4 | §9.1 |
-| 6 | Cucina sul computer | anteprima prima della 2.4 | §9.3 |
-| 7 | `p/<id>/visto` | tenerlo | §10.3 |
-| 8 | Il CSV di una sezione spenta | resta | §11 |
-| 9 | Dove si vedono Alimenti e Scorte nella 2.2 | la sezione Spese nasce con quelle due schede | §12 |
+Si chiudono prima della fase che li usa, non tutti insieme.
+
+**Decisi** (novembre 2026):
+
+| Punto | Decisione | Dove |
+|---|---|---|
+| Quali sezioni stanno nella barra del telefono | fisse, scelte nelle Impostazioni; predefinite Settimana, Casa, Dati | §3.3 |
+| Sezioni accese/spente | valgono su tutti i dispositivi (`i/spenta/<nome>`) | §3.4 |
+| La Libreria che dice «mai usata» per una voce con spunte | si corregge dentro la 2.1 | §4 |
+
+**Aperti:**
+
+| # | Punto | Proposta | Si decide prima di | Dove |
+|---|---|---|---|---|
+| 1 | Le parole per una voce «segnata, poi tolta» | da proporre a Michele | 2.1 | §4 |
+| 2 | Dove si vedono Alimenti e Scorte nella 2.2 | la sezione Spese nasce con quelle due schede | 2.2 | §12 |
+| 3 | Soglie delle parole di quantità | quelle del §6.1 | 2.2 | §6.1 |
+| 4 | `p/<id>/visto` | tenerlo | 2.2 | §10.3 |
+| 5 | Categorie di spesa proprie | no nella 2.3, si rivede dopo l'uso | 2.3 | §8.1 |
+| 6 | Il CSV di una sezione spenta | resta | 2.3 | §11 |
+| 7 | Un piatto o più per pasto | uno nella 2.4 | 2.4 | §9.1 |
+| 8 | Cucina sul computer | anteprima prima della 2.4 | 2.4 | §9.3 |
 
 ## 14. Fuori dalla Fase 2
 
 Idee raccolte, non pianificate: grafici delle bollette dai PDF; inserire i prodotti con il codice a barre; tenere
 traccia del tempo senza giudizio. Nessuna pubblicità e nessun punteggio, mai.
+
+**Da discutere dopo la Fase 2: le calorie** (proposta di Michele, novembre 2026). Una parte che, dato un minimo
+giornaliero, dica se ciò che è segnato in Cucina basta. Si appoggerebbe ai pasti e agli alimenti della 2.4; va
+discussa per intero prima di entrare nel piano, anche rispetto ai principi del §2.
