@@ -125,22 +125,11 @@ che non c'è.
 
 ## 4. La Libreria nella sezione Settimana
 
-Decisione: la Libreria delle attività sta nella sezione **Settimana**, perché parla delle attività della settimana e
-non del funzionamento dell'app.
-
-- **Dove:** un pannello richiudibile in fondo alla sezione Settimana, sotto la lista (o la tabella), chiuso di
-  partenza: «Libreria delle attività (N)». Stesso contenuto di oggi: nome modificabile, in quante settimane compare,
-  ultima volta usata, «Cancella» solo per le voci mai usate, lo stesso testo di spiegazione.
-- **Comportamento:** identico a oggi (`FUNZIONI.md` §6.2), con una correzione: **«usata» segue la regola del nucleo**
-  (deciso a novembre 2026; `FUNZIONI.md` §12, punto 1). Oggi una voce segnata e poi tolta dalla settimana risulta «mai
-  usata», mostra «Cancella» e poi la cancellazione viene rifiutata. Dopo: una voce con delle spunte non mostra
-  «Cancella», e al posto di «mai usata» scrive **«tolta dalle settimane · ultima spunta: 12 ott»** (parole scelte da
-  Michele, novembre 2026). Con un test che parte proprio da quel caso.
-- **Codice:** `js/libreria.js` passa dal gruppo Menu al gruppo **Settimana** (livello 5, come `azioni.js`); la
-  disegna `disegnaSettimana` invece di `disegnaAnche` in `guscio.js`. La regola «una sezione non importa un'altra
-  sezione» resta: la libreria è parte della Settimana. Da aggiornare `test/struttura.test.js` (gruppi) e i test nel
-  browser che aprono il menu per arrivare alla libreria (`pagina.spec.js`).
-- **Telefono:** il pannello sta in fondo alla vista del giorno, dopo le schede.
+**Fatto** (`settimana-20`, novembre 2026): il pannello sta in fondo alla sezione Settimana, e «usata» segue la regola
+del nucleo («tolta dalle settimane · ultima spunta: 13 ott» per una voce segnata e poi tolta, senza Cancella). Il
+comportamento è descritto in `FUNZIONI.md` §6.2. Nel codice: `libreria.js` è nel gruppo Settimana (livello 3) e lo
+disegna `disegnaSettimana`; il foglio «Rinomina», che usano anche le altre sezioni, è uscito in `rinomina.js`, nei
+comuni.
 
 ## 5. I prodotti: un elenco solo per Alimenti e Scorte
 
@@ -400,11 +389,13 @@ lontano. Non è prevista una compattazione; si misura alla fine della 2.4 e se n
 
 Una fase per volta: test verdi e push tra l'una e l'altra, `CLAUDE.md` e `DATI.md` aggiornati nella stessa fase.
 
-**2.1 Impostazioni, navigazione, Libreria**
-- Il Menu diventa Impostazioni; Libreria nella Settimana (§4); barra con Altro e ventaglio (§3.3); sezioni accese o
-  spente (§3.4), anche se all'inizio non c'è ancora niente da spegnere (si prova con sezioni finte nei test).
+**2.1 Impostazioni, navigazione, Libreria**, in tre passi (test verdi e push tra l'uno e l'altro):
+1. ~~Libreria nella Settimana (§4)~~: fatto, `settimana-20`.
+2. Il Menu diventa Impostazioni (§3.4), con le sezioni accese o spente (`i/spenta/<nome>`, nel nucleo e in
+   `DATI.md`), anche se all'inizio non c'è ancora niente da spegnere (si prova con sezioni finte nei test).
+3. La navigazione: barra con tre posti e Altro, la scelta dei tre posti, il ventaglio (§3.3).
 - Test: navigazione con Altro e con il ventaglio, tastiera e lettore di schermo (axe), riapertura su una sezione
-  spenta, libreria dalla sezione Settimana.
+  spenta.
 
 **2.2 Prodotti: Alimenti e Scorte**
 - Nucleo: chiavi `p/…`, movimenti, correzione, calcolo della quantità, stati delle scorte.

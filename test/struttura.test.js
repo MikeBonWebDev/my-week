@@ -17,10 +17,11 @@ const FILE = {
   'js/testi.js': [2, 'comune'],        // parole e date
   'js/pezzi.js': [2, 'comune'],        // pezzi di interfaccia
   'js/sezioni.js': [2, 'comune'],      // il registro delle sezioni e la navigazione
+  'js/rinomina.js': [2, 'comune'],     // il foglio «Rinomina», da qualunque sezione
   'js/promemoria.js': [3, 'settimana'],
+  'js/libreria.js': [3, 'settimana'],  // il pannello in fondo alla Settimana
   'js/settimana.js': [4, 'settimana'],
   'js/azioni.js': [5, 'settimana'],
-  'js/libreria.js': [5, 'menu'],
   'js/casa.js': [5, 'casa'],
   'js/file.js': [5, 'dati'],
   'js/guscio.js': [6, 'avvio'],        // il punto di partenza: può importare tutto, nessuno importa lui

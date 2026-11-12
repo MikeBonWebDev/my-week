@@ -11,7 +11,7 @@ ogni tocco, quali regole valgono. È il riferimento per dire se l'app fa la cosa
   dei dati; `LEGGIMI.md` dice come pubblicarla e installarla; `PIANO.md` è ciò che verrà; `CLAUDE.md` contiene le
   regole per chi ci lavora.
 
-Aggiornato alla versione `settimana-19` (ottobre 2026), ricavato dal codice e dai test.
+Aggiornato alla versione `settimana-20` (novembre 2026), ricavato dal codice e dai test.
 
 ## Indice
 
@@ -263,13 +263,19 @@ dice perché.
 
 ### 6.2 La Libreria
 
-Oggi sta nel **menu** (§7), in un pannello richiudibile «Libreria delle attività (N)». Per ogni voce, in ordine
-alfabetico: il nome, modificabile sul posto; «in N settimane · ultima: 12 ott», oppure «mai usata»; **Cancella**
-solo per le voci mai usate.
+Sta **in fondo alla sezione Settimana**, sotto la tabella (computer) o sotto le schede del giorno (telefono): un
+pannello richiudibile «Libreria delle attività (N)», chiuso di partenza. Nelle altre sezioni non si vede. Per ogni
+voce, in ordine alfabetico, il nome, modificabile sul posto, e una riga:
+
+- **«in N settimane · ultima: 12 ott»** se compare nella lista di qualche settimana (la data è il lunedì dell'ultima);
+- **«tolta dalle settimane · ultima spunta: 13 ott»** se non è più in nessuna lista ma ha delle spunte (segnata, poi
+  tolta): le spunte sono storia;
+- **«mai usata»**, con il pulsante **Cancella**, se non ha né liste né spunte. Solo queste si cancellano.
 
 - Rinominare da qui: se la voce compare in qualche settimana, prima una conferma che dice che il nome cambia
   ovunque, anche nel passato, e suggerisce di creare una voce nuova se si vuole cambiare solo da qui in avanti.
-- Cancellare chiede conferma. Una voce usata **non si cancella**: fa parte dello storico (ma vedi §12).
+- Cancellare chiede conferma. Una voce usata (in una lista o con una spunta) **non si cancella**: fa parte dello
+  storico.
 - Libreria vuota: «La libreria è vuota: si riempie da sola quando aggiungi un'attività alla settimana.»
 - Le voci nascono da sole quando le aggiungi a una settimana o crei una faccenda.
 
@@ -282,8 +288,7 @@ Il pulsante **Menu** in alto a destra. Sul computer un pannello al centro, sul t
 |---|---|---|
 | **Tema** | Automatico (segue il sistema), Chiaro, Scuro | questo dispositivo |
 | **Colore delle faccende** | Nessuno («Solo il testo.»), Morbido («Toni sabbia, leggeri.», predefinito), Deciso («Dal giallo all'arancio.»), con tre campioni ciascuno | tutti i dispositivi (viaggia con il file) |
-| **Libreria delle attività** | §6.2 | — |
-| **Versione** | «Versione: settimana-19», oppure «non installata (senza uso offline)» | — |
+| **Versione** | «Versione: settimana-20», oppure «non installata (senza uso offline)» | — |
 
 ## 8. Dati
 
@@ -379,12 +384,9 @@ controlla.
 Trovate scrivendo questo documento (ottobre 2026). Ognuna va decisa: si corregge il codice, oppure si accetta e si
 scrive qui come comportamento.
 
-1. **Libreria: «mai usata» e Cancella per una voce che ha delle spunte.** Se una voce è stata segnata in una
-   settimana e poi tolta da quella settimana, la Libreria la conta in 0 settimane: mostra «mai usata» e il pulsante
-   Cancella; la conferma dice «Non compare in nessuna settimana, quindi non si perde niente»; poi il nucleo rifiuta
-   («Questa voce compare nello storico: non si può cancellare.»). La regola del nucleo è giusta (le spunte sono
-   storia); la Libreria conta solo le liste. Correzione proposta: la Libreria usa la stessa regola del nucleo, e per
-   quella voce scrive per esempio «segnata, poi tolta» senza Cancella.
+1. ~~Libreria: «mai usata» e Cancella per una voce che ha delle spunte~~ (una voce segnata e poi tolta da ogni
+   settimana risultava «mai usata», mostrava Cancella, e poi il nucleo rifiutava): corretto in `settimana-20`. La
+   Libreria usa la stessa regola del nucleo (§6.2).
 2. ~~`README.md` in ritardo in due punti~~ (la scheda di Casa descritta come «Fatta 16 giorni fa (martedì 6
    ottobre)», e `aggiornaFaccendeTabella()` che ora si chiama `aggiornaTabellaSulPosto()`): corretto insieme a questo
    documento.

@@ -21,8 +21,8 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
 ## Regole dei moduli
 
 - **Livelli e gruppi** (README §4, controllati da `test/struttura.test.js`). Comuni: `core.js` 0 · `base.js` 1 ·
-  `testi.js`, `pezzi.js`, `sezioni.js` 2. Settimana: `promemoria.js` 3 · `settimana.js` 4 · `azioni.js` 5.
-  Casa: `casa.js` 5. Dati: `file.js` 5. Menu: `libreria.js` 5. Avvio: `guscio.js` 6.
+  `testi.js`, `pezzi.js`, `sezioni.js`, `rinomina.js` 2. Settimana: `promemoria.js`, `libreria.js` 3 ·
+  `settimana.js` 4 · `azioni.js` 5. Casa: `casa.js` 5. Dati: `file.js` 5. Avvio: `guscio.js` 6.
   Un file importa solo livelli più bassi (niente giri), e **una sezione non importa niente da un'altra sezione**:
   solo dai comuni e dai suoi file. Ciò che serve a due sezioni scende nei comuni.
 - **Gli elementi si costruiscono con `el()`** (`js/pezzi.js`), mai con `innerHTML` né con stringhe di HTML: il
@@ -35,8 +35,9 @@ per persone neurodivergenti. Pubblicata su GitHub Pages e usata ogni giorno su u
   (`data-sezione`) e il suo blocco. Il suo `disegna` si chiama solo quando è aperta. Chi deve sapere quando si cambia
   sezione si iscrive con `quandoCambiaSezione` (sezioni.js), non si fa chiamare da un'altra sezione.
 - **Il disegno è un elenco.** Chi cambia qualcosa chiama `disegna()` di `base.js`; le parti le elenca `guscio.js`
-  con `disegnaAnche(...)`: la sezione aperta, la libreria del menu, il puntino sulla voce Dati. Ciò che vale per
-  tutta la pagina (l'intensità del colore) lo imposta `disegna()` stesso.
+  con `disegnaAnche(...)`: la sezione aperta e il puntino sulla voce Dati. Ciò che sta dentro una sezione (la
+  libreria nella Settimana) lo disegna la sezione stessa. Ciò che vale per tutta la pagina (l'intensità del
+  colore) lo imposta `disegna()` stesso.
 - **Un valore che cambia lo cambia solo il suo file**, con una funzione: `rileggi()`, `cambiaOggi()`,
   `mostraSettimana()` in `base.js`, `scegliGiorno()` in `settimana.js`. Gli altri leggono il valore importato (è
   un collegamento, vede sempre il valore attuale), ma non lo assegnano: un `import` non si può riassegnare.
@@ -172,8 +173,10 @@ Decisioni per la Fase 2 (ottobre 2026):
 - **Colori** (le cinque palette e la predefinita): dopo che i moduli sono completi, così si fanno una volta sola.
 - **Documenti:** il piano per intero, prima del codice, come riferimento da verificare e seguire (`PIANO.md`, senza
   numero di fase nel nome); il comportamento attuale in un documento vivo (`FUNZIONI.md`), che riceve ogni fase finita.
-- **Libreria:** nella sezione Settimana (un pannello in fondo), non più nel menu. Nella 2.1 si corregge anche il
-  «mai usata» per le voci con spunte (`FUNZIONI.md` §12).
+- **Libreria:** nella sezione Settimana (un pannello in fondo), non più nel menu, con il «mai usata» corretto per
+  le voci con spunte. Fatto: primo passo della 2.1 (`settimana-20`).
+- **La 2.1 in tre passi**, ognuno con i suoi test e il push prima del successivo: 1. Libreria (fatto); 2. il Menu
+  diventa Impostazioni, con le sezioni accese o spente; 3. la navigazione (barra con Altro, ventaglio).
 
 Il piano è `PIANO.md`: si verifica prima del codice e si segue durante; se il codice deve allontanarsene, si cambia
 prima il piano. I punti ancora aperti sono nel suo §13: si chiudono prima della fase che li usa.

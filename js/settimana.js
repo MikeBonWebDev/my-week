@@ -9,6 +9,7 @@ import {
 import { etichettaPeriodo, fmt, fmtBreve, testoCadenza } from './testi.js';
 import { el, nomeRinominabile, segnaCalore } from './pezzi.js';
 import { aggiornaPromemoria } from './promemoria.js';
+import { aggiornaLibreria } from './libreria.js';
 
 /* ───────── Faccende nella settimana ─────────
    Una voce con una cadenza è una faccenda (vedi core.js, faccende). Nella settimana corrente la sua scheda
@@ -390,6 +391,7 @@ function disegnaSettimana() {
   aggiornaNavigatore();
   aggiornaPromemoria(visualizzata);
   aggiornaSuggerimenti();
+  aggiornaLibreria();
 }
 
 // La sezione Settimana, come la vede il registro delle sezioni (sezioni.js; la registra guscio.js)

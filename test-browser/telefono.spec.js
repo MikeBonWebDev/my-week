@@ -156,7 +156,7 @@ test('settimane passate: si consultano e correggono, senza aggiungere né toglie
   await expect(p.locator('#titolo-giorno')).toContainText('Lunedì 19 ottobre');
 });
 
-test('il menu si apre dal basso, con tema, colore e libreria; il CSV sta nella sezione Dati', async ({ browser }) => {
+test('il menu si apre dal basso, con tema e colore; la libreria sta sotto le schede; il CSV nella sezione Dati', async ({ browser }) => {
   const p = await apriTelefono(browser);
   await aggiungi(p, 'Sviluppo');
   await vaiA(p, 'dati');
@@ -166,9 +166,15 @@ test('il menu si apre dal basso, con tema, colore e libreria; il CSV sta nella s
   const menu = await p.locator('#menu').boundingBox();
   expect(Math.round(menu.y + menu.height)).toBe(p.viewportSize().height);         // appoggiato al fondo dello schermo
   expect(await p.locator('#menu h3').allTextContents()).toEqual(['Tema', 'Colore delle faccende']);
+  await expect(p.locator('#menu #pannello-libreria')).toHaveCount(0);
+  await chiudiMenu(p);
+  await vaiA(p, 'settimana');
   await p.locator('#pannello-libreria summary').click();
   await expect(p.locator('.lib-nome[data-id="sviluppo"]')).toBeVisible();
-  await chiudiMenu(p);
+  // in fondo al giorno: sotto l'ultima scheda
+  const scheda = await p.locator('#carte .carta').last().boundingBox();
+  const libreria = await p.locator('#pannello-libreria').boundingBox();
+  expect(libreria.y).toBeGreaterThan(scheda.y + scheda.height);
 });
 
 test('dal telefono al computer: ciò che segni sul telefono arriva nella tabella', async ({ browser }, info) => {

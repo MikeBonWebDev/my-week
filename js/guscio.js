@@ -5,25 +5,23 @@ import {
 import { el } from './pezzi.js';
 import { disegnaSezioneAperta, mostraSezione, registraSezioni, sezioneIniziale } from './sezioni.js';
 import { sezioneSettimana } from './settimana.js';
-import { aggiornaLibreria } from './libreria.js';
 import { aggiornaPuntinoDati, sezioneDati } from './file.js';
 import { sezioneCasa } from './casa.js';
 import './azioni.js';   // i gestori delle azioni sulla settimana: non esporta niente, basta caricarlo
+import './rinomina.js'; // il foglio «Rinomina», da qualunque sezione: anche lui basta caricarlo
 
 /* ───────── Le sezioni e il disegno ─────────
    Le sezioni, nell'ordine della barra (sezioni.js). Una sezione nuova si descrive nel suo file e si aggiunge qui,
    insieme al suo pulsante e al suo contenuto in index.html.
-   Poi le parti che disegna() (base.js) ridisegna, in quest'ordine: la sezione aperta, la libreria del menu, il
-   puntino sulla voce Dati (si vede da ogni sezione). */
+   Poi le parti che disegna() (base.js) ridisegna, in quest'ordine: la sezione aperta, il puntino sulla voce Dati
+   (si vede da ogni sezione). La libreria fa parte della Settimana: la disegna lei. */
 registraSezioni(sezioneSettimana, sezioneCasa, sezioneDati);
-disegnaAnche(disegnaSezioneAperta, aggiornaLibreria, aggiornaPuntinoDati);
+disegnaAnche(disegnaSezioneAperta, aggiornaPuntinoDati);
 
 /* ───────── Il menu ─────────
    Un <dialog> aperto con showModal(): sta sopra alla pagina, che intanto non risponde ai tocchi.
-   Si chiude con la ×, con Esc o con un tocco fuori (sullo sfondo). Dentro: tema, colore delle faccende,
-   libreria, versione. */
+   Si chiude con la ×, con Esc o con un tocco fuori (sullo sfondo). Dentro: tema, colore delle faccende, versione. */
 $('#apri-menu').addEventListener('click', () => {
-  aggiornaLibreria();
   disegnaScelteMenu();
   mostraVersione();
   menu.showModal();

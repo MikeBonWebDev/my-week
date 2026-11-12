@@ -491,6 +491,21 @@ test('togli: le spunte e il dettaglio restano come storico, e ricompaiono rimett
   assert.equal(dopo.done.sviluppo[0], true);
 });
 
+test('ultime spunte: la più recente di ogni voce, anche tolta dalla settimana; con finoA si ignora il dopo', () => {
+  const tel = dispositivo('telefono');
+  tel.aggiungi('2026-10-12', 'Leggere');
+  tel.aggiungi('2026-10-12', 'Correre');
+  tel.spunta('2026-10-12', 'leggere', 1, true);                             // martedì 13
+  tel.spunta('2026-10-12', 'leggere', 4, true);                             // venerdì 16
+  tel.spunta('2026-10-12', 'leggere', 4, false);                            // tolta: non conta
+  tel.togli('2026-10-12', 'leggere');                                        // fuori dalla lista: la spunta resta
+  assert.deepEqual(Core.ultimeSpunte(tel.registro), { leggere: '2026-10-13' });
+  tel.spunta('2026-10-12', 'correre', 6, true);                             // domenica 18
+  assert.deepEqual(Core.ultimeSpunte(tel.registro), { leggere: '2026-10-13', correre: '2026-10-18' });
+  assert.deepEqual(Core.ultimeSpunte(tel.registro, '2026-10-14'), { leggere: '2026-10-13' });
+  assert.equal(tel.cancella('leggere').errore, 'usata');                     // stessa regola di cancella()
+});
+
 test('intensità: predefinita «morbida», si sincronizza, rifiuta valori sconosciuti', () => {
   const tel = dispositivo('telefono');
   const pc = dispositivo('pc');

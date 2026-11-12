@@ -59,11 +59,12 @@ settimana-pwa/
 │   ├── sezioni.js        il registro delle sezioni e la navigazione tra loro
 │   ├── settimana.js      la settimana visualizzata e il disegno: tabella e vista a un giorno
 │   ├── promemoria.js     il promemoria delle faccende in cima alla settimana, con le sue scelte
-│   ├── libreria.js       il pannello «Libreria delle attività»
+│   ├── libreria.js       il pannello «Libreria delle attività», in fondo alla Settimana
+│   ├── rinomina.js       il foglio «Rinomina», che si apre dal nome di una voce in ogni sezione
 │   ├── azioni.js         aggiungere, suggerimenti, spuntare, togliere, energia, riposo, cambiare settimana
 │   ├── file.js           la sezione Dati: ultimo salvataggio, invito alla copia, CSV, sincronizzazione
 │   ├── casa.js           la sezione Casa: le faccende
-│   └── guscio.js         il punto di partenza: carica gli altri moduli, menu (tema, colore, libreria), avvio
+│   └── guscio.js         il punto di partenza: carica gli altri moduli, menu (tema, colore), avvio
 ├── sw.js                 il service worker: copia dei file per l'uso senza rete
 ├── manifest.webmanifest  nome, colori e icone dell'app installata
 ├── icone/                icone per Android, iPhone, scheda del browser
@@ -144,12 +145,12 @@ ciò che gli serve (`import`). Le frecce vanno in un verso solo, dall’alto ver
 chi sta sopra.
 
 ```
- livello                  comuni                    Settimana                 Casa      Dati      menu
+ livello                  comuni                       Settimana                         Casa      Dati
     6    guscio.js: il punto di partenza. Registra le sezioni, elenca le parti da disegnare, avvia
-    5                                               azioni.js                 casa.js   file.js   libreria.js
-    4                                               settimana.js
-    3                                               promemoria.js
-    2    testi.js  pezzi.js  sezioni.js
+    5                                                  azioni.js                         casa.js   file.js
+    4                                                  settimana.js
+    3                                                  promemoria.js  libreria.js
+    2    testi.js  pezzi.js  sezioni.js  rinomina.js
     1    base.js
     0    core.js
 ```
@@ -165,8 +166,8 @@ Due regole, controllate da `test/struttura.test.js`, che legge gli `import` di o
 Un file nuovo va messo nel test, con il suo livello e il suo gruppo: se manca, il test lo dice.
 
 Altre tre scelte tengono le frecce in un verso solo. **Il disegno è un elenco**: `base.js` ha `disegna()`, che
-chiama in ordine le parti che `guscio.js` gli consegna all’avvio (`disegnaAnche`): la sezione aperta, la libreria del
-menu, il puntino sulla voce Dati. **Le sezioni sono un registro** (`sezioni.js`): ognuna si descrive nel suo file
+chiama in ordine le parti che `guscio.js` gli consegna all’avvio (`disegnaAnche`): la sezione aperta e il puntino
+sulla voce Dati. La libreria fa parte della Settimana: la disegna `disegnaSettimana`. **Le sezioni sono un registro** (`sezioni.js`): ognuna si descrive nel suo file
 (nome, titolo, sottotitolo, elemento, disegno) e `guscio.js` le registra; chi deve sapere quando si cambia sezione
 si iscrive con `quandoCambiaSezione` (il promemoria lo usa per dimenticare i giri saltati da lì). **Un valore che
 cambia lo cambia solo il suo file**: `state`, `oggiK` e la settimana mostrata stanno in `base.js` e cambiano con
@@ -540,7 +541,7 @@ In Casa, «Salto questo giro» scrive `v/<id>/salto = oggi`: il conteggio (e il 
 volta mostrata resta quella vera. Il salto resta scritto finché non segni di nuovo la faccenda («Giro saltato ieri»,
 poi la data), e «Annulla» lo toglie. Non si può saltare una faccenda fatta oggi: il conteggio parte già da oggi.
 
-### Il menu: tema, colore, libreria
+### Il menu: tema, colore
 
 Un `<dialog id="menu">`, aperto dal pulsante in alto a destra con `showModal()`: sta sopra alla pagina, che intanto
 non risponde ai tocchi. Su computer è un pannello al centro, su telefono sale dal basso (stesso elemento, CSS
@@ -552,7 +553,7 @@ diverso). Si chiude con la ×, con Esc o con un tocco fuori.
   che la pagina si disegni, altrimenti all’avvio si vedrebbe un lampo del tema sbagliato.
 - **Colore delle faccende**: vale **su tutti i dispositivi**, quindi sta nel registro (`i/intensita`) e viaggia
   con il file.
-- **Libreria delle attività** e, in fondo, la versione installata.
+- In fondo, la versione installata. La **Libreria delle attività** non sta più qui: è in fondo alla Settimana (§9).
 
 ### La sezione Dati
 
@@ -646,9 +647,14 @@ partecipare all’unione e diventerebbe una terza versione dei dati.
 
 ## 9. Libreria e suggerimenti
 
-- **Libreria.** Le voci nascono quando le aggiungi a una settimana. Rinominare una voce vale ovunque, anche nel
+- **Libreria.** Un pannello richiudibile in fondo alla sezione Settimana (`libreria.js`, disegnato da
+  `disegnaSettimana`). Le voci nascono quando le aggiungi a una settimana. Rinominare una voce vale ovunque, anche nel
   passato (la pagina lo dice prima). Una voce già usata non si cancella, perché fa parte dello storico; una voce
-  mai usata sì.
+  mai usata sì. «Usata» vuol dire in una lista **o con una spunta**: la regola è una sola, `Core.ultimeSpunte`, e la
+  usano le faccende, `cancella()` e la libreria. Una voce segnata e poi tolta da ogni settimana dice «tolta dalle
+  settimane · ultima spunta: 13 ott», senza Cancella.
+- **Rinomina.** Il foglio che si apre toccando il nome di una voce sta in `rinomina.js`, nei file comuni, perché lo
+  usano la Settimana e Casa.
 - **Suggerimenti a campo vuoto ("Frequenti").** Le 3 voci più segnate nelle ultime 4 settimane (`FINESTRA`,
   `MAX_FREQUENTI`), escluse quelle già presenti nel giorno in cui aggiungeresti. Ordine: giorni segnati, poi settimane in cui compaiono, poi
   la più recente. Le voci non usate da più di 4 settimane spariscono da qui da sole.

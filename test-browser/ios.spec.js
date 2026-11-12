@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import { test, expect } from './aiuti.js';   // non da '@playwright/test': vedi `test` in aiuti.js
 import { creaSeme } from '../strumenti/seme.js';
-import { apri, caricaDati, vaiA, salvaFile, unisciFile, apriMenu, telefono } from './aiuti.js';
+import { apri, caricaDati, vaiA, salvaFile, unisciFile, telefono } from './aiuti.js';
 
 const nomiCarte = (p) => p.locator('#carte .nome-voce').allTextContents();
 
@@ -53,8 +53,7 @@ test('sul telefono ogni campo ha il testo di almeno 16 pixel: Safari non ingrand
   // solo com'era. Si controllano tutti i campi della pagina, anche quelli dei fogli chiusi e del menu.
   const p = await apri(await browser.newContext(telefono()));
   await caricaDati(p, creaSeme());
-  await apriMenu(p);
-  await p.locator('#pannello-libreria summary').click();
+  await p.locator('#pannello-libreria summary').click();   // la libreria: in fondo alla Settimana
   const piccoli = await p.evaluate(() => [...document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select')]
     .map((el) => ({ campo: el.id || el.className || el.name || el.tagName, px: parseFloat(getComputedStyle(el).fontSize) }))
     .filter((c) => c.px < 16));

@@ -47,6 +47,7 @@ async function controlla(p) {
 // Le viste da controllare, nell'ordine in cui si raggiungono
 const viste = [
   ['settimana, promemoria aperto', async (p) => { await p.locator('#promemoria > summary').click(); }],
+  ['settimana, libreria aperta', async (p) => { await p.locator('#pannello-libreria > summary').click(); }],
   ['casa', async (p) => { await vaiA(p, 'casa'); }],
   ['foglio della faccenda', async (p) => { await p.click('#nuova-faccenda'); await expect(p.locator('#foglio-faccenda')).toBeVisible(); }],
   ['rinomina', async (p) => {

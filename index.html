@@ -18,8 +18,8 @@
   <meta name="apple-mobile-web-app-title" content="Settimana">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- ?v=19: vedi la nota sugli script in fondo -->
-  <link rel="stylesheet" href="stile.css?v=19">
+  <!-- ?v=20: vedi la nota sugli script in fondo -->
+  <link rel="stylesheet" href="stile.css?v=20">
   <!-- Il tema scelto a mano (menu → Tema), applicato prima che la pagina si disegni: così non lampeggia.
        Senza scelta, segue il sistema (vedi js/base.js). -->
   <script>
@@ -58,7 +58,7 @@
       <div class="testata">
         <h1 id="titolo-sezione">La mia settimana</h1>
         <button type="button" class="apri-menu" id="apri-menu" aria-haspopup="dialog"
-                aria-label="Menu: tema, colore delle faccende, libreria delle attività">
+                aria-label="Menu: tema e colore delle faccende">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
           <span class="lungo">Menu</span>
         </button>
@@ -130,6 +130,18 @@
       </p>
       </div>
     </section>
+
+    <!-- La libreria delle attività: in fondo alla Settimana, chiusa di partenza (js/libreria.js) -->
+    <details class="riquadro pannello-libreria" id="pannello-libreria">
+      <summary>Libreria delle attività <span id="conta-libreria"></span></summary>
+      <p>
+        Le voci che usi nelle settimane: cosa fai, in generale. Il dettaglio di ogni settimana sta accanto all’attività.
+        Cambiare il nome di una voce lo cambia in tutte le settimane in cui compare.
+        Una voce già usata non si cancella, perché fa parte dello storico. Le voci che non usi da più di quattro settimane
+        spariscono da sole dai suggerimenti, ma tornano appena inizi a scriverne il nome.
+      </p>
+      <ul class="libreria" id="lista-libreria"></ul>
+    </details>
     </div>
 
     <!-- ═════ Sezione Casa: le faccende con una cadenza, e da quanto tempo non le fai (js/casa.js) ═════ -->
@@ -226,7 +238,7 @@
     <p class="stato" id="stato" role="status" aria-live="polite" popover="manual"></p>
   </main>
 
-  <!-- Il menu: tema, colore delle faccende, libreria. Si apre dal pulsante in alto a destra. -->
+  <!-- Il menu: tema e colore delle faccende. Si apre dal pulsante in alto a destra. -->
   <dialog id="menu" class="foglio" aria-labelledby="titolo-menu">
     <div class="foglio-testa">
       <h2 id="titolo-menu">Menu</h2>
@@ -244,16 +256,6 @@
       <div class="opzioni" id="scelte-intensita" role="group" aria-labelledby="titolo-intensita"></div>
     </section>
 
-    <details class="dati sezione" id="pannello-libreria">
-      <summary>Libreria delle attività <span id="conta-libreria"></span></summary>
-      <p>
-        Le voci che usi nelle settimane: cosa fai, in generale. Il dettaglio di ogni settimana sta accanto all’attività.
-        Cambiare il nome di una voce lo cambia in tutte le settimane in cui compare.
-        Una voce già usata non si cancella, perché fa parte dello storico. Le voci che non usi da più di quattro settimane
-        spariscono da sole dai suggerimenti, ma tornano appena inizi a scriverne il nome.
-      </p>
-      <ul class="libreria" id="lista-libreria"></ul>
-    </details>
 
     <p class="versione" id="versione-app"></p>
   </dialog>
@@ -323,29 +325,30 @@
        divisa per argomento in js/. Si carica solo guscio.js, che avvia l'app: i file che gli servono li chiede lui,
        con import, e così via a cascata (vedi la nota MODULI in js/base.js).
 
-       Il «?v=19» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
+       Il «?v=20» è il numero di VERSIONE di sw.js: a ogni versione l'indirizzo dei file cambia, e il browser non
        può mescolare la pagina nuova con file vecchi che ha in memoria. Un import dentro un modulo scrive solo
        './base.js', senza numero: l'elenco qui sotto (import map) dice al browser che './base.js' è
-       'js/base.js?v=19'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
+       'js/base.js?v=20'. Così il numero sta in un posto solo, questo, e si aggiorna insieme a VERSIONE.
        Ogni file di codice deve comparire qui: un test controlla che ci siano tutti, con il numero giusto. -->
   <script type="importmap">
     {
       "imports": {
-        "./core.js": "./core.js?v=19",
-        "./js/base.js": "./js/base.js?v=19",
-        "./js/testi.js": "./js/testi.js?v=19",
-        "./js/pezzi.js": "./js/pezzi.js?v=19",
-        "./js/sezioni.js": "./js/sezioni.js?v=19",
-        "./js/settimana.js": "./js/settimana.js?v=19",
-        "./js/promemoria.js": "./js/promemoria.js?v=19",
-        "./js/libreria.js": "./js/libreria.js?v=19",
-        "./js/azioni.js": "./js/azioni.js?v=19",
-        "./js/file.js": "./js/file.js?v=19",
-        "./js/casa.js": "./js/casa.js?v=19",
-        "./js/guscio.js": "./js/guscio.js?v=19"
+        "./core.js": "./core.js?v=20",
+        "./js/base.js": "./js/base.js?v=20",
+        "./js/testi.js": "./js/testi.js?v=20",
+        "./js/pezzi.js": "./js/pezzi.js?v=20",
+        "./js/sezioni.js": "./js/sezioni.js?v=20",
+        "./js/settimana.js": "./js/settimana.js?v=20",
+        "./js/promemoria.js": "./js/promemoria.js?v=20",
+        "./js/libreria.js": "./js/libreria.js?v=20",
+        "./js/rinomina.js": "./js/rinomina.js?v=20",
+        "./js/azioni.js": "./js/azioni.js?v=20",
+        "./js/file.js": "./js/file.js?v=20",
+        "./js/casa.js": "./js/casa.js?v=20",
+        "./js/guscio.js": "./js/guscio.js?v=20"
       }
     }
   </script>
-  <script type="module" src="js/guscio.js?v=19"></script>
+  <script type="module" src="js/guscio.js?v=20"></script>
 </body>
 </html>

@@ -463,7 +463,11 @@ input.riposo:checked::after { background: light-dark(#fff, #14202a); }
 .chip:hover { border-color: var(--accento); background: color-mix(in srgb, var(--accento) 10%, transparent); }
 .chip:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; }
 
-/* pannello della libreria */
+/* pannello della libreria, in fondo alla Settimana: un riquadro chiuso di partenza, come la spiegazione in Dati */
+.pannello-libreria { margin-top: 1rem; color: var(--tenue); }
+.pannello-libreria summary { width: fit-content; min-height: 1.8rem; font-weight: 600; color: var(--inchiostro); cursor: pointer; }
+.pannello-libreria summary:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 2px; border-radius: .3rem; }
+.pannello-libreria p { max-width: 38rem; font-size: .92rem; }
 .libreria { margin: 0 0 .9rem; padding: 0; list-style: none; max-width: 38rem; }
 .lib-voce {
   display: flex;
@@ -526,20 +530,6 @@ button.pulsante.piccolo { padding: .45rem 1rem; font-size: .9rem; }
 }
 .stato.visibile { opacity: 1; }
 .stato.errore { color: light-dark(#a24f3f, #e59a8a); border-color: currentColor; }
-
-/* ───────── Pannelli del menu (libreria, sincronizzazione) ───────── */
-.dati { color: var(--tenue); }
-.dati summary {
-  width: fit-content;
-  padding: .3rem .1rem;
-  border-radius: .4rem;
-  cursor: pointer;
-}
-.dati summary:focus-visible { outline: 3px solid var(--fuoco); outline-offset: 3px; }
-.dati p { max-width: 38rem; margin: .5rem 0 .8rem; font-size: .92rem; }
-.dati .azioni-dati { display: flex; flex-wrap: wrap; gap: .6rem; }
-.dati .copie { margin: 0 0 .9rem; padding: 0; list-style: none; font-size: .92rem; }
-.dati .copie li { margin: .1rem 0; }
 
 .solo-lettori {
   position: absolute;
@@ -636,9 +626,6 @@ dialog.foglio {
 .sezione { padding: 1rem 0 1.1rem; border-top: 1px solid var(--linea); }
 .sezione h3 { margin: 0 0 .35rem; font-size: 1rem; }
 .sezione > p { margin: 0 0 .8rem; font-size: .9rem; color: var(--tenue); }
-.sezione .copie { margin: 0 0 .9rem; padding: 0; list-style: none; font-size: .9rem; color: var(--tenue); }
-.sezione .azioni-dati { display: flex; flex-wrap: wrap; gap: .6rem; }
-.sezione.dati summary { font-weight: 600; color: var(--inchiostro); }
 .versione { margin: .6rem 0 0; font-size: .8rem; color: var(--tenue); text-align: center; }
 
 /* ───────── Vista a un giorno (telefono) ─────────

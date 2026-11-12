@@ -115,10 +115,10 @@ async function chiudiMenu(p) {
   await expect(p.locator('#menu')).toBeHidden();
 }
 
-/** Apre il menu e, per la libreria, anche il suo pannello richiudibile. */
-async function apriPannello(p, titolo) {
-  await apriMenu(p);
-  if (!/libreria/i.test(titolo)) return;
+/** Apre la Libreria delle attività: il pannello richiudibile in fondo alla sezione Settimana. */
+async function apriLibreria(p) {
+  await chiudiMenu(p);
+  if ((await sezioneAttuale(p)) !== 'settimana') await vaiA(p, 'settimana');
   const pannello = p.locator('#pannello-libreria');
   // attenzione: un pannello aperto ha open="" (stringa vuota, che in JavaScript vale come "falso"): si controlla null
   if ((await pannello.getAttribute('open')) === null) await pannello.locator('summary').click();
@@ -180,5 +180,5 @@ function foto(p) {
 export {
   test, expect, telefono,
   MERCOLEDI, LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
-  dettaglio, spunta, togli, apriMenu, chiudiMenu, apriPannello, vaiA, salvaFile, unisciFile, foto,
+  dettaglio, spunta, togli, apriMenu, chiudiMenu, apriLibreria, vaiA, salvaFile, unisciFile, foto,
 };

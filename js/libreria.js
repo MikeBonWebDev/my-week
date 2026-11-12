@@ -1,4 +1,5 @@
-// js/libreria.js — il pannello «Libreria delle attività» del menu.
+// js/libreria.js — il pannello «Libreria delle attività», in fondo alla sezione Settimana.
+// Lo disegna disegnaSettimana (settimana.js): il pannello si vede solo lì.
 import * as Core from '../core.js';
 import {
   $, chiaveNome, conferma, dataDaChiave, db, esito, listaLibreria, MAX_NOME, MESSAGGI, mostraStato, MSG_RISERVATO,
@@ -7,9 +8,21 @@ import {
 import { fmtBreve } from './testi.js';
 import { el } from './pezzi.js';
 
-/* ───────── Libreria ───────── */
-// Il pannello «Libreria delle attività»: ogni voce con nome modificabile, in quante settimane compare,
-// l'ultima volta che l'hai usata e, solo se non l'hai mai usata, il pulsante per cancellarla.
+/* ───────── Libreria ─────────
+   Ogni voce con nome modificabile e una riga che dice quanto è usata:
+     in una o più liste       «in 3 settimane · ultima: 12 ott» (il lunedì dell'ultima settimana in cui compare)
+     solo con delle spunte    «tolta dalle settimane · ultima spunta: 12 ott»: segnata, poi tolta da ogni settimana
+     né l'una né l'altra      «mai usata», e il pulsante Cancella
+   «Usata» segue la regola del nucleo (Core.ultimeSpunte, la stessa di cancella()): una voce con una spunta fa parte
+   dello storico anche se non è più in nessuna lista, e non si cancella. */
+const infoVoce = (usate, ultimaLista, ultimaSpunta) => {
+  if (usate) return `in ${usate} ${usate === 1 ? 'settimana' : 'settimane'} · ultima: ${fmtBreve.format(dataDaChiave(ultimaLista))}`;
+  if (ultimaSpunta) return `tolta dalle settimane · ultima spunta: ${fmtBreve.format(dataDaChiave(ultimaSpunta))}`;
+  return 'mai usata';
+};
+// Una voce si può cancellare solo se non è in nessuna lista e non ha nessuna spunta
+const cancellabile = (id) => settimaneConVoce(id) === 0 && !(id in Core.ultimeSpunte(db.registro));
+
 export function aggiornaLibreria() {
   const voci = [...state.libreria].sort((a, b) => a.name.localeCompare(b.name, 'it'));
   $('#conta-libreria').textContent = `(${voci.length})`;
@@ -19,6 +32,7 @@ export function aggiornaLibreria() {
     }));
     return;
   }
+  const spunte = Core.ultimeSpunte(db.registro);
   listaLibreria.replaceChildren(...voci.map((v) => {
     const usate = settimaneConVoce(v.id);
     const ultima = Object.keys(state.weeks).filter((k) => state.weeks[k].activities.some((a) => a.id === v.id)).sort().pop();
@@ -27,14 +41,9 @@ export function aggiornaLibreria() {
         type: 'text', class: 'lib-nome', value: v.name, maxLength: MAX_NOME, dataset: { id: v.id },
         aria: { label: `Nome della voce «${v.name}»` },
       }),
-      el('span', {
-        class: 'lib-info',
-        testo: usate
-          ? `in ${usate} ${usate === 1 ? 'settimana' : 'settimane'} · ultima: ${fmtBreve.format(dataDaChiave(ultima))}`
-          : 'mai usata',
-      }),
-      // solo una voce mai usata si può cancellare
-      !usate && el('button', {
+      el('span', { class: 'lib-info', testo: infoVoce(usate, ultima, spunte[v.id]) }),
+      // solo una voce mai usata (niente liste, niente spunte) si può cancellare
+      !usate && !spunte[v.id] && el('button', {
         type: 'button', class: 'pulsante secondario piccolo', dataset: { id: v.id, azione: 'cancella' }, testo: 'Cancella',
         aria: { label: `Cancella «${v.name}» dalla libreria` },
       }));
@@ -79,75 +88,8 @@ listaLibreria.addEventListener('click', async (e) => {
   if (!b) return;
   const v = voce(b.dataset.id);
   if (!v) return;
-  if (b.dataset.azione !== 'cancella' || settimaneConVoce(v.id) > 0) return;   // una voce usata fa parte dello storico
+  if (b.dataset.azione !== 'cancella' || !cancellabile(v.id)) return;   // una voce usata fa parte dello storico
   const ok = await conferma(`Cancellare «${v.name}» dalla libreria? Non compare in nessuna settimana, quindi non si perde niente.`, 'Cancella');
   if (!ok) return;
   esito(db.cancella(v.id));
 });
-
-/* ───────── Rinomina, dal nome della voce ─────────
-   Toccando il nome (scheda del telefono, tabella, Casa) si apre il foglio. Dice cosa succede — il nome cambia in tutte
-   le settimane — e non salva un nome vuoto, riservato o già usato da un'altra voce. */
-const foglioRinomina = $('#foglio-rinomina');
-const campoRinomina = $('#nome-rinomina');
-let rinominaId = null;
-let rinominaDa = null;   // il pulsante che ha aperto il foglio, per rimettergli il fuoco
-
-function apriRinomina(id, da) {
-  const v = voce(id);
-  if (!v) return;
-  rinominaId = id;
-  rinominaDa = da;
-  campoRinomina.value = v.name;
-  $('#titolo-rinomina').textContent = `Rinomina «${v.name}»`;
-  const n = settimaneConVoce(id);
-  $('#nota-rinomina').textContent = (n > 1
-    ? `Il nome cambia in tutte le ${n} settimane in cui compare, anche nel passato.`
-    : 'Il nome cambia ovunque compaia questa voce.')
-    + ' Per una nota solo di questa settimana c’è il dettaglio.';
-  aggiornaRinomina();
-  foglioRinomina.showModal();
-  campoRinomina.select();
-}
-
-// Il nome scritto si può salvare? Se no, la nota dice perché (e Salva resta spento)
-function aggiornaRinomina() {
-  const v = voce(rinominaId);
-  const nuovo = Core.pulisci(campoRinomina.value, MAX_NOME);
-  const doppione = nuovo && state.libreria.find((x) => x.id !== rinominaId && chiaveNome(x.name) === chiaveNome(nuovo));
-  let avviso = '';
-  if (!nuovo) avviso = MESSAGGI.vuoto();
-  else if (Core.eRiservato(nuovo)) avviso = MSG_RISERVATO;
-  else if (doppione) avviso = MESSAGGI.esiste(doppione.name);
-  $('#avviso-rinomina').textContent = avviso;
-  $('#salva-rinomina').disabled = Boolean(avviso) || !v || nuovo === v.name;
-}
-
-function salvaRinomina() {
-  if ($('#salva-rinomina').disabled) return;
-  const id = rinominaId;
-  const nuovo = Core.pulisci(campoRinomina.value, MAX_NOME);
-  foglioRinomina.close();
-  if (esito(db.rinomina(id, nuovo))) {
-    mostraStato(`Ora si chiama «${nuovo}».`);
-    // il pulsante è stato ridisegnato: il fuoco va su quello nuovo della stessa voce, nella sezione aperta
-    [...document.querySelectorAll(`[data-rinomina="${id}"]`)].find((b) => b.offsetParent !== null)?.focus();
-  }
-}
-
-document.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-rinomina]');
-  if (b) apriRinomina(b.dataset.rinomina, b);
-});
-campoRinomina.addEventListener('input', aggiornaRinomina);
-campoRinomina.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter') return;
-  e.preventDefault();
-  salvaRinomina();
-});
-$('#salva-rinomina').addEventListener('click', salvaRinomina);
-$('#annulla-rinomina').addEventListener('click', () => foglioRinomina.close());
-$('#chiudi-rinomina').addEventListener('click', () => foglioRinomina.close());
-foglioRinomina.addEventListener('click', (e) => { if (e.target === foglioRinomina) foglioRinomina.close(); });
-// chiuso senza salvare (Annulla, Esc, ×, sfondo): il fuoco torna sul nome toccato, se c'è ancora
-foglioRinomina.addEventListener('close', () => { if (rinominaDa && document.contains(rinominaDa)) rinominaDa.focus(); });

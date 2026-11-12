@@ -4,8 +4,11 @@ import fs from 'node:fs';
 import { creaSeme } from '../strumenti/seme.js';
 import {
   LUNEDI_DOPO, apri, caricaDati, nomi, suggerimenti, conferma, scrivi, aggiungi, riga,
-  dettaglio, togli, chiudiMenu, apriPannello, vaiA, foto,
+  dettaglio, togli, apriLibreria, vaiA, foto, spunta,
 } from './aiuti.js';
+
+// La riga sotto il nome di una voce, nella Libreria («in 2 settimane · ultima: 12 ott», «mai usata»…)
+const infoLibreria = (p, id) => p.locator('.lib-voce', { has: p.locator(`.lib-nome[data-id="${id}"]`) }).locator('.lib-info');
 
 // Lo stile e il codice stanno in file separati (stile.css, js/): se uno non arriva, la pagina sembra viva ma non lo è
 test('stile e script caricati: aspetto della pagina e nessun errore', async ({ browser }) => {
@@ -80,18 +83,16 @@ test.describe('con qualche settimana di storia', () => {
   test('libreria: rinomina ovunque, rifiuta i doppioni, cancella solo le voci mai usate', async ({ browser }) => {
     const p = await conStoria(browser);
     await aggiungi(p, 'Sviluppo');
-    await apriPannello(p, 'Libreria');
+    await apriLibreria(p);
 
     const sviluppo = p.locator('.lib-nome[data-id="sviluppo"]');
     await sviluppo.fill('Sviluppare');
     await sviluppo.press('Enter');
     await conferma(p);                                           // avvisa che vale anche nel passato
     expect((await nomi(p))[0]).toBe('Sviluppare');
-    await chiudiMenu(p);
     await p.click('#sett-prec');
     expect((await nomi(p))[0]).toBe('Sviluppare');
     await p.click('#vai-oggi');
-    await apriPannello(p, 'Libreria');
 
     const camminare = p.locator('.lib-nome[data-id="camminare"]');
     await camminare.fill('chitarra');
@@ -100,13 +101,35 @@ test.describe('con qualche settimana di storia', () => {
     await expect(camminare).toHaveValue('Camminare');
 
     await expect(p.locator('button[data-azione][data-id="esame"]')).toHaveCount(0);   // usata: non si cancella
-    await chiudiMenu(p);
     await aggiungi(p, 'Prova');
     await togli(p, 'Prova');                                     // ora è "mai usata"
-    await apriPannello(p, 'Libreria');
+    await expect(infoLibreria(p, 'prova')).toHaveText('mai usata');
     await p.click('button[data-azione="cancella"][data-id="prova"]');
     await conferma(p);
     await expect(p.locator('.lib-nome[data-id="prova"]')).toHaveCount(0);
+  });
+
+  test('libreria: una voce segnata e poi tolta dalla settimana non è «mai usata» e non si cancella', async ({ browser }) => {
+    const p = await apri(await browser.newContext());
+    await aggiungi(p, 'Prova');
+    await spunta(p, 'Prova', 1);                                 // segnata martedì 13 ottobre
+    await togli(p, 'Prova');                                     // tolta: la spunta resta nello storico
+    await apriLibreria(p);
+    await expect(infoLibreria(p, 'prova')).toHaveText('tolta dalle settimane · ultima spunta: 13 ott');
+    await expect(p.locator('button[data-azione="cancella"][data-id="prova"]')).toHaveCount(0);
+    // rimessa nella settimana, la spunta ricompare e la riga torna a contare le settimane (dal loro lunedì)
+    await aggiungi(p, 'Prova');
+    await expect(infoLibreria(p, 'prova')).toHaveText('in 1 settimana · ultima: 12 ott');
+    expect(p.errori).toEqual([]);
+  });
+
+  test('la libreria sta in fondo alla Settimana, non nel menu', async ({ browser }) => {
+    const p = await apri(await browser.newContext());
+    await expect(p.locator('#sezione-settimana #pannello-libreria')).toBeVisible();
+    await expect(p.locator('#menu #pannello-libreria')).toHaveCount(0);
+    await expect(p.locator('#pannello-libreria')).not.toHaveAttribute('open');   // chiusa di partenza
+    await vaiA(p, 'casa');
+    await expect(p.locator('#pannello-libreria')).toBeHidden();                   // fa parte della Settimana
   });
 
   test('CSV dello storico: una riga per attività, con il dettaglio della settimana giusta', async ({ browser }) => {

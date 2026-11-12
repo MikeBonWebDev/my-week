@@ -259,15 +259,7 @@ function vista(reg) {
 function faccende(reg, oggi) {
   if (!eData(oggi)) throw new Error('oggi deve essere una data AAAA-MM-GG');
   const vis = vista(reg);
-  const ultime = {};
-  for (const [k, x] of Object.entries(reg)) {
-    if (x.v !== true) continue;
-    const p = k.split('/');
-    if (p.length !== 6 || p[0] !== 's' || p[2] !== 'a' || p[4] !== 'f' || !/^[0-6]$/.test(p[5])) continue;
-    const quando = piuGiorni(p[1], Number(p[5]));
-    if (quando > oggi) continue;   // una spunta nel futuro (orologio sbagliato) non conta
-    if (!ultime[p[3]] || quando > ultime[p[3]]) ultime[p[3]] = quando;
-  }
+  const ultime = ultimeSpunte(reg, oggi);   // una spunta nel futuro (orologio sbagliato) non conta
   const elenco = [];
   for (const { id, name } of vis.libreria) {
     const cadenza = reg[`v/${id}/cad`]?.v;
@@ -283,6 +275,24 @@ function faccende(reg, oggi) {
   }
   const peso = (f) => (f.giorni === null ? -1 : f.giorni / f.cadenza);
   return elenco.sort((a, b) => peso(b) - peso(a) || a.nome.localeCompare(b.nome, 'it'));
+}
+
+/* ───────── L'ultima spunta di ogni voce ─────────
+   { id: 'AAAA-MM-GG' }: il giorno più recente in cui la voce è segnata, in qualunque settimana, anche in una da cui è
+   stata tolta (le spunte restano nel registro come storico). Con `finoA` (AAAA-MM-GG) si ignorano i giorni dopo.
+   È la regola dell'«usata»: una voce con una spunta fa parte dello storico. La usano le faccende, cancella() e la
+   Libreria, così tutte e tre dicono la stessa cosa. */
+function ultimeSpunte(reg, finoA = null) {
+  const ultime = {};
+  for (const [k, x] of Object.entries(reg)) {
+    if (x.v !== true) continue;
+    const p = k.split('/');
+    if (p.length !== 6 || p[0] !== 's' || p[2] !== 'a' || p[4] !== 'f' || !/^[0-6]$/.test(p[5])) continue;
+    const quando = piuGiorni(p[1], Number(p[5]));
+    if (finoA && quando > finoA) continue;
+    if (!ultime[p[3]] || quando > ultime[p[3]]) ultime[p[3]] = quando;
+  }
+  return ultime;
 }
 
 // Il lunedì della settimana più vecchia con dei dati: serve a contare da quando si usa l'app
@@ -439,8 +449,7 @@ function crea({ dispositivo, registro = {}, ora = () => Date.now() }) {
       const vis = vista(reg);
       if (!vis.libreria.some((v) => v.id === id)) return errore('non-trovata');
       const inLista = Object.values(vis.weeks).some((w) => w.activities.some((a) => a.id === id));
-      const conSpunte = Object.entries(reg).some(([k, x]) => x.v === true && /^s\/[^/]+\/a\/[^/]+\/f\/[0-6]$/.test(k) && k.split('/')[3] === id);
-      if (inLista || conSpunte) return errore('usata');
+      if (inLista || id in ultimeSpunte(reg)) return errore('usata');
       scrivi(`v/${id}/del`, true);
       return { ok: true };
     },
@@ -498,6 +507,6 @@ function daFile(dati) {
 
 export {
   FORMATO, VERSIONE, LIVELLI, INTENSITA, MAX_NOME, MAX_DETTAGLIO, MAX_CADENZA,
-  crea, unisci, vista, faccende, primoUso, valida, vince, eLunedi, eData, piuGiorni, giorniTra,
+  crea, unisci, vista, faccende, ultimeSpunte, primoUso, valida, vince, eLunedi, eData, piuGiorni, giorniTra,
   slug, chiaveNome, eRiservato, pulisci, perFile, daFile,
 };
