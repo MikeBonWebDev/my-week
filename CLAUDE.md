@@ -159,14 +159,16 @@ Debiti da togliere nella 2.0, in quest'ordine, uno per volta (test verdi e push 
 
 Debiti della 2.0 chiusi. Poi, dall'uso vero, un ritocco della Fase 1: **la settimana giorno per giorno** (attività per
 giorno, faccende coperte dalle spunte vicine, «Riprendi la lista» tolto; `settimana-19`). Il piano della Fase 2
-è scritto (`PIANO.md`), e il comportamento attuale è in `FUNZIONI.md`; prossimo passo, dopo la revisione del piano:
-la 2.1 (Impostazioni, navigazione, Libreria).
+è scritto (`PIANO.md`), e il comportamento attuale è in `FUNZIONI.md`; il piano è stato rivisto (novembre 2026), prossimo
+passo la 2.1 (Impostazioni, navigazione, Libreria).
 
 Decisioni per la Fase 2 (ottobre 2026):
 - **Menu del telefono:** predefinita la barra di oggi più una voce «Altro» per le sezioni che non ci stanno; il menu
   a ventaglio (radiale) resta selezionabile nelle Impostazioni. Le tre sezioni nella barra sono **fisse e le sceglie
   il proprietario** (predefinite Settimana, Casa, Dati), mai riordinate dall'uso; scelta per dispositivo.
 - **Sezioni accese o spente** (Cucina, Spese): valgono su tutti i dispositivi, chiave `i/spenta/<nome>`.
+- **Cucina:** cinque momenti al giorno (colazione, metà mattina, pranzo, merenda del pomeriggio, cena), nessuno
+  obbligatorio. Ordine delle fasi invariato: 2.1, 2.2, 2.3, 2.4.
 - **Colori** (le cinque palette e la predefinita): dopo che i moduli sono completi, così si fanno una volta sola.
 - **Documenti:** il piano per intero, prima del codice, come riferimento da verificare e seguire (`PIANO.md`, senza
   numero di fase nel nome); il comportamento attuale in un documento vivo (`FUNZIONI.md`), che riceve ogni fase finita.

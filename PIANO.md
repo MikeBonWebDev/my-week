@@ -134,8 +134,8 @@ non del funzionamento dell'app.
 - **Comportamento:** identico a oggi (`FUNZIONI.md` §6.2), con una correzione: **«usata» segue la regola del nucleo**
   (deciso a novembre 2026; `FUNZIONI.md` §12, punto 1). Oggi una voce segnata e poi tolta dalla settimana risulta «mai
   usata», mostra «Cancella» e poi la cancellazione viene rifiutata. Dopo: una voce con delle spunte non mostra
-  «Cancella», e al posto di «mai usata» una scritta come «segnata, poi tolta» (**le parole le sceglie Michele**). Con
-  un test che parte proprio da quel caso.
+  «Cancella», e al posto di «mai usata» scrive **«tolta dalle settimane · ultima spunta: 12 ott»** (parole scelte da
+  Michele, novembre 2026). Con un test che parte proprio da quel caso.
 - **Codice:** `js/libreria.js` passa dal gruppo Menu al gruppo **Settimana** (livello 5, come `azioni.js`); la
   disegna `disegnaSettimana` invece di `disegnaAnche` in `guscio.js`. La regola «una sezione non importa un'altra
   sezione» resta: la libreria è parte della Settimana. Da aggiornare `test/struttura.test.js` (gruppi) e i test nel
@@ -255,7 +255,22 @@ proposta è: fisse nella 2.3, si rivede dopo l'uso.
 ## 9. Cucina: i pasti
 
 **Cucina → Pasti.** La settimana corrente (la stessa settimana mostrata nella sezione Settimana), giorno per giorno,
-con **Pranzo** e **Cena**.
+con **cinque momenti** (deciso a novembre 2026), sempre in quest'ordine:
+
+| Momento | Chiave | Etichetta proposta |
+|---|---|---|
+| colazione | `colazione` | Colazione |
+| merenda di metà mattina | `mattina` | Metà mattina |
+| pranzo | `pranzo` | Pranzo |
+| merenda del pomeriggio | `pomeriggio` | Merenda |
+| cena | `cena` | Cena |
+
+Le etichette sono una proposta: **le parole le sceglie Michele** (§13). Le chiavi restano quelle, qualunque etichetta
+si scelga.
+
+**Nessun momento è obbligatorio.** Un momento vuoto è solo vuoto: niente «saltato», niente conteggi di quanti
+momenti sono pieni, niente segni sulla striscia dei giorni per i vuoti. Una merenda che non fai non ha bisogno di
+essere spiegata.
 
 ### 9.1 Un pasto
 
@@ -270,8 +285,8 @@ con **Pranzo** e **Cena**.
   riga sotto il pasto); per correggere, si toglie la spunta e si rimette.
 - **Togli il pasto:** con conferma se è già segnato come mangiato (e allora i suoi ingredienti rientrano).
 
-**[da decidere] Un piatto o più piatti per pasto.** L'anteprima ne ha uno per Pranzo e uno per Cena. Proposta: uno
-solo nella 2.4; se serve «primo e secondo», si scrivono nello stesso nome o si aggiunge dopo.
+**[da decidere] Un piatto o più piatti per pasto.** L'anteprima ne aveva uno per Pranzo e uno per Cena. Proposta: uno
+per momento nella 2.4; se serve «primo e secondo», si scrivono nello stesso nome o si aggiunge dopo.
 
 ### 9.2 Il costo
 
@@ -283,8 +298,9 @@ solo nella 2.4; se serve «primo e secondo», si scrivono nello stesso nome o si
 
 ### 9.3 Telefono
 
-Come la Settimana: la striscia dei giorni in alto, il giorno scelto sotto con Pranzo e Cena. Sul computer, i sette
-giorni affiancati (o in tabella) **[da decidere nella 2.4 con un'anteprima]**.
+Come la Settimana: la striscia dei giorni in alto, il giorno scelto sotto con i cinque momenti. Sul computer, i sette
+giorni affiancati (o in tabella) **[da decidere nella 2.4 con un'anteprima]**: con cinque momenti sono 35 caselle, e
+una tabella così piena va provata prima di sceglierla (un'alternativa: un giorno alla volta anche sul computer).
 
 ## 10. I dati: chiavi nuove
 
@@ -341,7 +357,7 @@ dell'app (`lettera/segmenti`, valore semplice): un telefono non ancora aggiornat
 | `u/<sid>/r/<n>/p` | id di un prodotto | riga `n` (0, 1, 2…): il prodotto |
 | `u/<sid>/r/<n>/n` | intero ≥ 1 | quante confezioni |
 | `u/<sid>/r/<n>/c` | intero, centesimi, o `null` | prezzo cad. |
-| `s/<lunedì>/k/<giorno>/<pasto>/nome` | testo | `<pasto>` = `pranzo` / `cena`: il piatto |
+| `s/<lunedì>/k/<giorno>/<pasto>/nome` | testo | `<pasto>` = `colazione` / `mattina` / `pranzo` / `pomeriggio` / `cena` (§9): il piatto |
 | `s/<lunedì>/k/<giorno>/<pasto>/i/<pid>` | intero > 0, sessantesimi, o `null` | un ingrediente; `null` = tolto |
 | `s/<lunedì>/k/<giorno>/<pasto>/m` | id di movimento o `''` | mangiato: l'identificativo usato per i suoi movimenti |
 
@@ -422,20 +438,22 @@ Si chiudono prima della fase che li usa, non tutti insieme.
 |---|---|---|
 | Quali sezioni stanno nella barra del telefono | fisse, scelte nelle Impostazioni; predefinite Settimana, Casa, Dati | §3.3 |
 | Sezioni accese/spente | valgono su tutti i dispositivi (`i/spenta/<nome>`) | §3.4 |
-| La Libreria che dice «mai usata» per una voce con spunte | si corregge dentro la 2.1 | §4 |
+| I momenti dei pasti | cinque: colazione, metà mattina, pranzo, merenda del pomeriggio, cena | §9 |
+| Ordine delle fasi | quello del §12; la Cucina non serve prima | §12 |
+| La Libreria che dice «mai usata» per una voce con spunte | si corregge dentro la 2.1: «tolta dalle settimane · ultima spunta: 12 ott» | §4 |
 
 **Aperti:**
 
 | # | Punto | Proposta | Si decide prima di | Dove |
 |---|---|---|---|---|
-| 1 | Le parole per una voce «segnata, poi tolta» | da proporre a Michele | 2.1 | §4 |
-| 2 | Dove si vedono Alimenti e Scorte nella 2.2 | la sezione Spese nasce con quelle due schede | 2.2 | §12 |
-| 3 | Soglie delle parole di quantità | quelle del §6.1 | 2.2 | §6.1 |
-| 4 | `p/<id>/visto` | tenerlo | 2.2 | §10.3 |
-| 5 | Categorie di spesa proprie | no nella 2.3, si rivede dopo l'uso | 2.3 | §8.1 |
-| 6 | Il CSV di una sezione spenta | resta | 2.3 | §11 |
-| 7 | Un piatto o più per pasto | uno nella 2.4 | 2.4 | §9.1 |
-| 8 | Cucina sul computer | anteprima prima della 2.4 | 2.4 | §9.3 |
+| 1 | Dove si vedono Alimenti e Scorte nella 2.2 | la sezione Spese nasce con quelle due schede | 2.2 | §12 |
+| 2 | Soglie delle parole di quantità | quelle del §6.1 | 2.2 | §6.1 |
+| 3 | `p/<id>/visto` | tenerlo | 2.2 | §10.3 |
+| 4 | Categorie di spesa proprie | no nella 2.3, si rivede dopo l'uso | 2.3 | §8.1 |
+| 5 | Il CSV di una sezione spenta | resta | 2.3 | §11 |
+| 6 | Un piatto o più per pasto | uno per momento nella 2.4 | 2.4 | §9.1 |
+| 7 | Cucina sul computer | anteprima prima della 2.4 | 2.4 | §9.3 |
+| 8 | Le etichette dei cinque momenti | Colazione, Metà mattina, Pranzo, Merenda, Cena | 2.4 | §9 |
 
 ## 14. Fuori dalla Fase 2
 
