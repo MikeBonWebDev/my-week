@@ -1114,6 +1114,10 @@ html:not([data-intensita="nessuna"]) [data-calore] { --tenue: var(--inchiostro);
 /* il puntino sul pulsante «Dati», in alto: una nuova copia è consigliata. Sabbia, non rosso; nessun numero */
 .sezione-voce { position: relative; }
 .apri-dati { position: relative; }
+/* Dati è una sezione: quando è aperta il suo pulsante lo dice, pieno come la voce attiva della barra (come
+   nell'anteprima). L'ingranaggio no: le Impostazioni sono un foglio sopra la sezione aperta, non una sezione. */
+.apri-dati[aria-current="page"] { color: var(--bottone-testo); background: var(--bottone); border-color: var(--bottone); }
+.apri-dati[aria-current="page"] .puntino-dati { box-shadow: 0 0 0 2px var(--bottone); }
 .puntino-dati {
   position: absolute;
   top: .3rem;

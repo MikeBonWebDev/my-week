@@ -11,7 +11,7 @@ ogni tocco, quali regole valgono. È il riferimento per dire se l'app fa la cosa
   dei dati; `LEGGIMI.md` dice come pubblicarla e installarla; `PIANO.md` è ciò che verrà; `CLAUDE.md` contiene le
   regole per chi ci lavora.
 
-Aggiornato alla versione `settimana-24` (novembre 2026), ricavato dal codice e dai test.
+Aggiornato alla versione `settimana-25` (novembre 2026), ricavato dal codice e dai test.
 
 ## Indice
 
@@ -77,7 +77,9 @@ con la sezione:
     movimento ridotto del telefono le sezioni compaiono senza animazione.
 - All'avvio l'app **si apre sempre sulla Panoramica** (§2.1).
 - In alto a destra, da ogni sezione: **Dati**, con il suo puntino (§8.2), e l'ingranaggio **Impostazioni** (§7). Sul
-  computer con il nome accanto all'icona, sul telefono due tondi con la sola icona.
+  computer con il nome accanto all'icona, sul telefono due tondi con la sola icona. Dati è una sezione: quando è
+  aperta il suo pulsante è pieno, come la voce attiva della barra. Le Impostazioni no: sono un foglio che si apre
+  sopra la sezione aperta, e chiudendolo si resta dove si era.
 - I messaggi brevi («Salvato», gli errori) compaiono in sovrimpressione, sopra a tutto, e spariscono da soli: dopo
   1,5 secondi, gli errori dopo 6.
 - Le domande che chiedono conferma usano una finestra con **Annulla** e un pulsante che dice l'azione («Togli»,
@@ -322,7 +324,7 @@ telefono sale dal basso. Si chiude con ×, Esc o un tocco fuori.
 | **Colore delle faccende** | Nessuno («Solo il testo.»), Morbido («Toni sabbia, leggeri.», predefinito), Deciso («Dal giallo all'arancio.»), con tre campioni ciascuno | tutti i dispositivi (viaggia con il file) |
 | **Sezioni** | una casella per ogni sezione che si può spegnere: segnata = accesa. «Una sezione spenta sparisce dal menu; i suoi dati restano. Vale su tutti i dispositivi.» | tutti i dispositivi (viaggia con il file) |
 | **Menu del telefono** | solo sul telefono: **Barra** o **Ventaglio**; con la barra e più di quattro sezioni accese, «Nella barra, oltre alla Panoramica (due)»: una casella per sezione (la Panoramica c'è sempre e non si sceglie), con due segnate le altre si spengono finché non ne togli una | questo dispositivo |
-| **Versione** | «Versione: settimana-24», oppure «non installata (senza uso offline)» | — |
+| **Versione** | «Versione: settimana-25», oppure «non installata (senza uso offline)» | — |
 
 **Le sezioni spente.** Panoramica, Settimana, Casa e Dati non si spengono: oggi non c'è nessuna sezione da spegnere, e la parte
 «Sezioni» non si vede. Comparirà con Cucina e Spese. Una sezione spenta perde il suo pulsante nella navigazione e non

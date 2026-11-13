@@ -118,6 +118,22 @@ test('Dati sta in alto, con il puntino, con la barra e con il ventaglio; non è 
   await vaiA(p, 'dati');
   await expect(sezioneAperta(p)).toHaveText('Dati');
   await expect(p.locator('#apri-dati')).toHaveAttribute('aria-current', 'page');
+  // aperta, Dati si vede piena come la voce attiva; l'ingranaggio no: apre un foglio sopra la sezione, non una sezione
+  const sfondo = (s) => p.locator(s).evaluate((e) => getComputedStyle(e).backgroundColor);
+  const attiva = await p.evaluate(() => {
+    const prova = document.createElement('span');
+    prova.style.background = 'var(--bottone)';
+    document.body.append(prova);
+    const c = getComputedStyle(prova).backgroundColor;
+    prova.remove();
+    return c;
+  });
+  expect(await sfondo('#apri-dati')).toBe(attiva);
+  expect(await sfondo('#apri-menu')).not.toBe(attiva);
+  await p.click('#apri-menu');                                         // le Impostazioni sopra a Dati
+  await expect(p.locator('#apri-dati')).toHaveAttribute('aria-current', 'page');
+  await p.click('#chiudi-menu');
+  await expect(sezioneAperta(p)).toHaveText('Dati');
   expect(p.errori).toEqual([]);
 });
 
